@@ -13,3 +13,11 @@ rw_ibov_stage:
 rw_ivvb_stage:
   type: pandas.CSVDataset
   filepath: data/sandbox/rw_ivvb_stage.csv
+
+rw_ifix_stage:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/rw_ifix_stage.csv
+
+rw_infomoney_stage:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/rw_infomoney_stage.csv

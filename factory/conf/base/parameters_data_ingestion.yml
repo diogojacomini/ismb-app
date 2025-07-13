@@ -19,7 +19,8 @@ cds_parms:
   url: "https://www.investing.com/rates-bonds/brazil-cds-5-years-usd-historical-data"
   headers: 
     User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-  csv_read: cds_stage
+  dat_ref_format: "%b %d, %Y"
+  csv_read: rw_cds_stage
 
 # api rename columns
 columns_mapping_yf:
@@ -35,3 +36,16 @@ ibov_ticker: "^BVSP"
 
 # etl_ivvb11_vix_brasil_node
 ivvb11_ticker: "IVVB11.SA"
+
+# etl_html_ifix_node
+ifix_parms:
+  url: "https://br.investing.com/indices/bm-fbovespa-real-estate-ifix-historical-data"
+  headers: 
+    User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+  dat_ref_format: "%d.%m.%Y"
+  csv_read: rw_ifix_stage
+
+# etl_html_infomoney_node
+infomoney_parms:
+  url: "https://www.infomoney.com.br/ultimas-noticias/"
+  class_: "flex gap-4 md:flex-col"

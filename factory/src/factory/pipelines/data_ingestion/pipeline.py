@@ -4,7 +4,7 @@ generated using Kedro 0.19.14
 """
 
 from kedro.pipeline import node, Pipeline, pipeline  # noqa
-from .nodes import extract_transform_html_table, extract_transform_api_yf
+from .nodes import extract_transform_html_table, extract_transform_api_yf, extract_transform_infomoney
 
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
@@ -26,6 +26,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["params:ivvb11_ticker", "params:columns_mapping_yf"],
                 outputs="rw_ivvb_stage",
                 name="etl_ivvb11_vix_brasil_node",
+            ),
+            node(
+                func=extract_transform_html_table,
+                inputs=["params:ifix_parms", "params:columns_order"],
+                outputs="rw_ifix_stage",
+                name="etl_html_ifix_node",
+            ),
+            node(
+                func=extract_transform_infomoney,
+                inputs=["params:infomoney_parms"],
+                outputs="rw_infomoney_stage",
+                name="etl_html_infomoney_node",
             ),
         ]
     )

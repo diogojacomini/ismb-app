@@ -8,6 +8,8 @@ from typing import Dict, List
 from time import sleep as time_sleep
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
+import pandas as pd
 
 
 def scraping(url: str, headers: Dict[str, str]) -> List[List[str]]:
@@ -36,7 +38,7 @@ def scraping(url: str, headers: Dict[str, str]) -> List[List[str]]:
 
             for table in tables:
                 hdrs = [th.get_text(strip=True) for th in table.find_all("th")]
-                if 'Date' in hdrs and 'Price' in hdrs:
+                if ('Date' in hdrs and 'Price' in hdrs) or ('Data' in hdrs and 'Último' in hdrs):
                     print("Tabela encontrada")
                     break
             else:
@@ -75,3 +77,37 @@ def validate_url_and_headers(url: str, headers: Dict[str, str]) -> None:
 
     if not isinstance(headers, dict) or not headers:
         raise ValueError("Headers devem ser um dicionário não vazio")
+
+
+def scraping_infomoney(url: str, class_: str) -> List[Dict[str, str]]:
+    r = requests.get(url, timeout=60)
+    soup = BeautifulSoup(r.text, "html.parser")
+    blocos = soup.find_all("div", class_=class_)
+    noticias = []
+
+    for bloco in blocos:
+        titulo = bloco.text.strip()
+        h2 = bloco.find("h2")
+        if h2:
+            a_tag = h2.find("a")
+            link = a_tag["href"] if a_tag and a_tag.has_attr("href") else None
+            data_el = bloco.find_next("time")
+            data = data_el["datetime"] if data_el else datetime.today().isoformat()
+            noticias.append({"fonte": "InfoMoney", "titulo": titulo, "dat_ref": data, "link": link})
+
+    return noticias
+
+
+def extrair_campos(texto):
+    partes = re.split(r'\s{2,}', texto.strip())
+    if len(partes) >= 3:
+        categoria = partes[0]
+        titulo = partes[1]
+        data_publicacao = partes[2]
+    else:
+        palavras = texto.strip().split()
+        categoria = palavras[0]
+        data_publicacao = palavras[-3] + ' ' + palavras[-2] + ' ' + palavras[-1]
+        titulo = ' '.join(palavras[1:-3])
+
+    return pd.Series([categoria, titulo, data_publicacao])
