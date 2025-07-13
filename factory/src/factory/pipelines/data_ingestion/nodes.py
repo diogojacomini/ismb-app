@@ -5,6 +5,7 @@ generated using Kedro 0.19.14
 import pandas as pd
 import yfinance as yf
 from .utils import scraping
+from typing import Dict
 
 
 def extract_transform_html_table(scraping_mapping: dict, columns_order: list) -> pd.DataFrame:
@@ -38,13 +39,15 @@ def _transform_html_table(raw_data: pd.DataFrame, columns_order: list) -> pd.Dat
     return df
 
 
-def extract_transform_api_yf(ticker: str) -> pd.DataFrame:
+def extract_transform_api_yf(ticker: str, columns_mapping: Dict[str, str]) -> pd.DataFrame:
     """Extrai e transforma dados de ações usando a API do yfinance."""
     df = yf.download(ticker, start="2023-01-01")
 
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = [col[0] for col in df.columns]
+
     df = df.reset_index(inplace=False)
+    df = df.rename(columns=columns_mapping)
 
     # TODO: filtro do dia
     return df

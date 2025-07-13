@@ -21,5 +21,17 @@ cds_parms:
     User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
   csv_read: cds_stage
 
+# api rename columns
+columns_mapping_yf:
+  Date: dat_ref
+  Close: close
+  High: high
+  Low: low
+  Open: vpen
+  Volume: volume
+
 # etl_ibov_node
 ibov_ticker: "^BVSP"
+
+# etl_ivvb11_vix_brasil_node
+ivvb11_ticker: "IVVB11.SA"

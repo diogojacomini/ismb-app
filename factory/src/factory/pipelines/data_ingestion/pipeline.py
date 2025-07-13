@@ -17,9 +17,15 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=extract_transform_api_yf,
-                inputs=["params:ibov_ticker"],
+                inputs=["params:ibov_ticker", "params:columns_mapping_yf"],
                 outputs="rw_ibov_stage",
                 name="etl_ibov_node",
+            ),
+            node(
+                func=extract_transform_api_yf,
+                inputs=["params:ivvb11_ticker", "params:columns_mapping_yf"],
+                outputs="rw_ivvb_stage",
+                name="etl_ivvb11_vix_brasil_node",
             ),
         ]
     )

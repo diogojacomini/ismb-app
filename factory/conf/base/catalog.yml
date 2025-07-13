@@ -4,8 +4,12 @@
 # Link: https://docs.kedro.org/en/stable/data/data_catalog.html
 rw_cds_stage:
   type: pandas.CSVDataset
-  filepath: data/sandbox/cds_stage.csv
+  filepath: data/sandbox/rw_cds_stage.csv
 
 rw_ibov_stage:
   type: pandas.CSVDataset
-  filepath: data/sandbox/ibov_stage.csv
+  filepath: data/sandbox/rw_ibov_stage.csv
+
+rw_ivvb_stage:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/rw_ivvb_stage.csv
