@@ -5,3 +5,7 @@
 rw_cds_stage:
   type: pandas.CSVDataset
   filepath: data/sandbox/cds_stage.csv
+
+rw_ibov_stage:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/ibov_stage.csv

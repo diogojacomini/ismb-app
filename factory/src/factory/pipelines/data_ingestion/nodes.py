@@ -3,13 +3,14 @@ This is a boilerplate pipeline 'data_ingestion'
 generated using Kedro 0.19.14
 """
 import pandas as pd
+import yfinance as yf
 from .utils import scraping
 
 
 def extract_transform_html_table(scraping_mapping: dict, columns_order: list) -> pd.DataFrame:
     """Função para extrair tabelas HTML."""
     if scraping_mapping.get('csv_read', False):
-        return pd.read_csv(f"/home/diogo/society/data_master_cmp/ismb/backend/data/{scraping_mapping.get('csv_read')}.csv")
+        return pd.read_csv(f"/home/diogo/society/data_master_cmp/ismb-app/factory/data/sandbox/{scraping_mapping.get('csv_read')}.csv")
 
     data = scraping(scraping_mapping.get('url', None), scraping_mapping.get('headers', None))
     df = pd.DataFrame(data)
@@ -32,6 +33,18 @@ def _transform_html_table(raw_data: pd.DataFrame, columns_order: list) -> pd.Dat
 
     for col in columns_order:
         df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    # TODO: filtro do dia
+    return df
+
+
+def extract_transform_api_yf(ticker: str) -> pd.DataFrame:
+    """Extrai e transforma dados de ações usando a API do yfinance."""
+    df = yf.download(ticker, start="2023-01-01")
+
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = [col[0] for col in df.columns]
+    df = df.reset_index(inplace=False)
 
     # TODO: filtro do dia
     return df

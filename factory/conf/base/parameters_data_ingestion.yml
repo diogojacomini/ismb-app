@@ -3,3 +3,23 @@
 #
 # Documentation for this file format can be found in "Parameters"
 # Link: https://docs.kedro.org/en/0.19.14/configuration/parameters.html
+
+# etl_html_cds_node
+columns_mapping:
+  0: dat_ref
+  1: open_price
+  2: close_price
+  3: high_price
+  4: low_price
+  5: change_percentage
+
+columns_order: ['dat_ref', 'open_price', 'close_price', 'high_price', 'low_price', 'change_percentage']
+
+cds_parms:
+  url: "https://www.investing.com/rates-bonds/brazil-cds-5-years-usd-historical-data"
+  headers: 
+    User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+  csv_read: cds_stage
+
+# etl_ibov_node
+ibov_ticker: "^BVSP"
