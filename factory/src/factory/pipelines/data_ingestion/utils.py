@@ -112,6 +112,27 @@ def scraping_valorinveste(url, class_post, class_date) -> List[Dict[str, str]]:
     return noticias
 
 
+def scraping_seudinheiro(url: str, class_feed: str, class_title: str, class_date: str) -> List[Dict[str, str]]:
+    r = requests.get(url, timeout=60)
+    soup = BeautifulSoup(r.text, "html.parser")
+    blocos = soup.find_all("div", class_=class_feed)
+    noticias = []
+
+    for b in blocos:
+        h2 = b.find("h2", class_=class_title)
+        if not h2:
+            continue
+
+        a_tag = h2.find("a")
+        titulo = a_tag.get_text(strip=True) if a_tag else h2.get_text(strip=True)
+        link = a_tag["href"] if a_tag and a_tag.has_attr("href") else None
+
+        data_el = b.find("div", class_=class_date)
+        data = data_el.get_text(strip=True) if data_el else datetime.today().isoformat()
+        noticias.append({"fonte": "Seu Dinheiro", "titulo": titulo, "dat_ref": data, "link": link})
+    return noticias
+
+
 def extrair_campos(texto):
     partes = re.split(r'\s{2,}', texto.strip())
     if len(partes) >= 3:
@@ -131,4 +152,20 @@ def extrair_data_url(link):
     m = re.search(r'/(\d{4})/(\d{2})/(\d{2})/', link)
     if m:
         return f"{m.group(1)}/{m.group(2)}/{m.group(3)}"
+    return None
+
+
+def parse_data_portugues(texto):
+    meses = {
+        "janeiro": "01", "fevereiro": "02", "março": "03", "abril": "04",
+        "maio": "05", "junho": "06", "julho": "07", "agosto": "08",
+        "setembro": "09", "outubro": "10", "novembro": "11", "dezembro": "12"
+    }
+    m = re.search(r'(\d{1,2}) de (\w+) de (\d{4})', texto)
+    if m:
+        dia = m.group(1).zfill(2)
+        mes = meses.get(m.group(2).lower())
+        ano = m.group(3)
+        if mes:
+            return f"{ano}-{mes}-{dia}"
     return None

@@ -4,7 +4,14 @@ generated using Kedro 0.19.14
 """
 
 from kedro.pipeline import node, Pipeline, pipeline  # noqa
-from .nodes import extract_transform_html_table, extract_transform_api_yf, extract_transform_infomoney, extract_transform_valorinveste
+from .nodes import (
+    extract_transform_html_table,
+    extract_transform_api_yf,
+    extract_transform_infomoney,
+    extract_transform_valorinveste,
+    extract_transform_seudinheiro,
+)
+
 
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
@@ -44,6 +51,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["params:valorinveste_parms"],
                 outputs="rw_valorinveste_stage",
                 name="etl_html_valorinveste_node",
+            ),
+            node(
+                func=extract_transform_seudinheiro,
+                inputs=["params:seudinheiro_parms"],
+                outputs="rw_seudinheiro_stage",
+                name="etl_html_seudinheiro_node",
             ),
         ]
     )

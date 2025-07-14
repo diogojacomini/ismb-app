@@ -4,8 +4,8 @@ generated using Kedro 0.19.14
 """
 import pandas as pd
 import yfinance as yf
-from .utils import scraping, scraping_infomoney, scraping_valorinveste
-from .utils import extrair_campos, extrair_data_url
+from .utils import scraping, scraping_infomoney, scraping_valorinveste, scraping_seudinheiro
+from .utils import extrair_campos, extrair_data_url, parse_data_portugues
 from typing import Dict
 
 
@@ -81,6 +81,22 @@ def extract_transform_valorinveste(columns_order: Dict[str, str]) -> pd.DataFram
     df = df[['dat_ref', 'fonte', 'titulo', 'link']]
     df = df.astype({col: 'string' for col in df.columns if col != 'dat_ref'})
     df['dat_ref'] = pd.to_datetime(df['dat_ref'], format='%Y/%m/%d').dt.strftime('%Y-%m-%d')
+
+    # TODO: filtro do dia
+    return df
+
+
+def extract_transform_seudinheiro(columns_order: Dict[str, str]) -> pd.DataFrame:
+    """Extrai e transforma dados do Seu Dinheiro."""
+    df = pd.DataFrame(scraping_seudinheiro(columns_order.get('url'),
+                                           columns_order.get('class_feed'),
+                                           columns_order.get('class_title'),
+                                           columns_order.get('class_date')))
+
+    df['dat_ref'] = df['dat_ref'].apply(parse_data_portugues)
+
+    df = df[['dat_ref', 'fonte', 'titulo', 'link']]
+    df = df.astype({col: 'string' for col in df.columns if col != 'dat_ref'})
 
     # TODO: filtro do dia
     return df

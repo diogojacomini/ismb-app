@@ -55,3 +55,9 @@ valorinveste_parms:
   url: "https://valorinveste.globo.com/ultimas-noticias/"
   class_post: "feed-post-link"
   class_date: "feed-post-datetime"
+
+seudinheiro_parms:
+  url: "https://www.seudinheiro.com/ultimas/"
+  class_feed: "feed_content"
+  class_title: "feed_content_title"
+  class_date: "feed_content_time"
