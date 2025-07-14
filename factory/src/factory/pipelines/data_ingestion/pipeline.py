@@ -10,6 +10,7 @@ from .nodes import (
     extract_transform_infomoney,
     extract_transform_valorinveste,
     extract_transform_seudinheiro,
+    extract_transform_moneytimes,
 )
 
 
@@ -57,6 +58,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["params:seudinheiro_parms"],
                 outputs="rw_seudinheiro_stage",
                 name="etl_html_seudinheiro_node",
+            ),
+            node(
+                func=extract_transform_moneytimes,
+                inputs=["params:moneytimes_parms"],
+                outputs="rw_moneytimes_stage",
+                name="etl_html_moneytimes_node",
             ),
         ]
     )

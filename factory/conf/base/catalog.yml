@@ -29,3 +29,7 @@ rw_valorinveste_stage:
 rw_seudinheiro_stage:
   type: pandas.CSVDataset
   filepath: data/sandbox/rw_seudinheiro_stage.csv
+
+rw_moneytimes_stage:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/rw_moneytimes_stage.csv

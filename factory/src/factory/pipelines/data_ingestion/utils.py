@@ -8,7 +8,7 @@ from typing import Dict, List
 from time import sleep as time_sleep
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 
 
@@ -133,6 +133,27 @@ def scraping_seudinheiro(url: str, class_feed: str, class_title: str, class_date
     return noticias
 
 
+def scraping_moneytimes(url: str, class_item: str, class_title: str, class_date: str) -> List[Dict[str, str]]:
+    r = requests.get(url, timeout=60)
+    soup = BeautifulSoup(r.text, "html.parser")
+    blocos = soup.find_all("div", class_=class_item)
+    noticias = []
+
+    for b in blocos:
+        h2 = b.find("h2", class_=class_title)
+        if not h2:
+            continue
+
+        a_tag = h2.find("a")
+        titulo = a_tag.get_text(strip=True) if a_tag else h2.get_text(strip=True)
+        link_url = a_tag["href"] if a_tag and a_tag.has_attr("href") else None
+
+        data_el = b.find("span", class_=class_date)
+        data = data_el.get_text(strip=True) if data_el else datetime.today().isoformat()
+        noticias.append({"fonte": "MoneyTimes", "titulo": titulo, "dat_ref": data, "link": link_url})
+    return noticias
+
+
 def extrair_campos(texto):
     partes = re.split(r'\s{2,}', texto.strip())
     if len(partes) >= 3:
@@ -169,3 +190,25 @@ def parse_data_portugues(texto):
         if mes:
             return f"{ano}-{mes}-{dia}"
     return None
+
+
+def data_relativa_para_absoluta(texto, agora=None):
+    if agora is None:
+        agora = datetime.now()
+    texto = texto.lower()
+    if "hora" in texto:
+        horas = int(re.search(r'(\d+)', texto).group(1))
+        dt = agora - timedelta(hours=horas)
+    elif "dia" in texto:
+        dias = int(re.search(r'(\d+)', texto).group(1))
+        dt = agora - timedelta(days=dias)
+    else:
+        return None
+    return dt.strftime('%Y-%m-%d')
+
+
+def select_cast_midia(df: pd.DataFrame) -> pd.DataFrame:
+    """Seleciona e converte colunas do DataFrame."""
+    df = df[['dat_ref', 'fonte', 'titulo', 'link']]
+    df = df.astype({col: 'string' for col in df.columns if col != 'dat_ref'})
+    return df

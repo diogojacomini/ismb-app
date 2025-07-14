@@ -61,3 +61,9 @@ seudinheiro_parms:
   class_feed: "feed_content"
   class_title: "feed_content_title"
   class_date: "feed_content_time"
+
+moneytimes_parms:
+  url: "https://www.moneytimes.com.br/ultimas-noticias/"
+  class_item: "news-item"
+  class_title: "news-item__title"
+  class_date: "date"
