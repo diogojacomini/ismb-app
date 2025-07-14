@@ -49,3 +49,9 @@ ifix_parms:
 infomoney_parms:
   url: "https://www.infomoney.com.br/ultimas-noticias/"
   class_: "flex gap-4 md:flex-col"
+
+# etl_html_valorinveste_node
+valorinveste_parms:
+  url: "https://valorinveste.globo.com/ultimas-noticias/"
+  class_post: "feed-post-link"
+  class_date: "feed-post-datetime"

@@ -4,7 +4,7 @@ generated using Kedro 0.19.14
 """
 
 from kedro.pipeline import node, Pipeline, pipeline  # noqa
-from .nodes import extract_transform_html_table, extract_transform_api_yf, extract_transform_infomoney
+from .nodes import extract_transform_html_table, extract_transform_api_yf, extract_transform_infomoney, extract_transform_valorinveste
 
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
@@ -38,6 +38,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["params:infomoney_parms"],
                 outputs="rw_infomoney_stage",
                 name="etl_html_infomoney_node",
+            ),
+            node(
+                func=extract_transform_valorinveste,
+                inputs=["params:valorinveste_parms"],
+                outputs="rw_valorinveste_stage",
+                name="etl_html_valorinveste_node",
             ),
         ]
     )

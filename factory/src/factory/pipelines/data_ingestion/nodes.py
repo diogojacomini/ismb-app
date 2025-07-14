@@ -4,8 +4,8 @@ generated using Kedro 0.19.14
 """
 import pandas as pd
 import yfinance as yf
-from .utils import scraping, scraping_infomoney
-from .utils import extrair_campos
+from .utils import scraping, scraping_infomoney, scraping_valorinveste
+from .utils import extrair_campos, extrair_data_url
 from typing import Dict
 
 
@@ -56,6 +56,7 @@ def extract_transform_api_yf(ticker: str, columns_mapping: Dict[str, str]) -> pd
 
 
 def extract_transform_infomoney(columns_order: Dict[str, str]) -> pd.DataFrame:
+    """Extrai e transforma dados do InfoMoney."""
     df = pd.DataFrame(scraping_infomoney(columns_order.get('url'), columns_order.get('class_')))
 
     df[['categoria', 'titulo', 'data_publicacao']] = df['titulo'].apply(extrair_campos)
@@ -64,6 +65,22 @@ def extract_transform_infomoney(columns_order: Dict[str, str]) -> pd.DataFrame:
 
     df = df[['dat_ref', 'fonte', 'titulo', 'link']]
     df = df.astype({col: 'string' for col in df.columns if col != 'dat_ref'})
+
+    # TODO: filtro do dia
+    return df
+
+
+def extract_transform_valorinveste(columns_order: Dict[str, str]) -> pd.DataFrame:
+    """Extrai e transforma dados do Valor Investe."""
+    df = pd.DataFrame(scraping_valorinveste(columns_order.get('url'),
+                                            columns_order.get('class_post'),
+                                            columns_order.get('class_date')))
+
+    df['dat_ref'] = df['link'].apply(extrair_data_url)
+
+    df = df[['dat_ref', 'fonte', 'titulo', 'link']]
+    df = df.astype({col: 'string' for col in df.columns if col != 'dat_ref'})
+    df['dat_ref'] = pd.to_datetime(df['dat_ref'], format='%Y/%m/%d').dt.strftime('%Y-%m-%d')
 
     # TODO: filtro do dia
     return df

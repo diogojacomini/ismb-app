@@ -98,6 +98,20 @@ def scraping_infomoney(url: str, class_: str) -> List[Dict[str, str]]:
     return noticias
 
 
+def scraping_valorinveste(url, class_post, class_date) -> List[Dict[str, str]]:
+    r = requests.get(url, timeout=60)
+    soup = BeautifulSoup(r.text, "html.parser")
+    blocos = soup.find_all("a", class_=class_post)
+    datas = soup.find_all("span", class_=class_date)
+    noticias = []
+
+    for i, bloco in enumerate(blocos):
+        titulo = bloco.text.strip()
+        data = datas[i].text.strip() if i < len(datas) else datetime.today().isoformat()
+        noticias.append({"fonte": "Valor Investe", "titulo": titulo, "dat_ref": data, "link": bloco['href']})
+    return noticias
+
+
 def extrair_campos(texto):
     partes = re.split(r'\s{2,}', texto.strip())
     if len(partes) >= 3:
@@ -111,3 +125,10 @@ def extrair_campos(texto):
         titulo = ' '.join(palavras[1:-3])
 
     return pd.Series([categoria, titulo, data_publicacao])
+
+
+def extrair_data_url(link):
+    m = re.search(r'/(\d{4})/(\d{2})/(\d{2})/', link)
+    if m:
+        return f"{m.group(1)}/{m.group(2)}/{m.group(3)}"
+    return None

@@ -21,3 +21,7 @@ rw_ifix_stage:
 rw_infomoney_stage:
   type: pandas.CSVDataset
   filepath: data/sandbox/rw_infomoney_stage.csv
+
+rw_valorinveste_stage:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/rw_valorinveste_stage.csv
