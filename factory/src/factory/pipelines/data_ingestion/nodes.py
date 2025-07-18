@@ -16,11 +16,12 @@ def extract_transform_html_table(scraping_mapping: dict, columns_order: list) ->
 
     data = scraping(scraping_mapping.get('url', None), scraping_mapping.get('headers', None))
     df = pd.DataFrame(data)
+    have_replace = scraping_mapping.get('replace_decimal', False)
 
-    return _transform_html_table(df, columns_order, scraping_mapping.get('dat_ref_format'))
+    return _transform_html_table(df, columns_order, scraping_mapping.get('dat_ref_format'), have_replace)
 
 
-def _transform_html_table(raw_data: pd.DataFrame, columns_order: list, dat_format: str) -> pd.DataFrame:
+def _transform_html_table(raw_data: pd.DataFrame, columns_order: list, dat_format: str, replace_decimal: bool = False) -> pd.DataFrame:
     """Transformação de dados html."""
     df = raw_data.copy()
     if len(df.columns) == 7:
@@ -35,6 +36,8 @@ def _transform_html_table(raw_data: pd.DataFrame, columns_order: list, dat_forma
     columns_order.remove('dat_ref')
 
     for col in columns_order:
+        if replace_decimal:
+            df[col] = df[col].str.replace('.', '', regex=False).str.replace(',', '.', regex=False)
         df[col] = pd.to_numeric(df[col], errors='coerce')
 
     # TODO: filtro do dia
@@ -43,7 +46,7 @@ def _transform_html_table(raw_data: pd.DataFrame, columns_order: list, dat_forma
 
 def extract_transform_api_yf(ticker: str, columns_mapping: Dict[str, str]) -> pd.DataFrame:
     """Extrai e transforma dados de ações usando a API do yfinance."""
-    df = yf.download(ticker, start="2023-01-01")
+    df = yf.download(ticker, start="2017-01-01")
 
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = [col[0] for col in df.columns]

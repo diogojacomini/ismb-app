@@ -44,6 +44,9 @@ ifix_parms:
     User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
   dat_ref_format: "%d.%m.%Y"
   csv_read: rw_ifix_stage
+  replace_decimal: True
+
+columns_order_ifix: ['dat_ref', 'close_price', 'open_price', 'high_price', 'low_price', 'change_percentage']
 
 # etl_html_infomoney_node
 infomoney_parms:

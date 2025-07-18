@@ -1,0 +1,15 @@
+# This is a boilerplate parameters config generated for pipeline 'data_score'
+# using Kedro 0.19.14.
+#
+# Documentation for this file format can be found in "Parameters"
+# Link: https://docs.kedro.org/en/0.19.14/configuration/parameters.html
+
+score_isbm:
+  metodo_calculo: "ponderado"  # opções: "ponderado" ou "media"
+  pesos:
+    score_risco_credito:        0.25
+    score_retorno_mercado:      0.20
+    score_volatilidade_mercado: 0.20
+    score_atividade_mercado:    0.10
+    score_confianca_mercado:    0.10
+    score_noticias:             0.15

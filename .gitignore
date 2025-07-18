@@ -163,6 +163,7 @@ venv.bak/
 
 # mlflow local runs
 mlruns/*
+_local/*
 
 # venvs
 .venv/*

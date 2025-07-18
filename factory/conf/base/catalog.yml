@@ -33,3 +33,31 @@ rw_seudinheiro_stage:
 rw_moneytimes_stage:
   type: pandas.CSVDataset
   filepath: data/sandbox/rw_moneytimes_stage.csv
+
+indicador_risco_credito:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/indicador_risco_credito.csv
+
+indicador_retorno_mercado:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/indicador_retorno_mercado.csv
+
+indicador_volatilidade_mercado:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/indicador_volatilidade_mercado.csv
+
+indicador_atividade_mercado:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/indicador_atividade_mercado.csv
+
+indicador_confianca_mercado_local:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/indicador_confianca_mercado_local.csv
+
+indicador_sentimento_noticias:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/indicador_sentimento_noticias.csv
+
+indice_isbm:
+  type: pandas.CSVDataset
+  filepath: data/sandbox/indice_isbm.csv

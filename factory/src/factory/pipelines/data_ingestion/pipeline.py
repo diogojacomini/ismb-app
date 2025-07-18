@@ -37,7 +37,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=extract_transform_html_table,
-                inputs=["params:ifix_parms", "params:columns_order"],
+                inputs=["params:ifix_parms", "params:columns_order_ifix"],
                 outputs="rw_ifix_stage",
                 name="etl_html_ifix_node",
             ),

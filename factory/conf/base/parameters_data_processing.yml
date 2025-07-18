@@ -3,3 +3,5 @@
 #
 # Documentation for this file format can be found in "Parameters"
 # Link: https://docs.kedro.org/en/0.19.14/configuration/parameters.html
+indicador_cds_returno_diario: 21
+indicador_cds_variacia: 21
