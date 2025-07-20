@@ -5,14 +5,13 @@ from pathlib import Path
 
 from airflow import DAG
 from airflow.models import BaseOperator
-from airflow.utils.decorators import apply_defaults
 
 from kedro.framework.session import KedroSession
 from kedro.framework.project import configure_project
 
 
 class KedroOperator(BaseOperator):
-    @apply_defaults
+
     def __init__(
         self,
         package_name: str,
@@ -60,8 +59,8 @@ with DAG(
         depends_on_past=False,
         email_on_failure=False,
         email_on_retry=False,
-        retries=1,
-        retry_delay=timedelta(minutes=5)
+        # retries=1,
+        # retry_delay=timedelta(minutes=5)
     )
 ) as dag:
     tasks = {
