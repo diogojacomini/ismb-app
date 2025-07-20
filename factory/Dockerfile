@@ -1,0 +1,44 @@
+# Imagem base com Airflow
+ARG BASE_IMAGE=apache/airflow:3.0.1
+FROM ${BASE_IMAGE} AS base
+
+# Instala ferramentas e dependências Python
+USER root
+RUN apt-get update && \
+    apt-get install -y wget curl gnupg software-properties-common procps libkrb5-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# # Instala Java JDK 21
+# RUN mkdir -p /etc/apt/keyrings && \
+#     wget -O /etc/apt/keyrings/openjdk.asc https://packages.adoptium.net/artifactory/api/gpg/key/public && \
+#     echo "deb [signed-by=/etc/apt/keyrings/openjdk.asc] https://packages.adoptium.net/artifactory/deb bookworm main" | tee /etc/apt/sources.list.d/adoptium.list && \
+#     apt-get update && \
+#     apt-get install -y temurin-11-jdk && \
+#     apt-get clean && \
+#     rm -rf /var/lib/apt/lists/*
+
+# ENV JAVA_HOME=/usr/lib/jvm/temurin-11-jdk-amd64
+# ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+# Cria usuário não root seguro
+ARG KEDRO_UID=999
+ARG KEDRO_GID=1000
+RUN groupadd -g ${KEDRO_GID} factory && \
+    useradd -m -u ${KEDRO_UID} -g ${KEDRO_GID} factory
+
+# Instala Python dependencies depois de Java e Spark já configurados
+USER airflow
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Define diretório de trabalho
+WORKDIR /home/factory
+COPY --chown=${KEDRO_UID}:${KEDRO_GID} . .
+
+USER ${KEDRO_UID}:${KEDRO_GID}
+
+EXPOSE 4040 8888
+
+CMD ["kedro", "--version"]
