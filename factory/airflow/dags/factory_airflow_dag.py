@@ -40,10 +40,9 @@ class KedroOperator(BaseOperator):
 # Kedro settings required to run your pipeline
 env = "airflow"
 pipeline_name = "__default__"
-project_path = Path.cwd()
+project_path = Path("/home/factory")
 package_name = "factory"
-conf_source = "" or Path.cwd() / "conf"
-
+conf_source = "" or str(project_path / "conf")
 
 # Using a DAG context manager, you don't have to specify the dag property of each task
 with DAG(
