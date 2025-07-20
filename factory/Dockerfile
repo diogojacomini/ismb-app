@@ -33,14 +33,16 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Define diretório de trabalho
 WORKDIR /home/factory
-COPY --chown=${KEDRO_UID}:${KEDRO_GID} . .
+COPY --chown=airflow:root . .
 
-USER root
+# Instala o pacote como usuário airflow
 RUN pip install -e .
 
-USER airflow
+# Ajusta propriedade final para o usuário factory
+USER root
+RUN chown -R ${KEDRO_UID}:${KEDRO_GID} /home/factory
+
 USER ${KEDRO_UID}:${KEDRO_GID}
 
 EXPOSE 4040 8888
