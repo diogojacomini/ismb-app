@@ -5,51 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 requires-python = ">=3.9"
 name = "factory"
-description = "Intelligent Scoring and Market Behavior (ISMB) Factory Pipeline"
 readme = "README.md"
-license = {text = "MIT"}
-authors = [
-    {name = "Diogo Leme Jacomini", email = "diogojacomini@outlook.com"}
-]
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers", 
-    "Intended Audience :: Financial and Insurance Industry",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10", 
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Office/Business :: Financial"
-]
 dynamic = ["version"]
 dependencies = [
     "ipython>=8.10",
-    "jupyterlab>=3.0", 
+    "jupyterlab>=3.0",
     "notebook",
-    "kedro~=0.19.14",
-    "pandas>=2.0",
-    "yfinance>=0.2.0",
-    "kedro-viz>=11.0",
-    "kedro-datasets>=7.0", 
-    "kedro-airflow>=0.10",
-    "kedro-telemetry>=0.6",
-    "torch>=2.0",
-    "transformers>=4.50",
-    "beautifulsoup4>=4.10",
-    "workalendar>=0.5",
-    "apache-airflow>=3.0"
+    "kedro~=0.19.14"
 ]
-
-[project.urls]
-"Homepage" = "https://github.com/diogojacomini/ismb-app"
-"Bug Reports" = "https://github.com/diogojacomini/ismb-app/issues" 
-"Source" = "https://github.com/diogojacomini/ismb-app"
-"Documentation" = "https://github.com/diogojacomini/ismb-app/wiki"
 
 [project.scripts]
 "factory" = "factory.__main__:main"
