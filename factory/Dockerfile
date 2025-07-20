@@ -37,8 +37,10 @@ RUN pip install --upgrade pip && \
 WORKDIR /home/factory
 COPY --chown=${KEDRO_UID}:${KEDRO_GID} . .
 
+USER root
 RUN pip install -e .
 
+USER airflow
 USER ${KEDRO_UID}:${KEDRO_GID}
 
 EXPOSE 4040 8888
