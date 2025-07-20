@@ -77,6 +77,8 @@ x-airflow-common:
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     # The following line can be used to set a custom config file, stored in the local config folder
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
+    # Configure Kedro logging
+    KEDRO_LOGGING_CONFIG: '/home/factory/conf/logging.yml'
   volumes:
     - ./conf/airflow/dags:/opt/airflow/dags
     - ./conf/airflow/logs:/opt/airflow/logs
