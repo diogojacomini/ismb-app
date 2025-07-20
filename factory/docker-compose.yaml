@@ -84,6 +84,7 @@ x-airflow-common:
     - ./conf/airflow/logs:/opt/airflow/logs
     - ./conf/airflow/config:/opt/airflow/config
     - ./conf/airflow/plugins:/opt/airflow/plugins
+    - ./data:/home/factory/data
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -211,6 +212,7 @@ services:
         echo "Creating missing opt dirs if missing:"
         echo
         mkdir -v -p /opt/airflow/{logs,dags,plugins,config}
+        mkdir -v -p ./data/sandbox
         echo
         echo "Airflow version:"
         /entrypoint airflow version
@@ -234,6 +236,7 @@ services:
         echo "Change ownership of files in shared volumes to ${AIRFLOW_UID}:0"
         echo
         chown -v -R "${AIRFLOW_UID}:0" /opt/airflow/{logs,dags,plugins,config}
+        chown -v -R "${AIRFLOW_UID}:0" /home/factory/data || echo "Data dir not mounted, skipping..."
         echo
         echo "Files in shared volumes:"
         echo

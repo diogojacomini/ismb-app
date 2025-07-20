@@ -41,7 +41,9 @@ RUN pip install -e .
 
 # Ajusta propriedade final para o usuário factory
 USER root
-RUN chown -R ${KEDRO_UID}:${KEDRO_GID} /home/factory
+RUN mkdir -p /home/factory/data/sandbox && \
+    chown -R ${KEDRO_UID}:${KEDRO_GID} /home/factory && \
+    chmod -R 755 /home/factory
 
 USER ${KEDRO_UID}:${KEDRO_GID}
 
