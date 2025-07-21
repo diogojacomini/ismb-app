@@ -1,11 +1,8 @@
 from __future__ import annotations
-
 from datetime import datetime, timedelta
 from pathlib import Path
-
 from airflow import DAG
 from airflow.models import BaseOperator
-
 from kedro.framework.session import KedroSession
 from kedro.framework.project import configure_project
 
@@ -37,6 +34,7 @@ class KedroOperator(BaseOperator):
                 self.node_name = [self.node_name]
             session.run(self.pipeline_name, node_names=self.node_name)
 
+
 # Kedro settings required to run your pipeline
 env = "airflow"
 pipeline_name = "__default__"
@@ -48,19 +46,18 @@ conf_source = "" or str(project_path / "conf")
 with DAG(
     dag_id="factory",
     start_date=datetime(2025, 1, 1),
-    max_active_runs=3,
-    # https://airflow.apache.org/docs/stable/scheduler.html#dag-runs
-    schedule="@daily",
+    max_active_runs=1,
+    schedule="0 13 * * 1-5",  # Segunda a Sexta, 13:00 UTC = 10:00 BRT
     catchup=False,
-    # Default settings applied to all tasks
     default_args=dict(
         owner="airflow",
         depends_on_past=False,
         email_on_failure=False,
         email_on_retry=False,
-        # retries=1,
-        # retry_delay=timedelta(minutes=5)
-    )
+        retries=2,
+        retry_delay=timedelta(minutes=10)
+    ),
+    tags=["finance", "data-pipeline", "kedro"]
 ) as dag:
     tasks = {
         "etl-html-cds-node": KedroOperator(

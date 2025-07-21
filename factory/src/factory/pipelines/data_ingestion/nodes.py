@@ -11,8 +11,8 @@ from typing import Dict
 
 def extract_transform_html_table(scraping_mapping: dict, columns_order: list) -> pd.DataFrame:
     """Função para extrair tabelas HTML."""
-    if scraping_mapping.get('csv_read', False):
-        return pd.read_csv(f"/home/diogo/society/data_master_cmp/ismb-app/factory/data/sandbox/{scraping_mapping.get('csv_read')}.csv")
+    # if scraping_mapping.get('csv_read', False):
+    #     return pd.read_csv(f"/home/diogo/society/data_master_cmp/ismb-app/factory/data/sandbox/{scraping_mapping.get('csv_read')}.csv")
 
     data = scraping(scraping_mapping.get('url', None), scraping_mapping.get('headers', None))
     df = pd.DataFrame(data)

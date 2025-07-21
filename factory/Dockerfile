@@ -47,6 +47,6 @@ RUN mkdir -p /home/factory/data/sandbox && \
 
 USER ${KEDRO_UID}:${KEDRO_GID}
 
-EXPOSE 4040 8888
+EXPOSE 4040 4141 8888
 
 CMD ["kedro", "--version"]
