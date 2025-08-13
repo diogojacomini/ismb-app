@@ -63,11 +63,11 @@ conf_source = "" or str(project_path / "conf")
 
 # Using a DAG context manager, you don't have to specify the dag property of each task
 with DAG(
-    dag_id="factory_2",
+    dag_id="factory_odate_3s",
     start_date=datetime(2025, 1, 1),
-    max_active_runs=3,
+    max_active_runs=10,
     # https://airflow.apache.org/docs/stable/scheduler.html#dag-runs
-    schedule="@daily",
+    schedule="0 13 * * 1-5",
     catchup=False,
     # Default settings applied to all tasks
     default_args=dict(
@@ -84,8 +84,7 @@ with DAG(
         "execution_date": "{{ ds }}",
         "run_id": "{{ run_id }}",
         "environment": "production",
-        "process_full_data": False,
-        "batch_size": 1000
+        "process_full_data": False
     }
 ) as dag:
     tasks = {

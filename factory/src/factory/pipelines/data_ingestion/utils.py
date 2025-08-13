@@ -10,6 +10,9 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import pandas as pd
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def scraping(url: str, headers: Dict[str, str]) -> List[List[str]]:
@@ -39,7 +42,7 @@ def scraping(url: str, headers: Dict[str, str]) -> List[List[str]]:
             for table in tables:
                 hdrs = [th.get_text(strip=True) for th in table.find_all("th")]
                 if ('Date' in hdrs and 'Price' in hdrs) or ('Data' in hdrs and 'Último' in hdrs):
-                    print("Tabela encontrada")
+                    logging.info("scraping: Tabela encontrada")
                     break
             else:
                 raise ValueError("Tabela não encontrada")

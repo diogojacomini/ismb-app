@@ -2,62 +2,66 @@
 #
 # Documentation for this file format can be found in "The Data Catalog"
 # Link: https://docs.kedro.org/en/stable/data/data_catalog.html
+
+# STAGING 
 rw_cds_stage:
   type: pandas.CSVDataset
-  filepath: data/sandbox/rw_cds_stage.csv
+  filepath: data/staging/market/rw_cds_stage.csv
 
 rw_ibov_stage:
   type: pandas.CSVDataset
-  filepath: data/sandbox/rw_ibov_stage.csv
+  filepath: data/staging/market/rw_ibov_stage.csv
 
 rw_ivvb_stage:
   type: pandas.CSVDataset
-  filepath: data/sandbox/rw_ivvb_stage.csv
+  filepath: data/staging/market/rw_ivvb_stage.csv
 
 rw_ifix_stage:
   type: pandas.CSVDataset
-  filepath: data/sandbox/rw_ifix_stage.csv
+  filepath: data/staging/market/rw_ifix_stage.csv
 
 rw_infomoney_stage:
   type: pandas.CSVDataset
-  filepath: data/sandbox/rw_infomoney_stage.csv
+  filepath: data/staging/news/rw_infomoney_stage.csv
 
 rw_valorinveste_stage:
   type: pandas.CSVDataset
-  filepath: data/sandbox/rw_valorinveste_stage.csv
+  filepath: data/staging/news/rw_valorinveste_stage.csv
 
 rw_seudinheiro_stage:
   type: pandas.CSVDataset
-  filepath: data/sandbox/rw_seudinheiro_stage.csv
+  filepath: data/staging/news/rw_seudinheiro_stage.csv
 
 rw_moneytimes_stage:
   type: pandas.CSVDataset
-  filepath: data/sandbox/rw_moneytimes_stage.csv
+  filepath: data/staging/news/rw_moneytimes_stage.csv
 
+# CURATED
 indicador_risco_credito:
   type: pandas.CSVDataset
-  filepath: data/sandbox/indicador_risco_credito.csv
+  filepath: data/curated/indicadores/indicador_risco_credito.csv
 
 indicador_retorno_mercado:
   type: pandas.CSVDataset
-  filepath: data/sandbox/indicador_retorno_mercado.csv
+  filepath: data/curated/indicadores/indicador_retorno_mercado.csv
 
 indicador_volatilidade_mercado:
   type: pandas.CSVDataset
-  filepath: data/sandbox/indicador_volatilidade_mercado.csv
+  filepath: data/curated/indicadores/indicador_volatilidade_mercado.csv
 
 indicador_atividade_mercado:
   type: pandas.CSVDataset
-  filepath: data/sandbox/indicador_atividade_mercado.csv
+  filepath: data/curated/indicadores/indicador_atividade_mercado.csv
 
 indicador_confianca_mercado_local:
   type: pandas.CSVDataset
-  filepath: data/sandbox/indicador_confianca_mercado_local.csv
+  filepath: data/curated/indicadores/indicador_confianca_mercado_local.csv
 
 indicador_sentimento_noticias:
   type: pandas.CSVDataset
-  filepath: data/sandbox/indicador_sentimento_noticias.csv
+  filepath: data/curated/indicadores/indicador_sentimento_noticias.csv
 
+# INDICE ISMB
 indice_isbm:
   type: pandas.CSVDataset
-  filepath: data/sandbox/indice_isbm.csv
+  filepath: data/curated/indice_isbm.csv

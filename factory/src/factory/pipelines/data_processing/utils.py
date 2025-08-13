@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def ewma_volatility(df, variacia=21, lambda_=0.94):

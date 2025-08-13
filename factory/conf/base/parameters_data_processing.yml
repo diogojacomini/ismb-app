@@ -3,5 +3,34 @@
 #
 # Documentation for this file format can be found in "Parameters"
 # Link: https://docs.kedro.org/en/0.19.14/configuration/parameters.html
-indicador_cds_returno_diario: 21
-indicador_cds_variacia: 21
+parameters_indicador_risco_credito:
+  window: 30            # Janela para cálculo do retorno diário
+  variacia: 21          # Janela para cálculo da volatilidade EWMA
+  lambda_ewma: 0.94     # Parâmetro lambda para suavização EWMA da volatilidade
+  w_retorno: 0.5        # Peso do retorno
+  w_vol: 0.5            # Peso da volatilidade
+
+parameters_retorno_mercado:
+  rolling_mean_window: 21   # Janela para média móvel do retorno
+  rolling_std_window: 21    # Janela para desvio padrão móvel
+  volume_mean_window: 30    # Janela para média móvel do volume
+  volume_clip: 0.7          # Limite inferior para fator de volume
+  lookback_days: 180        # Dias de histórico mínimo
+
+parameters_volatilidade_mercado:
+  ewma_weight: 0.5     # Peso da volatilidade EWMA (histórica)
+  atr_weight: 0.3      # Peso do ATR (intradiária)
+  ivvb_weight: 0.2     # Peso da volatilidade IVVB11 (percepção global)
+  alpha_ewma: 0.94     # Parâmetro alpha para EWMA (alpha_ewma + alpha_ivvb deve somar 1)
+  alpha_ivvb: 0.06     # Parâmetro alpha para volatilidade IVVB
+  atr_window: 14       # Janela para ATR
+  lookback_days: 180   # Dias de histórico mínimo
+
+parameters_atividade_mercado:
+  rolling_return_window: 3    # Janela para média móvel do retorno
+  volume_mean_window: 30      # Janela para média móvel do volume
+  volume_clip: 0.7            # Limite inferior para fator de volume
+
+parameters_confianca_mercado:
+  rolling_return_window: 3    # Janela para média móvel do retorno
+  lookback_days: 30           # Dias de histórico mínimo
