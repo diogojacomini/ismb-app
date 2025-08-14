@@ -28,6 +28,9 @@ def extract_transform_html_table(scraping_mapping: dict, columns_order: list, pa
     process_full_data = parameters.get("process_full_data", False)
     logger.info("Parameters - Odate: %s, Environment: %s, Full Data: %s", odate, environment, process_full_data)
 
+    have_replace = scraping_mapping.get("replace_decimal", False)
+    dat_ref_format = scraping_mapping.get("dat_ref_format")
+
     if environment == "test":
         return _make_dataframe_test_wbf(odate)
 
@@ -35,11 +38,19 @@ def extract_transform_html_table(scraping_mapping: dict, columns_order: list, pa
         scraping_mapping.get("url", None), scraping_mapping.get("headers", None)
     )
 
+    if (not data or len(data) == 0) and scraping_mapping.get("scraping_except", None):
+        logger.info("Data scraping failed. Try extracting data from another source.")
+        data = scraping(scraping_mapping.get("scraping_except").get('url'),
+                        scraping_mapping.get("headers"))
+
+        have_replace = scraping_mapping.get("scraping_except", False).get('replace_decimal')
+        columns_order = scraping_mapping.get("scraping_except").get('columns_order')
+        dat_ref_format = scraping_mapping.get("scraping_except").get('dat_ref_format')
+
     df = pd.DataFrame(data)
     logger.info("Data scraped successfully from URL: %s - Data collected: %d", scraping_mapping.get("url"), len(data))
 
-    have_replace = scraping_mapping.get("replace_decimal", False)
-    transformed_df = _transform_html_table(df, columns_order, scraping_mapping.get("dat_ref_format"), have_replace)
+    transformed_df = _transform_html_table(df, columns_order, dat_ref_format, have_replace)
 
     logger.info("Data transformed successfully")
     if not process_full_data:
