@@ -5,35 +5,35 @@
 
 # STAGING 
 rw_cds_stage:
-  type: pandas.CSVDataset
+  type: factory.datasets.AppendCSVDataset
   filepath: data/staging/market/rw_cds_stage.csv
 
 rw_ibov_stage:
-  type: pandas.CSVDataset
+  type: factory.datasets.AppendCSVDataset
   filepath: data/staging/market/rw_ibov_stage.csv
 
 rw_ivvb_stage:
-  type: pandas.CSVDataset
+  type: factory.datasets.AppendCSVDataset
   filepath: data/staging/market/rw_ivvb_stage.csv
 
 rw_ifix_stage:
-  type: pandas.CSVDataset
+  type: factory.datasets.AppendCSVDataset
   filepath: data/staging/market/rw_ifix_stage.csv
 
 rw_infomoney_stage:
-  type: pandas.CSVDataset
+  type: factory.datasets.AppendCSVDataset
   filepath: data/staging/news/rw_infomoney_stage.csv
 
 rw_valorinveste_stage:
-  type: pandas.CSVDataset
+  type: factory.datasets.AppendCSVDataset
   filepath: data/staging/news/rw_valorinveste_stage.csv
 
 rw_seudinheiro_stage:
-  type: pandas.CSVDataset
+  type: factory.datasets.AppendCSVDataset
   filepath: data/staging/news/rw_seudinheiro_stage.csv
 
 rw_moneytimes_stage:
-  type: pandas.CSVDataset
+  type: factory.datasets.AppendCSVDataset
   filepath: data/staging/news/rw_moneytimes_stage.csv
 
 # CURATED

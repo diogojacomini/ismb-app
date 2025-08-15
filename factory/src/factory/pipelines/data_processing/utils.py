@@ -1,10 +1,15 @@
 import pandas as pd
 import numpy as np
-import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import logging
+import nltk
+from nltk.sentiment import SentimentIntensityAnalyzer
 
 logger = logging.getLogger(__name__)
+
+try:
+    nltk.data.find('sentiment/vader_lexicon.zip')
+except LookupError:
+    nltk.download('vader_lexicon')
 
 
 def ewma_volatility(df, variacia=21, lambda_=0.94):
@@ -47,15 +52,11 @@ def normalizar_escala(s):
 
 
 def analisar_sentimento(texto):
-    model_name = "nlptown/bert-base-multilingual-uncased-sentiment"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name)
-    inputs = tokenizer(texto, return_tensors="pt", truncation=True, padding=True)
-    with torch.no_grad():
-        logits = model(**inputs).logits
-    probs = torch.nn.functional.softmax(logits, dim=1)[0]
+    sia = SentimentIntensityAnalyzer()
+    score = sia.polarity_scores(texto)
     return {
-        "negativo": probs[0].item(),
-        "neutro": probs[1].item(),
-        "positivo": probs[2].item()
+        "negativo": score["neg"],
+        "neutro": score["neu"],
+        "positivo": score["pos"],
+        "compound": score["compound"]
     }

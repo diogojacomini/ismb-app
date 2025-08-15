@@ -1,77 +1,47 @@
 """
-Dataset customizado para particionamento automático por odate
+Datasets customizados para particionamento automático por odate e append em CSV
 """
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 from kedro.io import AbstractDataset
 import pandas as pd
-
 
 logger = logging.getLogger(__name__)
 
 
-class PartitionedParquetDataset(AbstractDataset):
-    """Dataset que salva automaticamente com partição por odate"""
-    
-    def __init__(
-        self, 
-        filepath: str, 
-        save_args: Dict[str, Any] = None,
-        load_args: Dict[str, Any] = None
-    ):
-        self._filepath = filepath
-        self._save_args = save_args or {}
-        self._load_args = load_args or {}
-    
+class AppendCSVDataset(AbstractDataset):
+    """
+    Dataset que faz append e remove duplicatas por dat_ref, mantendo o mais recente
+    """
+
+    def __init__(self, filepath: str, load_args: Dict[str, Any] = None, save_args: Dict[str, Any] = None):
+        self._filepath: str = filepath
+        self._load_args: Dict[str, Any] = load_args or {}
+        self._save_args: Dict[str, Any] = save_args or {}
+
     def _load(self) -> pd.DataFrame:
-        """Carrega dados - implementação básica"""
-        try:
-            return pd.read_parquet(self._filepath, **self._load_args)
-        except FileNotFoundError:
-            logger.warning(f"Arquivo não encontrado: {self._filepath}")
-            return pd.DataFrame()
-    
-    def _save(self, data: pd.DataFrame) -> None:
-        """Salva dados com particionamento automático por odate"""
-        if data.empty:
-            logger.warning("DataFrame vazio, não salvando")
-            return
-        
-        # Verifica se tem coluna odate
-        if 'odate' in data.columns:
-            # Pega a data (assumindo que todas as linhas têm a mesma data)
-            odate = str(data['odate'].iloc[0])
-            
-            # Modifica o caminho para incluir partição
-            original_path = Path(self._filepath)
-            parent_dir = original_path.parent
-            filename = original_path.name
-            
-            # Cria caminho particionado
-            partitioned_path = parent_dir / f"odate={odate}" / filename
-            
-            # Cria diretório se não existe
-            partitioned_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Remove coluna odate antes de salvar
-            data_to_save = data.drop(columns=['odate'])
-            
-            logger.info(f"Salvando com partição: {partitioned_path}")
-            data_to_save.to_parquet(partitioned_path, **self._save_args)
+        if Path(self._filepath).exists():
+            return pd.read_csv(self._filepath, **self._load_args)
+
+        return pd.DataFrame()
+
+    def _save(self, data):
+        existing: pd.DataFrame = self._load()
+        combined: pd.DataFrame = pd.concat([existing, data], ignore_index=True)
+
+        if 'fonte' not in combined.columns:
+            combined = combined.sort_values('dat_ref', ascending=False)
+            combined = combined.drop_duplicates(subset=['dat_ref'], keep='last')
         else:
-            # Salva normalmente se não tem odate
-            Path(self._filepath).parent.mkdir(parents=True, exist_ok=True)
-            data.to_parquet(self._filepath, **self._save_args)
-    
+            keys_order_subset: List[str] = ['dat_ref', 'fonte', 'titulo']
+            combined = combined.sort_values(keys_order_subset, ascending=False)
+            combined = combined.drop_duplicates(subset=keys_order_subset, keep='last')
+
+        combined.to_csv(self._filepath, index=False, **self._save_args)
+
     def _exists(self) -> bool:
-        """Verifica se o dataset existe"""
         return Path(self._filepath).exists()
-    
+
     def _describe(self) -> Dict[str, Any]:
-        """Descreve o dataset"""
-        return {
-            "filepath": self._filepath,
-            "save_args": self._save_args,
-            "load_args": self._load_args
-        }
+        return {'filepath': self._filepath}

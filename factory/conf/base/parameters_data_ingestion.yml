@@ -21,6 +21,11 @@ cds_parms:
     User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
   dat_ref_format: "%b %d, %Y"
   csv_read: rw_cds_stage
+  scraping_except:
+    url: "https://br.investing.com/rates-bonds/brazil-cds-5-years-usd-historical-data"
+    dat_ref_format: "%d.%m.%Y"
+    replace_decimal: True
+    columns_order: ['dat_ref', 'close_price', 'open_price', 'high_price', 'low_price', 'change_percentage']
 
 # api rename columns
 columns_mapping_yf:

@@ -2,6 +2,7 @@
 This is a boilerplate pipeline 'data_ingestion' generated using Kedro 0.19.14
 """
 from typing import Dict
+from datetime import datetime
 import pandas as pd
 import yfinance as yf
 from .utils import (
@@ -48,17 +49,36 @@ def extract_transform_html_table(scraping_mapping: dict, columns_order: list, pa
         dat_ref_format = scraping_mapping.get("scraping_except").get('dat_ref_format')
 
     df = pd.DataFrame(data)
-    logger.info("Data scraped successfully from URL: %s - Data collected: %d", scraping_mapping.get("url"), len(data))
 
-    transformed_df = _transform_html_table(df, columns_order, dat_ref_format, have_replace)
-
+    df_transformed = _transform_html_table(df, columns_order, dat_ref_format, have_replace)
     logger.info("Data transformed successfully")
-    if not process_full_data:
-        transformed_df = transformed_df[transformed_df["dat_ref"] == odate]
-        logger.info("Filtered data for date '%s': %d records", odate, len(transformed_df))
-        transformed_df = _save_with_partition(transformed_df, odate)
 
-    return transformed_df
+    if not process_full_data:
+        df_transformed = df_transformed[df_transformed["dat_ref"] == odate]
+
+        if len(df_transformed) == 0 and scraping_mapping.get("scraping_except", None):
+            df_transformed = _retry_scraping_odate(odate, scraping_mapping.get("scraping_except"), scraping_mapping.get("headers"))
+
+        logger.info("Filtered data for date '%s': %d records", odate, len(df_transformed))
+
+    df_transformed = _save_with_partition(df_transformed, odate)
+
+    return df_transformed
+
+
+def _retry_scraping_odate(odate, scraping_mapping, headers):
+    """Tenta re-extrair dados para uma data específica."""
+    logger.info("Retrying data extraction for date: %s", odate)
+
+    data = scraping(scraping_mapping.get('url'), headers)
+    df = pd.DataFrame(data)
+
+    df_transformed = _transform_html_table(df,
+                                           scraping_mapping.get('columns_order'),
+                                           scraping_mapping.get('dat_ref_format'),
+                                           scraping_mapping.get('replace_decimal'))
+
+    return df_transformed[df_transformed["dat_ref"] == odate]
 
 
 def _transform_html_table(raw_data: pd.DataFrame, columns_order: list, dat_format: str, replace_decimal: bool = False) -> pd.DataFrame:
@@ -120,7 +140,8 @@ def extract_transform_infomoney(mapping_class: Dict[str, str], parameters: dict)
     """Extrai e transforma dados do InfoMoney."""
     odate = parameters.get("odate")
     environment = parameters.get("environment", "production")
-    logger.info("InfoMoney - Data: %s, Environment: %s", odate, environment)
+    process_full_data = parameters.get("process_full_data", False)
+    logger.info("InfoMoney - Odate: %s, Environment: %s, Full Data: %s", odate, environment, process_full_data)
 
     if environment == "test":
         return _make_dataframe_test_news(odate, "InfoMoney")
@@ -136,9 +157,9 @@ def extract_transform_infomoney(mapping_class: Dict[str, str], parameters: dict)
     df = select_cast_midia(df)
     logger.info("Data transformed successfully")
 
-    # df = df[df["dat_ref"] == odate]
-    # logger.info("Filtered InfoMoney data for date '%s': %d records", odate, len(df))
-    # df = _save_with_partition(df, odate)
+    if not process_full_data:
+        df = df[df["dat_ref"] == odate]
+        logger.info("Filtered InfoMoney data for date '%s': %d records", odate, len(df))
 
     return df
 
@@ -147,7 +168,8 @@ def extract_transform_valorinveste(mapping_class: Dict[str, str], parameters: di
     """Extrai e transforma dados do Valor Investe."""
     odate = parameters.get("odate")
     environment = parameters.get("environment", "production")
-    logger.info("ValorInveste - Data: %s, Environment: %s", odate, environment)
+    process_full_data = parameters.get("process_full_data", False)
+    logger.info("ValorInveste - Odate: %s, Environment: %s, Full Data: %s", odate, environment, process_full_data)
 
     if environment == "test":
         return _make_dataframe_test_news(odate, "ValorInveste")
@@ -166,9 +188,9 @@ def extract_transform_valorinveste(mapping_class: Dict[str, str], parameters: di
     df["dat_ref"] = pd.to_datetime(df["dat_ref"], format="%Y/%m/%d").dt.strftime("%Y-%m-%d")
     logger.info("Data transformed successfully")
 
-    # df = df[df["dat_ref"] == odate]
-    # logger.info("Filtered ValorInveste data for date '%s': %d records", odate, len(df))
-    # df = _save_with_partition(df, odate)
+    if not process_full_data:
+        df = df[df["dat_ref"] == odate]
+        logger.info("Filtered ValorInveste data for date '%s': %d records", odate, len(df))
 
     return df
 
@@ -178,8 +200,7 @@ def extract_transform_seudinheiro(mapping_class: Dict[str, str], parameters: dic
     odate = parameters.get("odate")
     environment = parameters.get("environment", "production")
     process_full_data = parameters.get("process_full_data", False)
-
-    logger.info("SeuDinheiro - Data: %s, Environment: %s", odate, environment)
+    logger.info("SeuDinheiro - Odate: %s, Environment: %s, Full Data: %s", odate, environment, process_full_data)
 
     if environment == "test":
         return _make_dataframe_test_news(odate, "SeuDinheiro")
@@ -210,8 +231,9 @@ def extract_transform_seudinheiro(mapping_class: Dict[str, str], parameters: dic
         df = select_cast_midia(df)
         logger.info("Data transformed successfully")
 
-        df = df[df["dat_ref"] == odate]
-        logger.info("Filtered SeuDinheiro data for date '%s': %d records", odate, len(df))
+        if not process_full_data:
+            df = df[df["dat_ref"] == odate]
+            logger.info("Filtered SeuDinheiro data for date '%s': %d records", odate, len(df))
 
         return df
 
@@ -221,8 +243,7 @@ def extract_transform_moneytimes(mapping_class: Dict[str, str], parameters: dict
     odate = parameters.get("odate")
     environment = parameters.get("environment", "production")
     process_full_data = parameters.get("process_full_data", False)
-
-    logger.info("MoneyTimes - Data: %s, Environment: %s", odate, environment)
+    logger.info("MoneyTimes - Odate: %s, Environment: %s, Full Data: %s", odate, environment, process_full_data)
 
     if environment == "test":
         return _make_dataframe_test_news(odate, "MoneyTimes")
@@ -252,11 +273,12 @@ def extract_transform_moneytimes(mapping_class: Dict[str, str], parameters: dict
     if not df.empty:
         df["dat_ref"] = df["dat_ref"].apply(data_relativa_para_absoluta)
         df = select_cast_midia(df)
+        df['dat_ref'].fillna(datetime.today().strftime('%Y-%m-%d'), inplace=True)  # para notícias recém publicadas
         logger.info("Data transformed successfully")
 
-    df = df[df["dat_ref"] == odate]
-    logger.info("Filtered MoneyTimes data for date '%s': %d records", odate, len(df))
-    # df = _save_with_partition(df, odate)
+    if not process_full_data:
+        df = df[df["dat_ref"] == odate]
+        logger.info("Filtered MoneyTimes data for date '%s': %d records", odate, len(df))
 
     return df
 
