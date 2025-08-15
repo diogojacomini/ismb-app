@@ -1,6 +1,6 @@
 # ISMB - Índice de Sentimento do Mercado Brasileiro
 
-O **ISMB (Índice de Sentimento do Mercado Brasileiro)** é uma análise de dados de mercado que gera indicadores e scores diários de sentimento financeiro. O projeto foi desenvolvido com **Kedro** para criação de pipelines modulares e reproduzíveis e é **orquestrado pelo Apache Airflow** para execução automatizada.  
+O **ISMB (Índice de Sentimento do Mercado Brasileiro)** é uma análise de dados de mercado que gera indicadores e scores diários de sentimento financeiro. O projeto foi desenvolvido com **Kedro** para criação de pipelines modulares e reproduzíveis e é **orquestrado pelo Apache Airflow** para execução automatizada e os dados são  gravados diretamente em um bucket S3.
 
 Seguindo **boas práticas DevOps**, o ISMB garante:  
 - **Reprodutibilidade:** pipelines que produzem resultados consistentes independentemente do ambiente.  
