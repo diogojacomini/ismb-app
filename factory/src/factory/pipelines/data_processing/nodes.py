@@ -300,18 +300,34 @@ def indicador_sentimento_midia(df_rw_infomoney, df_rw_moneytimes, df_rw_seudinhe
     df = pd.concat([df_rw_infomoney, df_rw_moneytimes, df_rw_seudinheiro, df_rw_valorinveste], ignore_index=True)
     df = df.drop_duplicates(subset=['fonte', 'titulo', 'link'])
 
+    # padroniza dat_ref para YYYY-MM-DD
+    if 'dat_ref' in df.columns:
+        df['dat_ref'] = pd.to_datetime(df['dat_ref'], errors='coerce').dt.strftime('%Y-%m-%d')
+
     if not process_full_data:
         df = df[df["dat_ref"] == odate]
 
-    sentimentos = df["titulo"].apply(analisar_sentimento)
-    df_sent = pd.DataFrame(sentimentos.tolist())
-    df = pd.concat([df, df_sent], axis=1)
+    # nada para processar: retorna DF vazio com schema esperado
+    if df.empty:
+        return pd.DataFrame(columns=['dat_ref', 'score_noticias'])
 
-    # score
-    df["score_sentimento"] = (df["positivo"] - df["negativo"]) * 100 / (df[["positivo", "negativo"]].sum(axis=1) + 1e-5)
+    # garante string e trata nulos para análise de sentimento
+    df['titulo'] = df['titulo'].fillna('').astype(str)
+
+    sentimentos = df["titulo"].apply(analisar_sentimento)
+    # assegura colunas esperadas mesmo quando o DF estiver vazio após transformação
+    df_sent = pd.DataFrame(list(sentimentos)).reindex(columns=["negativo", "neutro", "positivo", "compound"])  # type: ignore[arg-type]
+    # realinha índices para concat
+    df = pd.concat([df.reset_index(drop=True), df_sent.reset_index(drop=True)], axis=1)
+
+    # score (robusto a ausência de colunas)
+    pos = df.get("positivo", pd.Series(0, index=df.index))
+    neg = df.get("negativo", pd.Series(0, index=df.index))
+    denom = (pd.concat([pos, neg], axis=1).sum(axis=1) + 1e-5).replace(0, 1e-5)
+    df["score_sentimento"] = (pos - neg) * 100 / denom
 
     # normalizar para 0–100 (percentis robustos)
     df['score_noticias'] = normalizar_escala(df['score_sentimento'])
-    sentimento_dia = df.groupby(df['dat_ref'])['score_noticias'].mean().reset_index()
+    sentimento_dia = df.groupby('dat_ref', as_index=False)['score_noticias'].mean()
 
     return sentimento_dia

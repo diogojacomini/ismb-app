@@ -61,8 +61,6 @@ def extract_transform_html_table(scraping_mapping: dict, columns_order: list, pa
 
         logger.info("Filtered data for date '%s': %d records", odate, len(df_transformed))
 
-    df_transformed = _save_with_partition(df_transformed, odate)
-
     return df_transformed
 
 
@@ -131,7 +129,6 @@ def extract_transform_api_yf(ticker: str, columns_mapping: Dict[str, str], param
         df["dat_ref"] = df["dat_ref"].dt.strftime("%Y-%m-%d")
         df = df[df["dat_ref"] == odate]
         logger.info("Filtered Yahoo Finance data for date '%s': %d records", odate, len(df))
-        df = _save_with_partition(df, odate)
 
     return df
 
@@ -280,21 +277,6 @@ def extract_transform_moneytimes(mapping_class: Dict[str, str], parameters: dict
         df = df[df["dat_ref"] == odate]
         logger.info("Filtered MoneyTimes data for date '%s': %d records", odate, len(df))
 
-    return df
-
-
-def _save_with_partition(df: pd.DataFrame, odate: str) -> pd.DataFrame:
-    """
-    Adiciona coluna de partição baseada na odate.
-    O hook DataPartitioningHook criará automaticamente a estrutura de partições.
-    """
-    if df.empty:
-        return df
-
-    df = df.copy()
-    df["odate"] = odate
-
-    logger.info("DataFrame preparado para partição: odate=%s", odate)
     return df
 
 

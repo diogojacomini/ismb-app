@@ -11,7 +11,6 @@ from kedro.framework.project import configure_project
 
 
 class KedroOperator(BaseOperator):
-
     def __init__(
         self,
         package_name: str,
@@ -37,15 +36,28 @@ class KedroOperator(BaseOperator):
         
         # Combina parâmetros do DAG run com parâmetros padrão
         all_params = {**dag_default_params, **dag_params}
+
+        # Garante que macros do Airflow sejam resolvidas (ex.: "{{ ds }}")
+        ds = context.get('ds')
+        run_id = context.get('run_id') or (context.get('dag_run').run_id if context.get('dag_run') else None)
+
+        def _needs_render(v):
+            return v is None or (isinstance(v, str) and '{{' in v)
+        if _needs_render(all_params.get('odate')):
+            all_params['odate'] = ds
+        if _needs_render(all_params.get('execution_date')):
+            all_params['execution_date'] = ds
+        if _needs_render(all_params.get('run_id')):
+            all_params['run_id'] = run_id
         
         # Log dos parâmetros para debug
         self.log.info(f"Executing with parameters: {all_params}")
         self.log.info(f"Execution date (odate): {context.get('ds')}")
-        
+
         configure_project(self.package_name)
         with KedroSession.create(
-            self.project_path, 
-            env=self.env, 
+            self.project_path,
+            env=self.env,
             conf_source=self.conf_source,
             # Passa os parâmetros para o Kedro via extra_params
             extra_params=all_params
@@ -54,20 +66,22 @@ class KedroOperator(BaseOperator):
                 self.node_name = [self.node_name]
             session.run(self.pipeline_name, node_names=self.node_name)
 
+
 # Kedro settings required to run your pipeline
-env = "airflow"
+env = "local"
 pipeline_name = "__default__"
-project_path = Path("/home/factory")
+project_path = Path.cwd()
 package_name = "factory"
-conf_source = "" or str(project_path / "conf")
+conf_source = "" or Path.cwd() / "conf"
+
 
 # Using a DAG context manager, you don't have to specify the dag property of each task
 with DAG(
-    dag_id="factory_2",
+    dag_id="factory_ismb",
     start_date=datetime(2025, 1, 1),
     max_active_runs=3,
     # https://airflow.apache.org/docs/stable/scheduler.html#dag-runs
-    schedule="@daily",
+    schedule="0 23 * * 1-5",
     catchup=False,
     # Default settings applied to all tasks
     default_args=dict(
@@ -75,17 +89,15 @@ with DAG(
         depends_on_past=False,
         email_on_failure=False,
         email_on_retry=False,
-        # retries=1,
-        # retry_delay=timedelta(minutes=5)
+        retries=1,
+        retry_delay=timedelta(minutes=5)
     ),
-    # Parâmetros da DAG (similar ao odate do Control-M)
     params={
         "odate": "{{ ds }}",  # Data de execução no formato YYYY-MM-DD
         "execution_date": "{{ ds }}",
         "run_id": "{{ run_id }}",
         "environment": "production",
-        "process_full_data": False,
-        "batch_size": 1000
+        "process_full_data": False
     }
 ) as dag:
     tasks = {
@@ -229,19 +241,15 @@ with DAG(
     tasks["etl-html-ifix-node"] >> tasks["indicador-confianca-mercado-local-node"]
     tasks["etl-ibov-node"] >> tasks["indicador-retorno-mercado-node"]
     tasks["etl-html-cds-node"] >> tasks["indicador-risco-credito-node"]
-    tasks["etl-html-valorinveste-node"] >> tasks["indicador-sentimento-noticias-node"]
     tasks["etl-html-seudinheiro-node"] >> tasks["indicador-sentimento-noticias-node"]
     tasks["etl-html-moneytimes-node"] >> tasks["indicador-sentimento-noticias-node"]
     tasks["etl-html-infomoney-node"] >> tasks["indicador-sentimento-noticias-node"]
+    tasks["etl-html-valorinveste-node"] >> tasks["indicador-sentimento-noticias-node"]
     tasks["etl-ibov-node"] >> tasks["indicador-volatilidade-mercado-node"]
     tasks["etl-ivvb11-vix-brasil-node"] >> tasks["indicador-volatilidade-mercado-node"]
-    tasks["indicador-retorno-mercado-node"] >> tasks["process-score-data-node"]
-    tasks["indicador-volatilidade-mercado-node"] >> tasks["process-score-data-node"]
     tasks["indicador-confianca-mercado-local-node"] >> tasks["process-score-data-node"]
-    tasks["indicador-risco-credito-node"] >> tasks["process-score-data-node"]
+    tasks["indicador-volatilidade-mercado-node"] >> tasks["process-score-data-node"]
+    tasks["indicador-retorno-mercado-node"] >> tasks["process-score-data-node"]
     tasks["indicador-atividade-mercado-node"] >> tasks["process-score-data-node"]
     tasks["indicador-sentimento-noticias-node"] >> tasks["process-score-data-node"]
-
-# Para executar a DAG com parâmetros personalizados, use:
-# airflow dags trigger factory -c '{"odate": "2025-01-15", "environment": "test", "batch_size": 500}'
-# ou via UI do Airflow na seção "Trigger DAG w/ Config"
+    tasks["indicador-risco-credito-node"] >> tasks["process-score-data-node"]
