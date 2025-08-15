@@ -2,10 +2,11 @@
 Datasets customizados para particionamento automático por odate e append em CSV
 """
 import logging
-from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from kedro.io import AbstractDataset
 import pandas as pd
+import fsspec
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,14 +16,23 @@ class AppendCSVDataset(AbstractDataset):
     Dataset que faz append e remove duplicatas por dat_ref, mantendo o mais recente
     """
 
-    def __init__(self, filepath: str, load_args: Dict[str, Any] = None, save_args: Dict[str, Any] = None):
+    def __init__(self, filepath: str, load_args: Optional[Dict[str, Any]] = None, save_args: Optional[Dict[str, Any]] = None,
+                 credentials: Optional[Dict[str, Any]] = None, fs_args: Optional[Dict[str, Any]] = None):
         self._filepath: str = filepath
         self._load_args: Dict[str, Any] = load_args or {}
         self._save_args: Dict[str, Any] = save_args or {}
 
+        self._storage_options: Dict[str, Any] = {}
+        if credentials:
+            self._storage_options.update(credentials)
+        if fs_args:
+            self._storage_options.update(fs_args)
+
     def _load(self) -> pd.DataFrame:
-        if Path(self._filepath).exists():
-            return pd.read_csv(self._filepath, **self._load_args)
+        if self._exists():
+            load_kwargs = dict(self._load_args)
+            load_kwargs.setdefault('storage_options', self._storage_options)
+            return pd.read_csv(self._filepath, **load_kwargs)
 
         return pd.DataFrame()
 
@@ -38,10 +48,20 @@ class AppendCSVDataset(AbstractDataset):
             combined = combined.sort_values(keys_order_subset, ascending=False)
             combined = combined.drop_duplicates(subset=keys_order_subset, keep='last')
 
-        combined.to_csv(self._filepath, index=False, **self._save_args)
+        save_kwargs = dict(self._save_args)
+        save_kwargs.setdefault('storage_options', self._storage_options)
+        combined.to_csv(self._filepath, index=False, **save_kwargs)
 
     def _exists(self) -> bool:
-        return Path(self._filepath).exists()
+        storage_options: Dict[str, Any] = self._load_args.get('storage_options', {}) or self._storage_options or {}
+        fs, path = fsspec.core.url_to_fs(self._filepath, **storage_options)
+        try:
+            exist_file = fs.exists(path)
+        except Exception as error_file_empty:
+            exist_file = False
+            logger.info("Arquivo não existe: %s", error_file_empty)
+
+        return exist_file
 
     def _describe(self) -> Dict[str, Any]:
         return {'filepath': self._filepath}

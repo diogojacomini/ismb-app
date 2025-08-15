@@ -6,62 +6,77 @@
 # STAGING 
 rw_cds_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/staging/market/rw_cds_stage.csv
+  filepath: s3://meu-bucket-ismb/staging/market/rw_cds_stage.csv
+  credentials: prod_s3
 
 rw_ibov_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/staging/market/rw_ibov_stage.csv
+  filepath: s3://meu-bucket-ismb/staging/market/rw_ibov_stage.csv
+  credentials: prod_s3
 
 rw_ivvb_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/staging/market/rw_ivvb_stage.csv
+  filepath: s3://meu-bucket-ismb/staging/market/rw_ivvb_stage.csv
+  credentials: prod_s3
 
 rw_ifix_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/staging/market/rw_ifix_stage.csv
+  filepath: s3://meu-bucket-ismb/staging/market/rw_ifix_stage.csv
+  credentials: prod_s3
 
 rw_infomoney_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/staging/news/rw_infomoney_stage.csv
+  filepath: s3://meu-bucket-ismb/staging/news/rw_infomoney_stage.csv
+  credentials: prod_s3
 
 rw_valorinveste_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/staging/news/rw_valorinveste_stage.csv
+  filepath: s3://meu-bucket-ismb/staging/news/rw_valorinveste_stage.csv
+  credentials: prod_s3
 
 rw_seudinheiro_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/staging/news/rw_seudinheiro_stage.csv
+  filepath: s3://meu-bucket-ismb/staging/news/rw_seudinheiro_stage.csv
+  credentials: prod_s3
 
 rw_moneytimes_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/staging/news/rw_moneytimes_stage.csv
+  filepath: s3://meu-bucket-ismb/staging/news/rw_moneytimes_stage.csv
+  credentials: prod_s3
 
 # CURATED
 indicador_risco_credito:
-  type: pandas.CSVDataset
-  filepath: data/curated/indicadores/indicador_risco_credito.csv
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_risco_credito.csv
+  credentials: prod_s3
 
 indicador_retorno_mercado:
-  type: pandas.CSVDataset
-  filepath: data/curated/indicadores/indicador_retorno_mercado.csv
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_retorno_mercado.csv
+  credentials: prod_s3
 
 indicador_volatilidade_mercado:
-  type: pandas.CSVDataset
-  filepath: data/curated/indicadores/indicador_volatilidade_mercado.csv
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_volatilidade_mercado.csv
+  credentials: prod_s3
 
 indicador_atividade_mercado:
-  type: pandas.CSVDataset
-  filepath: data/curated/indicadores/indicador_atividade_mercado.csv
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_atividade_mercado.csv
+  credentials: prod_s3
 
 indicador_confianca_mercado_local:
-  type: pandas.CSVDataset
-  filepath: data/curated/indicadores/indicador_confianca_mercado_local.csv
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_confianca_mercado_local.csv
+  credentials: prod_s3
 
 indicador_sentimento_noticias:
-  type: pandas.CSVDataset
-  filepath: data/curated/indicadores/indicador_sentimento_noticias.csv
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_sentimento_noticias.csv
+  credentials: prod_s3
 
 # INDICE ISMB
 indice_isbm:
-  type: pandas.CSVDataset
-  filepath: data/curated/indice_isbm.csv
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indice_isbm.csv
+  credentials: prod_s3

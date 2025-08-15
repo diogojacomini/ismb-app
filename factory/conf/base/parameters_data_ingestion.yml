@@ -68,7 +68,7 @@ seudinheiro_parms:
   url: "https://www.seudinheiro.com/ultimas/"
   pattern_pages: "pagina/<number>/"
   max_pages: 5
-  max_pages_full: 10
+  max_pages_full: 5
   class_feed: "feed_content"
   class_title: "feed_content_title"
   class_date: "feed_content_time"
@@ -77,7 +77,7 @@ moneytimes_parms:
   url: "https://www.moneytimes.com.br/ultimas-noticias/"
   pattern_pages: "page/<number>/"
   max_pages: 5
-  max_pages_full: 10
+  max_pages_full: 5
   class_item: "news-item"
   class_title: "news-item__title"
   class_date: "date"
