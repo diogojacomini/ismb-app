@@ -1,0 +1,83 @@
+# This is a boilerplate parameters config generated for pipeline 'data_ingestion'
+# using Kedro 0.19.14.
+#
+# Documentation for this file format can be found in "Parameters"
+# Link: https://docs.kedro.org/en/0.19.14/configuration/parameters.html
+
+# etl_html_cds_node
+columns_mapping:
+  0: dat_ref
+  1: open_price
+  2: close_price
+  3: high_price
+  4: low_price
+  5: change_percentage
+
+columns_order: ['dat_ref', 'open_price', 'close_price', 'high_price', 'low_price', 'change_percentage']
+
+cds_parms:
+  url: "https://www.investing.com/rates-bonds/brazil-cds-5-years-usd-historical-data"
+  headers: 
+    User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+  dat_ref_format: "%b %d, %Y"
+  csv_read: rw_cds_stage
+  scraping_except:
+    url: "https://br.investing.com/rates-bonds/brazil-cds-5-years-usd-historical-data"
+    dat_ref_format: "%d.%m.%Y"
+    replace_decimal: True
+    columns_order: ['dat_ref', 'close_price', 'open_price', 'high_price', 'low_price', 'change_percentage']
+
+# api rename columns
+columns_mapping_yf:
+  Date: dat_ref
+  Close: close
+  High: high
+  Low: low
+  Open: vpen
+  Volume: volume
+
+# etl_ibov_node
+ibov_ticker: "^BVSP"
+
+# etl_ivvb11_vix_brasil_node
+ivvb11_ticker: "IVVB11.SA"
+
+# etl_html_ifix_node
+ifix_parms:
+  url: "https://br.investing.com/indices/bm-fbovespa-real-estate-ifix-historical-data"
+  headers: 
+    User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+  dat_ref_format: "%d.%m.%Y"
+  csv_read: rw_ifix_stage
+  replace_decimal: True
+
+columns_order_ifix: ['dat_ref', 'close_price', 'open_price', 'high_price', 'low_price', 'change_percentage']
+
+# etl_html_infomoney_node
+infomoney_parms:
+  url: "https://www.infomoney.com.br/ultimas-noticias/"
+  class_: "flex gap-4 md:flex-col"
+
+# etl_html_valorinveste_node
+valorinveste_parms:
+  url: "https://valorinveste.globo.com/ultimas-noticias/"
+  class_post: "feed-post-link"
+  class_date: "feed-post-datetime"
+
+seudinheiro_parms:
+  url: "https://www.seudinheiro.com/ultimas/"
+  pattern_pages: "pagina/<number>/"
+  max_pages: 5
+  max_pages_full: 5
+  class_feed: "feed_content"
+  class_title: "feed_content_title"
+  class_date: "feed_content_time"
+
+moneytimes_parms:
+  url: "https://www.moneytimes.com.br/ultimas-noticias/"
+  pattern_pages: "page/<number>/"
+  max_pages: 5
+  max_pages_full: 5
+  class_item: "news-item"
+  class_title: "news-item__title"
+  class_date: "date"

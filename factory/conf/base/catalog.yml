@@ -1,0 +1,82 @@
+# Here you can define all your datasets by using simple YAML syntax.
+#
+# Documentation for this file format can be found in "The Data Catalog"
+# Link: https://docs.kedro.org/en/stable/data/data_catalog.html
+
+# STAGING 
+rw_cds_stage:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/staging/market/rw_cds_stage.csv
+  credentials: prod_s3
+
+rw_ibov_stage:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/staging/market/rw_ibov_stage.csv
+  credentials: prod_s3
+
+rw_ivvb_stage:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/staging/market/rw_ivvb_stage.csv
+  credentials: prod_s3
+
+rw_ifix_stage:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/staging/market/rw_ifix_stage.csv
+  credentials: prod_s3
+
+rw_infomoney_stage:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/staging/news/rw_infomoney_stage.csv
+  credentials: prod_s3
+
+rw_valorinveste_stage:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/staging/news/rw_valorinveste_stage.csv
+  credentials: prod_s3
+
+rw_seudinheiro_stage:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/staging/news/rw_seudinheiro_stage.csv
+  credentials: prod_s3
+
+rw_moneytimes_stage:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/staging/news/rw_moneytimes_stage.csv
+  credentials: prod_s3
+
+# CURATED
+indicador_risco_credito:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_risco_credito.csv
+  credentials: prod_s3
+
+indicador_retorno_mercado:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_retorno_mercado.csv
+  credentials: prod_s3
+
+indicador_volatilidade_mercado:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_volatilidade_mercado.csv
+  credentials: prod_s3
+
+indicador_atividade_mercado:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_atividade_mercado.csv
+  credentials: prod_s3
+
+indicador_confianca_mercado_local:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_confianca_mercado_local.csv
+  credentials: prod_s3
+
+indicador_sentimento_noticias:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_sentimento_noticias.csv
+  credentials: prod_s3
+
+# INDICE ISMB
+indice_isbm:
+  type: factory.datasets.AppendCSVDataset
+  filepath: s3://meu-bucket-ismb/curated/indice_isbm.csv
+  credentials: prod_s3
