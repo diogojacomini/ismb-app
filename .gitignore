@@ -8,12 +8,7 @@ conf/local/**
 
 # ignore potentially sensitive credentials files
 conf/**/*credentials*
-
-# ignore everything in the following folders
-data/**
-
-# except their sub-folders
-!data/**/
+credentials.yml
 
 # also keep all .gitkeep files
 !.gitkeep
@@ -167,3 +162,7 @@ _local/*
 
 # venvs
 .venv/*
+
+# data
+*.csv
+*.parquet
