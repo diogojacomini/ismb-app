@@ -3,9 +3,11 @@ de páginas web, bem como para transformar esses dados em um formato adequado pa
 
 Pipeline: data_ingestion
 """
+import hashlib
 import re
 from typing import Dict, List
 from time import sleep as time_sleep
+import unicodedata
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
@@ -212,6 +214,26 @@ def data_relativa_para_absoluta(texto, agora=None):
 
 def select_cast_midia(df: pd.DataFrame) -> pd.DataFrame:
     """Seleciona e converte colunas do DataFrame."""
-    df = df[['dat_ref', 'fonte', 'titulo', 'link']]
+    df = df[['id', 'dat_ref', 'fonte', 'titulo', 'link']]
     df = df.astype({col: 'string' for col in df.columns if col != 'dat_ref'})
     return df
+
+def create_news_id(titulo: str = "", fonte: str = "", dat_ref: str = "") -> str:
+    """
+    Gera um ID único para uma notícia com base no conteúdo e na fonte.
+
+    - Concatena campos relevantes (titulo, fonte, dat_ref).
+    - Calcula SHA-256 da string resultante e retorna um prefixo truncado (16 hex chars) com um prefixo reconhecível.
+    """
+    parts = []
+    for field in (titulo, fonte, dat_ref):
+        text = re.sub(r"<[^>]+>", "", str(field))
+        text = re.sub(r"#\S+", "", text)
+        text = unicodedata.normalize("NFKC", text).lower()
+        text = re.sub(r"\s+", " ", text).strip()
+        parts.append(text)
+
+    canonical = "||".join(parts)
+    meta = f"{len(canonical)}|{canonical}"
+    digest = hashlib.sha256(meta.encode("utf-8")).hexdigest()
+    return f"ismb_{digest[:16]}"
