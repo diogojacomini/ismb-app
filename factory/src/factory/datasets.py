@@ -17,16 +17,21 @@ class AppendCSVDataset(AbstractDataset):
     """
 
     def __init__(self, filepath: str, load_args: Optional[Dict[str, Any]] = None, save_args: Optional[Dict[str, Any]] = None,
-                 credentials: Optional[Dict[str, Any]] = None, fs_args: Optional[Dict[str, Any]] = None):
+                 credentials: Optional[Dict[str, Any]] = None, fs_args: Optional[Dict[str, Any]] = None, environment: str = 'prd'):
         self._filepath: str = filepath
         self._load_args: Dict[str, Any] = load_args or {}
         self._save_args: Dict[str, Any] = save_args or {}
+        self.environment = environment
 
         self._storage_options: Dict[str, Any] = {}
         if credentials:
             self._storage_options.update(credentials)
+        
         if fs_args:
             self._storage_options.update(fs_args)
+        
+        if self.environment == 'dev' or self.environment == 'test':
+            self._filepath = self._filepath.replace('data/', 'data/sandbox/dev/')
 
     def _load(self) -> pd.DataFrame:
         if self._exists():
@@ -38,11 +43,18 @@ class AppendCSVDataset(AbstractDataset):
 
     def _save(self, data):
         existing: pd.DataFrame = self._load()
+        logger.info('dataset read:')
+        logger.info(existing)
+
+        logger.info('dataset to save:')
+        logger.info(data)
         combined: pd.DataFrame = pd.concat([existing, data], ignore_index=True)
 
         if 'fonte' not in combined.columns:
             combined = combined.sort_values('dat_ref', ascending=False)
             combined = combined.drop_duplicates(subset=['dat_ref'], keep='last')
+            if len(data) == 0:
+                raise ValueError("Dataset vazio!")
         else:
             keys_order_subset: List[str] = ['dat_ref', 'fonte', 'titulo']
             combined = combined.sort_values(keys_order_subset, ascending=False)
@@ -50,6 +62,9 @@ class AppendCSVDataset(AbstractDataset):
 
         save_kwargs = dict(self._save_args)
         save_kwargs.setdefault('storage_options', self._storage_options)
+        if self.environment == 'hk':
+            self._filepath = self._filepath.replace('data/', 'data/sandbox/')
+
         combined.to_csv(self._filepath, index=False, **save_kwargs)
 
     def _exists(self) -> bool:
