@@ -2,81 +2,83 @@
 #
 # Documentation for this file format can be found in "The Data Catalog"
 # Link: https://docs.kedro.org/en/stable/data/data_catalog.html
+_common_environment: &environment_default
+  environment: prd
 
-# STAGING 
+# Stage
 rw_cds_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/staging/market/rw_cds_stage.csv
-  credentials: prod_s3
+  filepath: data/raw/mercado/rw_cds_stage.csv
+  <<: *environment_default
 
 rw_ibov_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/staging/market/rw_ibov_stage.csv
-  credentials: prod_s3
+  filepath: data/raw/mercado/rw_ibov_stage.csv
+  <<: *environment_default
 
 rw_ivvb_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/staging/market/rw_ivvb_stage.csv
-  credentials: prod_s3
+  filepath: data/raw/mercado/rw_ivvb_stage.csv
+  <<: *environment_default
 
 rw_ifix_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/staging/market/rw_ifix_stage.csv
-  credentials: prod_s3
+  filepath: data/raw/mercado/rw_ifix_stage.csv
+  <<: *environment_default
 
 rw_infomoney_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/staging/news/rw_infomoney_stage.csv
-  credentials: prod_s3
+  filepath: data/raw/noticias/rw_infomoney_stage.csv
+  <<: *environment_default
 
 rw_valorinveste_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/staging/news/rw_valorinveste_stage.csv
-  credentials: prod_s3
+  filepath: data/raw/noticias/rw_valorinveste_stage.csv
+  <<: *environment_default
 
 rw_seudinheiro_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/staging/news/rw_seudinheiro_stage.csv
-  credentials: prod_s3
+  filepath: data/raw/noticias/rw_seudinheiro_stage.csv
+  <<: *environment_default
 
 rw_moneytimes_stage:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/staging/news/rw_moneytimes_stage.csv
-  credentials: prod_s3
+  filepath: data/raw/noticias/rw_moneytimes_stage.csv
+  <<: *environment_default
 
-# CURATED
+# Indicadores
 indicador_risco_credito:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_risco_credito.csv
-  credentials: prod_s3
+  filepath: data/indicadores/indicador_risco_credito.csv
+  <<: *environment_default
 
 indicador_retorno_mercado:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_retorno_mercado.csv
-  credentials: prod_s3
+  filepath: data/indicadores/indicador_retorno_mercado.csv
+  <<: *environment_default
 
 indicador_volatilidade_mercado:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_volatilidade_mercado.csv
-  credentials: prod_s3
+  filepath: data/indicadores/indicador_volatilidade_mercado.csv
+  <<: *environment_default
 
 indicador_atividade_mercado:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_atividade_mercado.csv
-  credentials: prod_s3
+  filepath: data/indicadores/indicador_atividade_mercado.csv
+  <<: *environment_default
 
 indicador_confianca_mercado_local:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_confianca_mercado_local.csv
-  credentials: prod_s3
+  filepath: data/indicadores/indicador_confianca_mercado_local.csv
+  <<: *environment_default
 
 indicador_sentimento_noticias:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/curated/indicadores/indicador_sentimento_noticias.csv
-  credentials: prod_s3
+  filepath: data/indicadores/indicador_sentimento_noticias.csv
+  <<: *environment_default
 
 # INDICE ISMB
 indice_isbm:
   type: factory.datasets.AppendCSVDataset
-  filepath: s3://meu-bucket-ismb/curated/indice_isbm.csv
-  credentials: prod_s3
+  filepath: data/indice/indice_ismb.csv
+  <<: *environment_default

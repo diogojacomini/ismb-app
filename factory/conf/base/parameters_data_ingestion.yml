@@ -31,6 +31,7 @@ cds_parms:
 columns_mapping_yf:
   Date: dat_ref
   Close: close
+  Adj Close: close_adj
   High: high
   Low: low
   Open: vpen
@@ -51,7 +52,7 @@ ifix_parms:
   csv_read: rw_ifix_stage
   replace_decimal: True
 
-columns_order_ifix: ['dat_ref', 'close_price', 'open_price', 'high_price', 'low_price', 'change_percentage']
+columns_order_ifix: ['dat_ref', 'open_price', 'close_price', 'high_price', 'low_price', 'change_percentage']
 
 # etl_html_infomoney_node
 infomoney_parms:

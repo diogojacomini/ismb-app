@@ -1,108 +1,175 @@
 # ISMB - Índice de Sentimento do Mercado Brasileiro
 
-O **ISMB (Índice de Sentimento do Mercado Brasileiro)** é uma análise de dados de mercado que gera indicadores e scores diários de sentimento financeiro. O projeto foi desenvolvido com **Kedro** para criação de pipelines modulares e reproduzíveis e é **orquestrado pelo Apache Airflow** para execução automatizada e os dados são  gravados diretamente em um bucket S3.
-
-Seguindo **boas práticas DevOps**, o ISMB garante:  
-- **Reprodutibilidade:** pipelines que produzem resultados consistentes independentemente do ambiente.  
-- **Versionamento:** controle de código, dados e configurações para rastreabilidade total.  
-- **Infraestrutura como código (Terraform):** provisionamento de buckets, chaves e recursos de nuvem de forma automatizada e segura.  
-- **Configuração por ambiente:** separação entre desenvolvimento, teste e produção.  
-- **Execução em containers:** isolamento e portabilidade, garantindo consistência entre ambientes locais e de produção.
-
-O ISMB permite:  
-- Ingestão, processamento e pontuação de dados de mercado.  
-- Monitoramento e visualização dos pipelines via **Kedro Viz**.  
-- Orquestração robusta de workflows financeiros com **Airflow**.  
+Data platform de pipelines para ingestão, transformação e geração de métricas analíticas, do mercado financeiro.
 
 
-## Requisitos
+## Sumário
 
+- [Sumário](#sumário)
+- [Sobre o Repositório](#sobre-o-repositório)
+- [Instalação](#instalação)
+    - [Requisitos](#requisitos)
+- [Como executar](#como-executar)
+- [Exemplo de usos]()
+- [URLs relevantes]()
+- [Status do Projeto]()
+- [Contato]()
+
+## Sobre o Repositório
+ISMB (Índice de Sentimento do Mercado Brasileiro) é uma plataforma de engenharia de dados e análise dedicada a transformar fontes brutas em indicadores e scores analíticos diários para uso em pesquisa, monitoramento e tomada de decisão financeira. Este repositório contém pipelines, configurações e artefatos para ingestão, processamento, validação, versionamento e entrega de sinais quantitativos focados em sentimento, volatilidade, retorno e risco aplicados ao mercado financeiro brasileiro.
+
+#### Visão geral da arquitetura
+```mermaid
+flowchart LR
+
+%% Layer: Sources
+subgraph L1["Source Layer"]
+    API["APIs"]
+    NEWS["Portais de Notícias"]
+    TABLES["CDS, IFIX"]
+end
+
+%% Layer: Ingestion
+subgraph L2["Ingestion Layer"]
+    ING["data_ingestion"]
+end
+
+%% Layer: Processing
+subgraph L3["Processing Layer"]
+    PROC["data_processing"]
+end
+
+%% Layer: Governance
+subgraph L4["Governance Layer"]
+    DQ["data_quality"]
+    VAL["data_validation"]
+end
+
+%% Layer: Scoring
+subgraph L5["Scoring Layer"]
+    SCORE["data_score"]
+end
+
+%% Layer: Serving
+subgraph L6["Serving Layer"]
+    API_SERVE["REST API"]
+    DASH["Dashboards"]
+end
+
+%% Horizontal flow
+API --> ING
+NEWS --> ING
+TABLES --> ING
+
+ING --> PROC
+PROC --> DQ
+PROC --> VAL
+DQ --> SCORE
+VAL --> SCORE
+
+SCORE --> API_SERVE
+API_SERVE --> DASH
+```
+- Orquestração: Apache Airflow organiza as DAGs e dependências; em [`factory/conf/airflow/dags`](factory/conf/airflow/dags).
+- Orquestração de pipelines: Kedro estrutura pipelines em [`/pipelines/`](factory/src/factory/pipelines) com nodes em cada domínio:
+    - **data_ingestion**: Pipeline responsável pela coleta, normalização inicial e persistência de dados brutos.
+    - **data_processing**: Pipeline responsável por aplicar as regras de cálculo dos indicadores analíticos a partir de dados brutos, produzindo datasets prontos para composição do score final.
+    - **data_quality**: Pipeline responsável por avaliar a qualidade dos dados, aplicando verificações técnicas e estatísticas para garantir qualidade antes do uso analítico.
+    - **data_validation**: Pipeline responsável por validar regras de negócio, garantindo que os dados estejam coerentes antes de serem consumidos.
+    - **data_score**: Pipeline responsável pelo cálculo final de indicadores e score analítico.
+- Configuração: parâmetros por ambiente em [conf/](factory/conf) (conf/base, conf/local, conf/airflow).
+- Infraestrutura: API de serving dos dados analíticos e a aplicação web para consumo via dashboards.
+- Armazenamento: datasets gerenciados pelo Kedro (CSV).
+
+#### Arquitetura de Dados
+![alt text](factory/docs/imagens/diagrama_relacionamento_ismb.png)
+
+
+#### Estrutura de pastas
+```
+.
+├── factory
+│   ├── conf
+│   │   ├── airflow
+│   │   │   ├── config
+│   │   │   └── dags
+│   │   ├── base
+│   │   └── local
+│   ├── data
+│   │   ├── indicadores
+│   │   ├── indice
+│   │   ├── raw
+│   │   │   ├── mercado
+│   │   │   └── noticias
+│   │   └── sandbox
+│   │       └── dev
+│   │           ├── indicadores
+│   │           ├── indice
+│   │           └── raw
+│   │               ├── mercado
+│   │               └── noticias
+│   ├── docs
+│   │   ├── imagens
+│   │   ├── indicators
+│   │   └── source
+│   ├── src
+│   │   └── factory
+│   │       └── pipelines
+│   │           ├── data_ingestion
+│   │           ├── data_processing
+│   │           └── data_score
+│   └── tests
+│       └── pipelines
+│           ├── data_ingestion
+│           ├── data_processing
+│           └── data_score
+└── infra
+    └── aws
+```
+
+## Instalação
+
+#### Requisitos
 - Linux ou WSL (Windows Subsystem for Linux)
 - Python 3.12
 
-## Como rodar localmente (sem Docker)
-
+#### Instalação
 1) Clone o repositório
 
 ```bash
-git clone https://github.com/diogojacomini/ismb-app.git
-cd ismb-app
+> git clone https://github.com/diogojacomini/ismb-app.git; cd ismb-app
 ```
 
 2) Crie e ative o ambiente virtual
 
 Linux/WSL:
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+> python -m venv .venv; source .venv/bin/activate
 ```
 
 3) Instale as dependências
 
 ```bash
-pip install -r factory/requirements.txt
+> pip install -r factory/requirements.txt
 ```
 
-Observação: para rodar local, ajuste os diretórios em `factory/conf/airflow/catalog.yml` (paths de dados conforme sua máquina).
+## Como executar
 
-4) Execute os pipelines Kedro (o único parâmetro obrigatório é `odate`; opcionais: `environment`, `process_full_data`)
+Observação: para rodar local, ajuste os diretórios em `factory/conf/airflow/catalog.yml` (paths de dados conforme sua máquina). Também é necessário passar o ambiente correto.
+
+1) Execute os pipelines Kedro (o único parâmetro obrigatório é `odate`; opcionais: `environment`, `process_full_data`)
 
 ```bash
-kedro run --pipeline data_ingestion --params="odate=2025-08-14"
-kedro run --pipeline data_processing --params="odate=2025-08-14"
-kedro run --pipeline data_score --params="odate=2025-08-14"
+> cd factory/
+> kedro run --pipeline data_ingestion --params="odate=2025-08-14"
+> kedro run --pipeline data_processing --params="odate=2025-08-14"
+> kedro run --pipeline data_score --params="odate=2025-08-14"
+
+# exemplo com parametro opcional:
+> kedro run --pipeline data_processing --params="odate=2025-08-14, process_full_data=True"
+
+# Descrição dos parametros:
+# odate: Data de referencia;
+# environment: ambiente (dev, hk, prd);
+# process_full_data: Coleta e processamento de todo os dias disponiveis;
 ```
-
-Opcional (visualização):
-```bash
-kedro viz
-```
-Acesse: http://localhost:4141/
-
-## Produção (Infraestrutura e credenciais)
-
-1) Provisione recursos com Terraform (ex.: buckets e chaves de acesso)
-
-2) Configure as credenciais no arquivo:
-
-```
-factory/conf/local/credentials.yml
-```
-
-## Orquestração com Apache Airflow (Docker Compose)
-
-No diretório `factory/`:
-
-```bash
-docker-compose up airflow-init
-docker-compose up
-```
-
-Serviços:
-- Airflow Webserver: http://localhost:8080/
-- Kedro Viz (quando iniciado localmente via `kedro viz`): http://localhost:4141/
-
-Parâmetros da DAG: `odate` (YYYY-MM-DD) é obrigatório; `process_full_data` e outros são opcionais. Você pode acionar execuções e/ou passar `--conf` via Airflow UI ou CLI.
-
-## Estrutura (visão geral)
-
-- `factory/src/factory/` - código da aplicação e pipelines Kedro
-- `factory/conf/` - configurações por ambiente (airflow/local), catálogo, parâmetros
-- `factory/conf/airflow/dags/` - DAGs do Airflow
-- `factory/docker-compose.yaml` e `factory/Dockerfile` - execução em containers
-- `factory/src/factory/pipelines/` - todos os pipelines criados e disponiveis para executar
-- `factory/data/` - dados locais (montados no container)
-
-## Dicas e solução de problemas
-
-- DateParseError com `{{ ds }}`: garanta que `odate` esteja definido como data real (ex.: `2025-08-15`) quando executar manualmente; nas DAGs, macros do Airflow são resolvidas automaticamente.
-- Erros de caminho: ajuste `catalog.yml` para apontar para diretórios locais corretos.
-- Dependências: use exatamente Python 3.12 e as versões de `factory/requirements.txt`.
-
-## Sobre o Kedro
-
-Kedro é um framework para criar pipelines de dados reprodutíveis e robustos. Ele organiza código, dados e configurações em uma estrutura padrão, facilita parametrização e integração com ferramentas como Airflow e Kedro Viz.
-
-## Licença
-
-Veja o arquivo `LICENSE` na raiz do repositório.
