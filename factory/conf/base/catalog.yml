@@ -5,6 +5,11 @@
 _common_environment: &environment_default
   environment: prd
 
+pipeline_metrics:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/metrics/pipeline_metrics.csv
+  <<: *environment_default
+
 # Stage
 rw_cds_stage:
   type: factory.datasets.AppendCSVDataset

@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 from kedro.io import AbstractDataset
 import pandas as pd
 import fsspec
-
+from .schemas import SchemaRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -48,17 +48,23 @@ class AppendCSVDataset(AbstractDataset):
 
         logger.info('dataset to save:')
         logger.info(data)
+
+        data = SchemaRegistry._apply_schema(data, name=self._filepath.split('/')[-1].split('.')[0])
         combined: pd.DataFrame = pd.concat([existing, data], ignore_index=True)
 
-        if 'fonte' not in combined.columns:
+        if 'fonte' not in combined.columns and 'metrics' not in combined.columns:
             combined = combined.sort_values('dat_ref', ascending=False)
             combined = combined.drop_duplicates(subset=['dat_ref'], keep='last')
             if len(data) == 0:
                 raise ValueError("Dataset vazio!")
-        else:
+
+        elif 'fonte' in combined.columns:
             keys_order_subset: List[str] = ['dat_ref', 'fonte', 'titulo']
             combined = combined.sort_values(keys_order_subset, ascending=False)
             combined = combined.drop_duplicates(subset=keys_order_subset, keep='last')
+
+        elif 'metrics' in combined.columns:
+            combined = combined.sort_values('start_time', ascending=False)
 
         save_kwargs = dict(self._save_args)
         save_kwargs.setdefault('storage_options', self._storage_options)

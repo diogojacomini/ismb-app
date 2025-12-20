@@ -2,6 +2,7 @@
 from the Kedro defaults. For further information, including these default values, see
 https://docs.kedro.org/en/stable/kedro_project_setup/settings.html."""
 
+
 # Instantiated project hooks.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from factory.hooks import ProjectHooks
@@ -44,3 +45,9 @@ CONFIG_LOADER_ARGS = {
 # Class that manages the Data Catalog.
 # from kedro.io import DataCatalog
 # DATA_CATALOG_CLASS = DataCatalog
+
+from .hooks import MonitoringHooks
+
+HOOKS = (
+    MonitoringHooks(),
+    )

@@ -2,30 +2,61 @@
 Hooks personalizados para particionamento por data
 """
 import logging
-from typing import Any
 from kedro.framework.hooks import hook_impl
-import pandas as pd
+from kedro.io import DataCatalog
+from .saiph.monitoring import Monitor
+
 
 logger = logging.getLogger(__name__)
 
+class MonitoringHooks:
+    """
+    Hooks para monitoramento automático de pipelines.
 
-class DataPartitioningHook:
-    """Hook para salvar dados particionados por odate"""
+    Rastreia:
+        - Tempo de execução de cada pipeline e node.
+        - Custos estimados
+        - Data Lineage
+        - Erros e exceções
+    """
+
+    def __init__(self):
+        self.monitors = {}
+        self.node_start_times = {}
 
     @hook_impl
-    def before_dataset_saved(self, dataset_name: str, data: Any, node: Any = None) -> None:
+    def before_pipeline_run(self, run_params, pipeline, catalog: DataCatalog):
         """
-        Modifica o caminho do arquivo para incluir partição por odate
+        Executado antes de cada pipeline inicar.
         """
-        # Verifica se o dataset tem particionamento habilitado
-        if (hasattr(data, 'columns') and 'odate' in data.columns and isinstance(data, pd.DataFrame) and not data.empty):
+        pipeline_name = run_params.get("pipeline_name", "default")
 
-            # Pega a data da primeira linha (assumindo que todas as linhas têm a mesma data)
-            odate = str(data['odate'].iloc[0])
+        monitor = PipelineMonitor(pipeline_name, catalog=catalog)
+        monitor.start()
+        self.monitors[pipeline_name] = monitor
+    
+    @hook_impl
+    def after_pipeline_run(self, run_params, pipeline, catalog: DataCatalog):
+        pipeline_name = run_params.get("pipeline_name", "default")
+        extra_params = run_params.get("extra_params", {})
 
-            logger.info("Particionamento detectado: %s para data %s", dataset_name, odate)
+        monitor = self.monitors.get(pipeline_name)
 
-            # Remove a coluna odate do DataFrame antes de salvar
-            if 'odate' in data.columns:
-                data.drop(columns=['odate'], inplace=True)
-                logger.info("Coluna 'odate' removida do DataFrame %s", dataset_name)
+        if monitor:
+            result = monitor.end(status="SUCCESS", params=extra_params)
+
+    @hook_impl
+    def on_pipeline_error(self, error, run_params, pipeline, catalog):
+        pass
+
+    @hook_impl
+    def before_node_run(self, node, catalog, inputs, is_async):
+        pass
+
+    @hook_impl
+    def after_node_run(self, node, catalog, inputs, outputs, is_async):
+        pass
+    
+    @hook_impl
+    def on_node_error(self, error, node, catalog, inputs, is_async):
+        pass
