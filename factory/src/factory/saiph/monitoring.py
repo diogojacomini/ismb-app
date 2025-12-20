@@ -1,7 +1,9 @@
+import json
 import logging
 import time
 from datetime import datetime
 from typing import Any
+import uuid
 from pandas import DataFrame
 
 logger = logging.getLogger(__name__)
@@ -15,10 +17,28 @@ class Monitor:
         self.metrics = {}
         self.errors = []
         self.catalog = catalog
+        self.run_id = None
+        self.params = {}
 
-    def start(self):
+    def start(self, params):
         self.start_time = time.time()
-        logger.info(f"[MONITOR] Pipeline '{self.pipeline_name}' started.")
+        self.run_id = uuid.uuid4().hex[:8]
+        self.params = params
+        start_iso = datetime.fromtimestamp(self.start_time).isoformat()
+        
+        banner = [
+             "=" * 80,
+            f"| STARTING PIPELINE: {self.pipeline_name} ",
+            "-" * 80,
+            f" run_id                 : {self.run_id}",
+            f" start_time             : {start_iso}",
+            f" parm odate             : {json.dumps(self.params.get('extra_params').get('odate'))}",
+            f" parm environment       : {json.dumps(self.params.get('extra_params').get('environment', 'prd'))}",
+            f" parm process_full_data : {json.dumps(self.params.get('extra_params').get('process_full_data', False))}",
+            "=" * 80,
+        ]
+        for line in banner:
+            logger.info(line)
     
     def end(self, status: str = "SUCCESS", params: dict = None):
         self.end_time = time.time()
@@ -27,8 +47,9 @@ class Monitor:
         logger.info(f"[MONITOR] Pipeline '{self.pipeline_name}' ended with status '{status}' in {duration:.2f} seconds.")
         result = {
             'pipeline': self.pipeline_name,
+            'run_id': self.run_id,
             'status': status,
-            'duration_seconds': duration,
+            'duration_seconds': round(duration, 2),
             'start_time': datetime.fromtimestamp(self.start_time).isoformat(),
             'end_time': datetime.fromtimestamp(self.end_time).isoformat(),
             'metrics': self.metrics,

@@ -321,5 +321,7 @@ def _make_dataframe_test_yf(odate: str) -> pd.DataFrame:
                          "high": [9999],
                          "low": [9999],
                          "vpen": [9999],
-                         "volume": [9999]
+                         "volume": [9999],
+                         "close_adj": [9999],
+                         "test_env": [True]
                          })

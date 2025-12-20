@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 from kedro.io import AbstractDataset
 import pandas as pd
 import fsspec
-from .schemas import SchemaRegistry
+from .saiph.schemas import SchemaRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -46,11 +46,11 @@ class AppendCSVDataset(AbstractDataset):
         logger.info('dataset read:')
         logger.info(existing)
 
-        logger.info('dataset to save:')
-        logger.info(data)
-
         data = SchemaRegistry._apply_schema(data, name=self._filepath.split('/')[-1].split('.')[0])
         combined: pd.DataFrame = pd.concat([existing, data], ignore_index=True)
+
+        logger.info('dataset to save:')
+        logger.info(data)
 
         if 'fonte' not in combined.columns and 'metrics' not in combined.columns:
             combined = combined.sort_values('dat_ref', ascending=False)

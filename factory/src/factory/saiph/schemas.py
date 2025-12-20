@@ -36,6 +36,11 @@ class SchemaRegistry:
         colunas_df = list(df.columns)
         missing_schema_cols = [col for col in colunas_schema if col not in colunas_df]
 
+        if cls._diff_list(colunas_schema, colunas_df):
+            logger.warning(f"Existem colunas divergentes entre o DataFrame e o schema: {cls._diff_list(colunas_df, colunas_schema)}")
+            logger.warning(f"Colunas do DataFrame: {colunas_df}")
+            logger.warning(f"Colunas do Schema: {colunas_schema}")
+
         if missing_schema_cols:
             raise ValueError(f"As seguintes colunas do schema não foram encontradas no DataFrame: {missing_schema_cols}")
 
@@ -58,3 +63,9 @@ class SchemaRegistry:
 
         # Retorna apenas as colunas definidas no schema, na ordem correta
         return df[colunas_schema]
+
+    @classmethod
+    def _diff_list(cls, list1, list2):
+        list_l = set(list1).union(set(list2))
+        list_r = set(list1).intersection(set(list2))
+        return list(list_l - list_r)

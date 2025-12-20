@@ -31,8 +31,8 @@ class MonitoringHooks:
         """
         pipeline_name = run_params.get("pipeline_name", "default")
 
-        monitor = PipelineMonitor(pipeline_name, catalog=catalog)
-        monitor.start()
+        monitor = Monitor(pipeline_name, catalog=catalog)
+        monitor.start(run_params)
         self.monitors[pipeline_name] = monitor
     
     @hook_impl
