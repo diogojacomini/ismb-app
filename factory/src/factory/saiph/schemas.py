@@ -11,6 +11,14 @@ SCHEMA_API_FINANCE = {
     "volume": "Int64",
 }
 
+SCHEMA_NEWS = {
+    "dat_ref": "string",
+    "fonte": "string",
+    "titulo": "string",
+    "link": "string",
+}
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,6 +26,10 @@ class SchemaRegistry:
     _schemas = {
         "rw_ibov_stage": SCHEMA_API_FINANCE,
         "rw_ivvb_stage": SCHEMA_API_FINANCE,
+        "rw_infomoney_stage": SCHEMA_NEWS,
+        "rw_moneytimes_stage": SCHEMA_NEWS,
+        "rw_seudinheiro_stage": SCHEMA_NEWS,
+        "rw_valorinveste_stage": SCHEMA_NEWS,
     }
 
     @classmethod

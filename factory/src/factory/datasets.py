@@ -43,20 +43,18 @@ class AppendCSVDataset(AbstractDataset):
 
     def _save(self, data):
         existing: pd.DataFrame = self._load()
-        logger.info('dataset read:')
-        logger.info(existing)
 
         data = SchemaRegistry._apply_schema(data, name=self._filepath.split('/')[-1].split('.')[0])
         combined: pd.DataFrame = pd.concat([existing, data], ignore_index=True)
-
-        logger.info('dataset to save:')
-        logger.info(data)
 
         if 'fonte' not in combined.columns and 'metrics' not in combined.columns:
             combined = combined.sort_values('dat_ref', ascending=False)
             combined = combined.drop_duplicates(subset=['dat_ref'], keep='last')
             if len(data) == 0:
                 raise ValueError("Dataset vazio!")
+
+            logger.info('dataset to save:')
+            logger.info(data)
 
         elif 'fonte' in combined.columns:
             keys_order_subset: List[str] = ['dat_ref', 'fonte', 'titulo']
