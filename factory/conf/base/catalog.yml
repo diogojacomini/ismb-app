@@ -10,45 +10,57 @@ pipeline_metrics:
   filepath: data/metrics/pipeline_metrics.csv
   <<: *environment_default
 
-# Stage
-rw_cds_stage:
+# stage_moneytimes:
+#   type: factory.datasets.AppendCSVDataset
+#   filepath: data/metrics/.csv
+#   <<: *environment_default
+
+## LAYER 1 - DADOS BRUTOS
+
+# Dados de mercado
+# chave: dat_ref
+
+stage_cds:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/raw/mercado/rw_cds_stage.csv
+  filepath: data/01_stage/mercado/stage_cds.csv
   <<: *environment_default
 
-rw_ibov_stage:
+stage_ibov:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/raw/mercado/rw_ibov_stage.csv
+  filepath: data/01_stage/mercado/stage_ibov.csv
   <<: *environment_default
 
-rw_ivvb_stage:
+stage_ivvb:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/raw/mercado/rw_ivvb_stage.csv
+  filepath: data/01_stage/mercado/stage_ivvb.csv
   <<: *environment_default
 
-rw_ifix_stage:
+stage_ifix:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/raw/mercado/rw_ifix_stage.csv
+  filepath: data/01_stage/mercado/stage_ifix.csv
   <<: *environment_default
 
-rw_infomoney_stage:
+# Dados de Noticias
+# chave: dat_ref
+
+stage_infomoney:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/raw/noticias/rw_infomoney_stage.csv
+  filepath: data/01_stage/noticias/stage_infomoney.csv
   <<: *environment_default
 
-rw_valorinveste_stage:
+stage_valorinveste:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/raw/noticias/rw_valorinveste_stage.csv
+  filepath: data/01_stage/noticias/stage_valorinveste.csv
   <<: *environment_default
 
-rw_seudinheiro_stage:
+stage_seudinheiro:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/raw/noticias/rw_seudinheiro_stage.csv
+  filepath: data/01_stage/noticias/stage_seudinheiro.csv
   <<: *environment_default
 
-rw_moneytimes_stage:
+stage_moneytimes:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/raw/noticias/rw_moneytimes_stage.csv
+  filepath: data/01_stage/noticias/stage_moneytimes.csv
   <<: *environment_default
 
 # Indicadores

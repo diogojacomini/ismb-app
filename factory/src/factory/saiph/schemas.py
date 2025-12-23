@@ -18,18 +18,28 @@ SCHEMA_NEWS = {
     "link": "string",
 }
 
+SCHEMA_WEB_SCRAPING = {
+    "dat_ref": "string",
+    "open_price": "float",
+    "close_price": "float",
+    "high_price": "float",
+    "low_price": "float",
+    "change_percentage": "float",
+}
 
 logger = logging.getLogger(__name__)
 
 
 class SchemaRegistry:
     _schemas = {
-        "rw_ibov_stage": SCHEMA_API_FINANCE,
-        "rw_ivvb_stage": SCHEMA_API_FINANCE,
-        "rw_infomoney_stage": SCHEMA_NEWS,
-        "rw_moneytimes_stage": SCHEMA_NEWS,
-        "rw_seudinheiro_stage": SCHEMA_NEWS,
-        "rw_valorinveste_stage": SCHEMA_NEWS,
+        "stage_ibov": SCHEMA_API_FINANCE,
+        "stage_ivvb": SCHEMA_API_FINANCE,
+        "stage_infomoney": SCHEMA_NEWS,
+        "stage_valorinveste": SCHEMA_NEWS,
+        "stage_seudinheiro": SCHEMA_NEWS,
+        "stage_moneytimes": SCHEMA_NEWS,
+        "stage_cds": SCHEMA_WEB_SCRAPING,
+        "stage_ifix": SCHEMA_WEB_SCRAPING,
     }
 
     @classmethod
