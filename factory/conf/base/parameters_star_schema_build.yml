@@ -1,0 +1,113 @@
+# This is a boilerplate parameters config generated for pipeline 'star_schema_build'
+# using Kedro 0.19.14.
+#
+# Documentation for this file format can be found in "Parameters"
+# Link: https://docs.kedro.org/en/0.19.14/configuration/parameters.html
+
+dim_tempo:
+  date_start: '2017-01-01'
+  year_range: 100
+
+indices:
+
+  indice_01:
+    sk_indice: 1
+    cod_indice: 'CDS'
+    nome_indice: 'Credit Default Swap Brasil 5 Anos'
+    categoria: 'Risco Soberano'
+    descricao: 'Medida de risco de crédito do Brasil'
+
+  indice_02:
+    sk_indice: 2
+    cod_indice: 'IBOV'
+    nome_indice: 'Indice Bovespa'
+    categoria: 'Mercado Acionario'
+    descricao: 'Principal indice de ações da B3'
+
+  indice_03:
+    sk_indice: 3
+    cod_indice: 'IVVB'
+    nome_indice: 'IVVB - VIX Brasil'
+    categoria: 'Volatilidade'
+    descricao: 'Indice de volatilidade do mercado brasileiro'
+
+  indice_04:
+    sk_indice: 4
+    cod_indice: 'IFIX'
+    nome_indice: 'Indice de Fundos Imobiliarios'
+    categoria: 'Mercado Imobiliario'
+    descricao: 'Indice de fundos imobiliarios da B3'
+
+fontes_noticias:
+
+  fonte_01:
+    sk_fonte: 1
+    cod_fonte: 'INFOMONEY'
+    nome_fonte: 'InfoMoney'
+    url: 'https://www.infomoney.com.br'
+    confiabilidade: 'Alta'
+
+  fonte_02:
+    sk_fonte: 2
+    cod_fonte: 'VALORINVEST'
+    nome_fonte: 'Valor Investe'
+    url: 'https://valorinveste.globo.com/'
+    confiabilidade: 'Alta'
+
+  fonte_03:
+    sk_fonte: 3
+    cod_fonte: 'SEUDINHEIRO'
+    nome_fonte: 'Seu Dinheiro'
+    url: 'https://www.seudinheiro.com/'
+    confiabilidade: 'Media'
+
+  fonte_04:
+    sk_fonte: 4
+    cod_fonte: 'MONEYTIMES'
+    nome_fonte: 'Money Times'
+    url: 'https://www.moneytimes.com.br'
+    confiabilidade: 'Media'
+
+indicadores:
+
+  indicador_01:
+    sk_indicador: 1
+    cod_indicador: 'RISCO_CREDITO'
+    nome_indicador: 'Risco de credito'
+    descricao: 'Indicador baseado em CDS e volatilidade'
+    peso_ismb: 0.25
+
+  indicador_02:
+    sk_indicador: 2
+    cod_indicador: 'RETORNO_MERCADO'
+    nome_indicador: 'Retorno do Mercado'
+    descricao: 'Indicador baseado em retornos do Ibovespa'
+    peso_ismb: 0.20
+
+  indicador_03:
+    sk_indicador: 3
+    cod_indicador: 'VOLATILIDADE'
+    nome_indicador: 'Volatilidade do Mercado'
+    descricao: 'Indicador baseado em EWMA, ATR e IVVB'
+    peso_ismb: 0.20
+
+  indicador_04:
+    sk_indicador: 4
+    cod_indicador: 'ATIVIDADE'
+    nome_indicador: 'Atividade do Mercado'
+    descricao: 'Indicador baseado em volume e descio de retorno'
+    peso_ismb: 0.10
+
+  indicador_05:
+    sk_indicador: 5
+    cod_indicador: 'CONFIANCA_LOCAL'
+    nome_indicador: 'Confianca do Mercado Local'
+    descricao: 'Indicador baseado no IFIX'
+    peso_ismb: 0.10
+
+  indicador_06:
+    sk_indicador: 6
+    cod_indicador: 'SENTIMENTO_NOTICIAS'
+    nome_indicador: 'Sentimento de Noticias'
+    descricao: 'Indicador baseado em analise de sentimento de portais financeiros'
+    peso_ismb: 0.15
