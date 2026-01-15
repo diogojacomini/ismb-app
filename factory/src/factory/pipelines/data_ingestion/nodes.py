@@ -306,10 +306,10 @@ def _make_dataframe_test_wbf(odate: str) -> pd.DataFrame:
     logger.info("Running in test environment, returning test data for market.")
     return pd.DataFrame({"dat_ref": [odate],
                          "close_price": [999.99],
-                         "open_price": [9999],
-                         "high_price": [9999],
-                         "low_price": [9999],
-                         "change_percentage": [9999]
+                         "open_price": [999.99],
+                         "high_price": [999.99],
+                         "low_price": [999.99],
+                         "change_percentage": [99.99]
                          })
 
 
@@ -317,11 +317,11 @@ def _make_dataframe_test_yf(odate: str) -> pd.DataFrame:
     """Cria um DataFrame de teste para dados do Yahoo Finance."""
     logger.info("Running in test environment, returning test data for Yahoo Finance.")
     return pd.DataFrame({"dat_ref": [odate],
-                         "close": [999.99],
-                         "high": [9999],
-                         "low": [9999],
-                         "vpen": [9999],
+                         "close_price": [999.99],
+                         "high_price": [999.99],
+                         "low_price": [999.99],
+                         "open_price": [999.99],
                          "volume": [9999],
-                         "close_adj": [9999],
+                         "close_adj_price": [999.99],
                          "test_env": [True]
                          })

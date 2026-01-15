@@ -3,11 +3,11 @@ import logging
 
 SCHEMA_API_FINANCE = {
     "dat_ref": "string",
-    "close_adj": "float",
-    "close": "float",
-    "high": "float",
-    "low": "float",
-    "vpen": "float",
+    "close_adj_price": "float",
+    "close_price": "float",
+    "high_price": "float",
+    "low_price": "float",
+    "open_price": "float",
     "volume": "Int64",
 }
 
