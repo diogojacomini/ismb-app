@@ -47,14 +47,9 @@ class AppendCSVDataset(AbstractDataset):
         data = SchemaRegistry._apply_schema(data, name=self._filepath.split('/')[-1].split('.')[0])
         combined: pd.DataFrame = pd.concat([existing, data], ignore_index=True)
 
-        if 'fonte' not in combined.columns and 'metrics' not in combined.columns:
-            combined = combined.sort_values('dat_ref', ascending=False)
-            combined = combined.drop_duplicates(subset=['dat_ref'], keep='last')
-            if len(data) == 0:
-                raise ValueError("Dataset vazio!")
-
-            logger.info('dataset to save:')
-            logger.info(data)
+        if 'sk' in combined.columns[0]:
+            keys_order_subset: List[str] = [combined.columns[0]]
+            combined = combined.drop_duplicates(subset=keys_order_subset, keep='first')
 
         elif 'fonte' in combined.columns:
             keys_order_subset: List[str] = ['dat_ref', 'fonte', 'titulo']
@@ -63,6 +58,18 @@ class AppendCSVDataset(AbstractDataset):
 
         elif 'metrics' in combined.columns:
             combined = combined.sort_values('start_time', ascending=False)
+
+        elif 'metrics_id' in combined.columns:
+            combined = combined.sort_values('check_timestamp', ascending=False)
+
+        else:
+            combined = combined.sort_values('dat_ref', ascending=False)
+            combined = combined.drop_duplicates(subset=['dat_ref'], keep='last')
+            if len(data) == 0:
+                raise ValueError("Dataset vazio!")
+
+            logger.info('dataset to save:')
+            logger.info(data)
 
         save_kwargs = dict(self._save_args)
         save_kwargs.setdefault('storage_options', self._storage_options)
