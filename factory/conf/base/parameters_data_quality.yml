@@ -17,3 +17,6 @@ quality_thresholds:
   validity_min: 90.0      # percentage mínima de dados válidos
   consistency_min: 95.0   # percentage mínima de consistência
   outlier_max_pct: 5.0    # percentage máxima de outliers permitidos
+
+sample_period_month:
+  stage_cds: 12
