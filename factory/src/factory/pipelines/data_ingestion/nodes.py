@@ -152,7 +152,7 @@ def extract_transform_infomoney(mapping_class: Dict[str, str], parameters: dict)
     df[["categoria", "titulo", "data_publicacao"]] = df["titulo"].apply(extrair_campos)
     df["dat_ref"] = pd.to_datetime(df["dat_ref"]).dt.strftime("%Y-%m-%d")
     df = df[df["categoria"] != "Esportes"]
-    df["id"] = df.apply(_generate_id_from_row, axis=1)
+    df["id_news"] = df.apply(_generate_id_from_row, axis=1)
     df = select_cast_midia(df)
     logger.info("Data transformed successfully")
 
@@ -183,7 +183,7 @@ def extract_transform_valorinveste(mapping_class: Dict[str, str], parameters: di
     logger.info("Data collected successfully from URL: %s - Data collected: %d", mapping_class.get("url"), len(df))
 
     df["dat_ref"] = df["link"].apply(extrair_data_url)
-    df["id"] = df.apply(_generate_id_from_row, axis=1)
+    df["id_news"] = df.apply(_generate_id_from_row, axis=1)
     df = select_cast_midia(df)
     df["dat_ref"] = pd.to_datetime(df["dat_ref"], format="%Y/%m/%d").dt.strftime("%Y-%m-%d")
     logger.info("Data transformed successfully")
@@ -228,7 +228,7 @@ def extract_transform_seudinheiro(mapping_class: Dict[str, str], parameters: dic
 
     if not df.empty:
         df["dat_ref"] = df["dat_ref"].apply(parse_data_portugues)
-        df["id"] = df.apply(_generate_id_from_row, axis=1)
+        df["id_news"] = df.apply(_generate_id_from_row, axis=1)
         df = select_cast_midia(df)
         logger.info("Data transformed successfully")
 
@@ -273,7 +273,7 @@ def extract_transform_moneytimes(mapping_class: Dict[str, str], parameters: dict
 
     if not df.empty:
         df["dat_ref"] = df["dat_ref"].apply(data_relativa_para_absoluta)
-        df["id"] = df.apply(_generate_id_from_row, axis=1)
+        df["id_news"] = df.apply(_generate_id_from_row, axis=1)
         df = select_cast_midia(df)
         df['dat_ref'].fillna(datetime.today().strftime('%Y-%m-%d'), inplace=True)  # para notícias recém publicadas
         logger.info("Data transformed successfully")
@@ -294,7 +294,8 @@ def _generate_id_from_row(row):
 def _make_dataframe_test_news(odate: str, context) -> pd.DataFrame:
     """Cria um DataFrame de teste."""
     logger.info("Running in test environment, returning test data for news.")
-    return pd.DataFrame({"dat_ref": [odate],
+    return pd.DataFrame({"id_news": ['1AB13'],
+                         "dat_ref": [odate],
                          "fonte": [context],
                          "titulo": ["Titulo de Test"],
                          "link": [f"link_test_{context}.com"],
