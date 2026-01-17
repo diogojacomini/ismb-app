@@ -12,6 +12,7 @@ SCHEMA_API_FINANCE = {
 }
 
 SCHEMA_NEWS = {
+    "id_news": "string",
     "dat_ref": "string",
     "fonte": "string",
     "titulo": "string",
