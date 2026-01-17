@@ -52,7 +52,7 @@ class AppendCSVDataset(AbstractDataset):
             combined = combined.drop_duplicates(subset=keys_order_subset, keep='first')
 
         elif 'fonte' in combined.columns:
-            keys_order_subset: List[str] = ['dat_ref', 'fonte', 'titulo']
+            keys_order_subset: List[str] = ['dat_ref', 'id_news', 'fonte']
             combined = combined.sort_values(keys_order_subset, ascending=False)
             combined = combined.drop_duplicates(subset=keys_order_subset, keep='last')
 
@@ -61,6 +61,14 @@ class AppendCSVDataset(AbstractDataset):
 
         elif 'metrics_id' in combined.columns:
             combined = combined.sort_values('check_timestamp', ascending=False)
+
+        elif ('dat_ref' in combined.columns) and ('cod_indice' in combined.columns):
+            combined = combined.sort_values(['dat_ref', 'cod_indice'], ascending=False)
+            combined = combined.drop_duplicates(subset=['dat_ref', 'cod_indice'], keep='last')
+
+        elif ('dat_ref' in combined.columns) and ('cod_fonte' in combined.columns):
+            combined = combined.sort_values(['dat_ref', 'cod_fonte'], ascending=False)
+            combined = combined.drop_duplicates(subset=['dat_ref', 'cod_fonte'], keep='last')
 
         else:
             combined = combined.sort_values('dat_ref', ascending=False)
