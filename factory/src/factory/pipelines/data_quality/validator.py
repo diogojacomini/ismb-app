@@ -7,7 +7,8 @@ from dataclasses import dataclass, asdict
 from typing import Dict, List
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timezone
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ class QualityMetrics:
     """Métricas de qualidade de dados para monitoramento."""
     metrics_id: str
     dataset_name: str
+    dat_ref: str
     check_timestamp: str
     total_records: int
     null_count: Dict[str, int]
@@ -146,15 +148,6 @@ class DataQualityValidator:
         return outlier_counts
 
     def validate_price_consistency(self, df: pd.DataFrame):
-        """Valida a consistencia entre preços"""
-        
-        # High deve ser >= Low
-
-        # Close deve estar entre Low e High
-        
-        # Open deve estar entre Low e High
-
-    def validate_price_consistency(self, df: pd.DataFrame):
         """Valida a consistencia entre preços."""
         errors: List[str] = []
 
@@ -188,21 +181,21 @@ class DataQualityValidator:
             sample_vals = df.loc[~high_ge_low_mask, "dat_ref"].head(5)
             sample_list = sample_vals.astype(str).tolist()
             errors.append(
-                f"{n_high_low_viol} linhas ({pct_high_low_viol:.2f}%) com high < low. Exemplos dat_ref: {sample_list}"
+                f"{n_high_low_viol} linhas ({pct_high_low_viol:.2f}%) com high < low. dat_ref: {sample_list}"
             )
 
         if n_close_viol > 0:
             sample_vals = df.loc[~close_between_mask, "dat_ref"].head(5)
             sample_list = sample_vals.astype(str).tolist()
             errors.append(
-                f"{n_close_viol} linhas ({pct_close_viol:.2f}%) com close fora do intervalo [low, high]. Exemplos dat_ref: {sample_list}"
+                f"{n_close_viol} linhas ({pct_close_viol:.2f}%) com close fora do intervalo [low, high]. dat_ref: {sample_list}"
             )
 
         if n_open_viol > 0:
             sample_vals = df.loc[~open_between_mask, "dat_ref"].head(5)
             sample_list = sample_vals.astype(str).tolist()
             errors.append(
-                f"{n_open_viol} linhas ({pct_open_viol:.2f}%) com open fora do intervalo [low, high]. Exemplos dat_ref: {sample_list}"
+                f"{n_open_viol} linhas ({pct_open_viol:.2f}%) com open fora do intervalo [low, high]. dat_ref: {sample_list}"
             )
 
         failed = any(
@@ -212,7 +205,7 @@ class DataQualityValidator:
 
         # guardar warnings se pequenas inconsistências (não bloqueantes)
         if not failed and errors:
-            self.warnings.append(f"Pequenas inconsistências de preço detectadas: {errors}")
+            self.warnings.extend(errors)
 
         # se falhou, também registrar como error interno
         if failed:
@@ -221,7 +214,7 @@ class DataQualityValidator:
         return (not failed), errors
 
     def calculate_quality_metrics(self, df: pd.DataFrame, null_counts: Dict[str, int],
-                                  duplicate_counts: int, outlier_counts: Dict[str, int]):
+                                  duplicate_counts: int, outlier_counts: Dict[str, int], dat_ref: str):
         """Calcula métricas agregadas de qualidade"""
         total_records = len(df)
         total_cells = total_records * len(df.columns)
@@ -246,13 +239,17 @@ class DataQualityValidator:
             status = 'WARNING'
         else:
             status = 'PASSED'
-        
+
+        short_uid = uuid.uuid4().hex[:8]
+        metrics_id = f"{self.dataset_name}_{short_uid}"
+
         return QualityMetrics(
-            metrics_id=f'{self.dataset_name}_{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}',
+            metrics_id=metrics_id,
             dataset_name=self.dataset_name,
+            dat_ref=dat_ref,
             check_timestamp=datetime.now().isoformat(),
             total_records=total_records,
-            null_count=null_counts,
+            null_count=total_nulls,
             duplicate_count=duplicate_counts,
             completeness_pct=round(nulls_pct, 2),
             validity_pct=round(validity_pct, 2),
@@ -275,3 +272,17 @@ class DataQualityValidator:
         
         compatible_types = type_mapping.get(expected.lower(), [expected.lower()])
         return actual.lower() in compatible_types or expected.lower() in actual.lower()
+
+    def validate_text_fields(self, df: pd.DataFrame, text_cols: List[str]):
+        """Valida compos de texto nao nulos"""
+        
+        for col in text_cols:
+            empty_count = (df[col].astype(str).str.strip() == '').sum()
+            if empty_count > 0:
+                self.warnings.append(f"Coluna '{col}' contém {empty_count} strings vazias")
+            
+            # Verificar tamanho minimo
+            if col == 'titulo':
+                short_titles = (df[col].astype(str).str.strip().str.len() < 10).sum()
+                if short_titles > 0:
+                    self.warnings.append(f"{short_titles} titulos com menos de 10 caracteres")

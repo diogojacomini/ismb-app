@@ -7,7 +7,6 @@ from kedro.pipeline import node, Pipeline, pipeline  # noqa
 from .nodes import (
     validate_stage_mercado,
     validate_stage_noticias,
-    validate_data_consolidated,
     generate_quality_report,
 )
 
