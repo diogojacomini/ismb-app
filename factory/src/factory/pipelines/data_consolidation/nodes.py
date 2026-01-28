@@ -50,7 +50,8 @@ def consolidate_data_noticias(stage_infomoney, stage_valorinveste, stage_seudinh
     consolidated_parts = []
     for df, cod_fonte in sources:
         if not process_full_data:
-            df = df[df["dat_ref"] == odate]
+            data_limite = (pd.to_datetime(odate) - pd.Timedelta(days=5)).strftime('%Y-%m-%d')
+            df = df[(df['dat_ref'] >= data_limite) & (df['dat_ref'] <= odate)]
 
         processed_df = _select_columns_news(df, cod_fonte)
         consolidated_parts.append(processed_df)
@@ -71,9 +72,6 @@ def _select_columns_transacoes(df: pd.DataFrame, cod_indice: list) -> pd.DataFra
 
     df = df.rename(columns={k: v for k, v in column_mapping.items() if k in df.columns})
 
-    # sk tempo
-    df['sk_tempo'] = pd.to_datetime(df['dat_ref']).dt.strftime('%Y%m%d').astype(int)
-
     # cod indice
     df['cod_indice'] = cod_indice
 
@@ -87,7 +85,6 @@ def _select_columns_transacoes(df: pd.DataFrame, cod_indice: list) -> pd.DataFra
 
     return df[['dat_ref',
               'cod_indice',
-              'sk_tempo',
               'val_fechamento',
               'val_abertura',
               'val_maxima',
@@ -102,14 +99,10 @@ def _select_columns_news(df: pd.DataFrame, cod_fonte: list) -> pd.DataFrame:
 
     df = df.rename(columns={k: v for k, v in column_mapping.items() if k in df.columns})
 
-    # sk tempo
-    df['sk_tempo'] = pd.to_datetime(df['dat_ref']).dt.strftime('%Y%m%d').astype(int)
-
     # cod fonte
     df['cod_fonte'] = cod_fonte
 
     return df[['dat_ref',
                'cod_fonte',
-              'sk_tempo',
               'txt_titulo',
               ]]

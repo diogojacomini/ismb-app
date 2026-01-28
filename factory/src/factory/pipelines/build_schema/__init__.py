@@ -1,5 +1,5 @@
 """
-This is a boilerplate pipeline 'star_schema_build'
+This is a boilerplate pipeline 'build_schema'
 generated using Kedro 0.19.14
 """
 

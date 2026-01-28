@@ -116,33 +116,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="validate_stage_moneytimes_node",
                 tags=["pipeline-data_quality", "noticias"],
             ),
-            
-            # # Consolidado
-            # node(
-            #     func=validate_data_consolidated,
-            #     inputs=[
-            #         "data_consolidated_mercado",
-            #         "params:dataset_name_consolidated_mercado",
-            #         "parameters"
-            #     ],
-            #     outputs="metrics_consolidated_mercado",
-            #     name="validate_consolidated_mercado_node",
-            #     tags=["pipeline-data_quality", "noticias"],
-            # ),
-            
-            # node(
-            #     func=validate_data_consolidated,
-            #     inputs=[
-            #         "data_consolidated_noticias",
-            #         "params:dataset_name_consolidated_noticias",
-            #         "parameters"
-            #     ],
-            #     outputs="metrics_consolidated_noticias",
-            #     name="validate_consolidated_noticias_node",
-            #     tags=["pipeline-data_quality", "noticias"],
-            # ),
-            
-            
+
             # Relatorio final
             node(
                 func=generate_quality_report,
@@ -155,8 +129,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "metrics_stage_valorinveste",
                     "metrics_stage_seudinheiro",
                     "metrics_stage_moneytimes",
-                    # "metrics_consolidated_noticias",
-                    # "metrics_consolidated_mercado",
                     "parameters",
                 ],
                 outputs="data_quality_report",

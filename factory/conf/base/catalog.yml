@@ -2,23 +2,81 @@
 #
 # Documentation for this file format can be found in "The Data Catalog"
 # Link: https://docs.kedro.org/en/stable/data/data_catalog.html
-_common_environment: &environment_default
-  environment: prd
 
-pipeline_metrics:
+# Parametros Globais
+_common_environment: &environment_default
+  environment: hk
+
+# Registra logs de execucao dos pipelines e de cada node
+pipeline_logs:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/metrics/pipeline_metrics.csv
+  filepath: data/00_governance/metadata/pipeline_logs.csv
   <<: *environment_default
 
-# stage_moneytimes:
-#   type: factory.datasets.AppendCSVDataset
-#   filepath: data/metrics/.csv
-#   <<: *environment_default
+# Validação de dados pós processamento
+validation_data_mercado:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/00_governance/validation/validation_data_mercado.csv
+  <<: *environment_default
 
-## LAYER 1 - DADOS BRUTOS
+validation_data_indicadores:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/00_governance/validation/validation_data_indicadores.csv
+  <<: *environment_default
 
-# Dados de mercado
-# chave: dat_ref
+validation_indice_isbm:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/00_governance/validation/validation_indice_isbm.csv
+  <<: *environment_default
+
+# Métricas de qualidade de dados stage
+metrics_stage_cds:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/00_governance/data_quality/metrics_stage_cds.csv
+  <<: *environment_default
+
+metrics_stage_ibov:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/00_governance/data_quality/metrics_stage_ibov.csv
+  <<: *environment_default
+
+metrics_stage_ivvb:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/00_governance/data_quality/metrics_stage_ivvb.csv
+  <<: *environment_default
+
+metrics_stage_ifix:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/00_governance/data_quality/metrics_stage_ifix.csv
+  <<: *environment_default
+
+metrics_stage_infomoney:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/00_governance/data_quality/metrics_stage_infomoney.csv
+  <<: *environment_default
+
+metrics_stage_valorinveste:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/00_governance/data_quality/metrics_stage_valorinveste.csv
+  <<: *environment_default
+
+metrics_stage_seudinheiro:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/00_governance/data_quality/metrics_stage_seudinheiro.csv
+  <<: *environment_default
+
+metrics_stage_moneytimes:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/00_governance/data_quality/metrics_stage_moneytimes.csv
+  <<: *environment_default
+
+data_quality_report:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/00_governance/data_quality/data_quality_report.csv
+  <<: *environment_default
+
+
+# Camada Stage
 
 stage_cds:
   type: factory.datasets.AppendCSVDataset
@@ -40,9 +98,6 @@ stage_ifix:
   filepath: data/01_stage/mercado/stage_ifix.csv
   <<: *environment_default
 
-# Dados de Noticias
-# chave: dat_ref
-
 stage_infomoney:
   type: factory.datasets.AppendCSVDataset
   filepath: data/01_stage/noticias/stage_infomoney.csv
@@ -63,39 +118,98 @@ stage_moneytimes:
   filepath: data/01_stage/noticias/stage_moneytimes.csv
   <<: *environment_default
 
-# Indicadores
+
+# Camada Curated
+
+# fato:
+fato_transacao_mercado:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/02_curated/facts/fato_transacao_mercado.csv
+  <<: *environment_default
+
+fato_transacao_noticias:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/02_curated/facts/fato_transacao_noticias.csv
+  <<: *environment_default
+
+fato_indice_ismb:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/02_curated/facts/fato_indice_ismb.csv
+  <<: *environment_default
+
+# dim:
+dim_indice:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/02_curated/dimensions/dim_indice.csv
+  <<: *environment_default
+
+dim_tempo:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/02_curated/dimensions/dim_tempo.csv
+  <<: *environment_default
+
+dim_indicador:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/02_curated/dimensions/dim_indicador.csv
+  <<: *environment_default
+
+dim_fonte_noticia:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/02_curated/dimensions/dim_fonte_noticia.csv
+  <<: *environment_default
+
+
+# 03 - Indicadores
+
 indicador_risco_credito:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/indicadores/indicador_risco_credito.csv
+  filepath: data/03_indicators/indicador_risco_credito.csv
   <<: *environment_default
 
 indicador_retorno_mercado:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/indicadores/indicador_retorno_mercado.csv
+  filepath: data/03_indicators/indicador_retorno_mercado.csv
   <<: *environment_default
 
 indicador_volatilidade_mercado:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/indicadores/indicador_volatilidade_mercado.csv
+  filepath: data/03_indicators/indicador_volatilidade_mercado.csv
   <<: *environment_default
 
 indicador_atividade_mercado:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/indicadores/indicador_atividade_mercado.csv
+  filepath: data/03_indicators/indicador_atividade_mercado.csv
   <<: *environment_default
 
 indicador_confianca_mercado_local:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/indicadores/indicador_confianca_mercado_local.csv
+  filepath: data/03_indicators/indicador_confianca_mercado_local.csv
   <<: *environment_default
 
 indicador_sentimento_noticias:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/indicadores/indicador_sentimento_noticias.csv
+  filepath: data/03_indicators/indicador_sentimento_noticias.csv
   <<: *environment_default
 
-# INDICE ISMB
-indice_isbm:
+
+# 04 - Analytics
+
+analytics_dashboard_diario:
   type: factory.datasets.AppendCSVDataset
-  filepath: data/indice/indice_ismb.csv
+  filepath: data/04_analytics/analytics_dashboard_diario.csv
+  <<: *environment_default
+
+analytics_serie_temporal_ismb:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/04_analytics/analytics_serie_temporal_ismb.csv
+  <<: *environment_default
+
+analytics_correlacao:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/04_analytics/analytics_correlacao.csv
+  <<: *environment_default
+
+analytics_kpis_agregados:
+  type: factory.datasets.AppendCSVDataset
+  filepath: data/04_analytics/analytics_kpis_agregados.csv
   <<: *environment_default

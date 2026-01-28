@@ -12,6 +12,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=calculate_score_dim,
                 inputs=[
                     "params:score_isbm",
+                    "dim_tempo",
                     "indicador_risco_credito",
                     "indicador_retorno_mercado",
                     "indicador_volatilidade_mercado",
@@ -20,8 +21,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "indicador_sentimento_noticias",
                     "parameters"
                 ],
-                outputs="indice_isbm",
+                outputs="fato_indice_ismb",
                 name="process_score_data_node",
+                tags=["pipeline-calculo_score"],
             ),
         ]
     )

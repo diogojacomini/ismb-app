@@ -85,9 +85,35 @@ class Monitor:
         try:
             if self.catalog is not None:
                 df = DataFrame([result])
-                self.catalog.save("pipeline_metrics", df)
+                self.catalog.save("pipeline_logs", df)
                 logger.info(f"[MONITOR] Metrics for pipeline '{self.entity_name}' saved to catalog.")
             else:
                 logger.warning(f"[MONITOR] ERROR '{self.entity_name}'.")
         except Exception as e:
             logger.error(f"[MONITOR] Failed to save metrics to catalog: {e}")
+
+
+class MonitorCost:
+    
+    def __init__(self, catalog=None):
+        self.costs = {
+            'compute': 0.0,
+            'storage': 0.0,
+            'network': 0.0
+        }
+        self.catalog = catalog
+    
+    def estimate_compute_cost(self, duration_seconds: float, workers: int = 1):
+        cost_per_hour = 0.10
+        hours = duration_seconds / 3600
+        cost = hours * workers * cost_per_hour
+        
+        self.costs['compute'] += cost
+        return cost
+    
+    def estimate_storage_cost(self, size_gb: float, duration_days: int = 30):
+        cost_per_gb_month = 0.023
+        cost = (size_gb / 1024) * cost_per_gb_month
+        
+        self.costs['storage'] += cost
+        return cost

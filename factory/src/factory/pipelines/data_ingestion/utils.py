@@ -214,7 +214,7 @@ def data_relativa_para_absoluta(texto, agora=None):
 
 def select_cast_midia(df: pd.DataFrame) -> pd.DataFrame:
     """Seleciona e converte colunas do DataFrame."""
-    df = df[['id', 'dat_ref', 'fonte', 'titulo', 'link']]
+    df = df[['id_news', 'dat_ref', 'fonte', 'titulo', 'link']]
     df = df.astype({col: 'string' for col in df.columns if col != 'dat_ref'})
     return df
 

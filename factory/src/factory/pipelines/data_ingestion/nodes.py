@@ -102,6 +102,7 @@ def _transform_html_table(raw_data: pd.DataFrame, columns_order: list, dat_forma
             )
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
+    df["change_percentage"] = pd.to_numeric(df["change_percentage"], errors="coerce").round(2)
     return df
 
 
@@ -125,6 +126,9 @@ def extract_transform_api_yf(ticker: str, columns_mapping: Dict[str, str], param
     df = df.reset_index(inplace=False)
     df = df.rename(columns=columns_mapping)
     logger.info("Data transformed successfully")
+
+    for col in df.select_dtypes(include=['float']).columns:
+        df[col] = df[col].round(2)
 
     if not process_full_data:
         df["dat_ref"] = df["dat_ref"].dt.strftime("%Y-%m-%d")
@@ -306,8 +310,8 @@ def _make_dataframe_test_wbf(odate: str) -> pd.DataFrame:
     """Cria um DataFrame de teste para dados de mercado."""
     logger.info("Running in test environment, returning test data for market.")
     return pd.DataFrame({"dat_ref": [odate],
-                         "close_price": [999.99],
                          "open_price": [999.99],
+                         "close_price": [999.99],
                          "high_price": [999.99],
                          "low_price": [999.99],
                          "change_percentage": [99.99]
@@ -318,11 +322,10 @@ def _make_dataframe_test_yf(odate: str) -> pd.DataFrame:
     """Cria um DataFrame de teste para dados do Yahoo Finance."""
     logger.info("Running in test environment, returning test data for Yahoo Finance.")
     return pd.DataFrame({"dat_ref": [odate],
+                         "close_adj_price": [999.99],
                          "close_price": [999.99],
                          "high_price": [999.99],
                          "low_price": [999.99],
                          "open_price": [999.99],
-                         "volume": [9999],
-                         "close_adj_price": [999.99],
-                         "test_env": [True]
+                         "volume": [9999]
                          })

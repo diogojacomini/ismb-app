@@ -1,5 +1,5 @@
 """
-This is a boilerplate pipeline 'star_schema_build'
+This is a boilerplate pipeline 'build_schema'
 generated using Kedro 0.19.14
 """
 import logging
@@ -78,7 +78,12 @@ def build_dim_tempo(parameters: pd.DataFrame) -> pd.DataFrame:
     df_dim.fillna(value={'feriado': 0, 'nome_feriado': ''}, inplace=True)
 
     # Flag dia util
-    df_dim['dia_util'] = ((df_dim['fim_semana'] == 0) & (df_dim['feriado'] == 0)).astype(int)
+    # df_dim['dia_util'] = ((df_dim['fim_semana'] == 0) & (df_dim['feriado'] == 0)).astype(int)
+    is_vespera = (
+        ((df_dim['mes'] == 12) & (df_dim['dia_mes'] == 24)) |
+        ((df_dim['mes'] == 12) & (df_dim['dia_mes'] == 31))
+    )
+    df_dim['dia_util'] = ( (df_dim['fim_semana'] == 0) & (df_dim['feriado'] == 0) & (~is_vespera)).astype(int)
 
     df_dim = df_dim.sort_values('sk_tempo').reset_index(drop=True)
 

@@ -13,3 +13,4 @@ score_isbm:
     score_atividade_mercado:    0.10
     score_confianca_mercado:    0.10
     score_noticias:             0.15
+  schema: ['dat_ref', 'score_risco_credito', 'score_retorno_mercado', 'score_volatilidade_mercado', 'score_atividade_mercado', 'score_confianca_mercado', 'score_noticias', 'indice_ismb']

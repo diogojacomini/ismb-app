@@ -1,4 +1,4 @@
-# This is a boilerplate parameters config generated for pipeline 'star_schema_build'
+# This is a boilerplate parameters config generated for pipeline 'build_schema'
 # using Kedro 0.19.14.
 #
 # Documentation for this file format can be found in "Parameters"

@@ -9,6 +9,8 @@ parameters_indicador_risco_credito:
   lambda_ewma: 0.94     # Parâmetro lambda para suavização EWMA da volatilidade
   w_retorno: 0.5        # Peso do retorno
   w_vol: 0.5            # Peso da volatilidade
+  cod_indicador: 'RISCO_CREDITO'  # Código do indicador de risco de crédito
+  schema: ['dat_ref', 'cod_indicador', 'retorno_diario', 'vol_ewma', 'rank_vol', 'rank_retorno', 'risco_bruto', 'score_risco_credito']
 
 parameters_retorno_mercado:
   rolling_mean_window: 21   # Janela para média móvel do retorno
@@ -16,6 +18,8 @@ parameters_retorno_mercado:
   volume_mean_window: 30    # Janela para média móvel do volume
   volume_clip: 0.7          # Limite inferior para fator de volume
   lookback_days: 180        # Dias de histórico mínimo
+  cod_indicador: 'RETORNO_MERCADO'  # Código do indicador de retorno de mercado
+  schema: ['dat_ref', 'cod_indicador', 'log_ret', 'media_ret', 'desvio_ret', 'z_retorno', 'media_vol', 'score_retorno_mercado']
 
 parameters_volatilidade_mercado:
   ewma_weight: 0.5     # Peso da volatilidade EWMA (histórica)
@@ -25,12 +29,24 @@ parameters_volatilidade_mercado:
   alpha_ivvb: 0.06     # Parâmetro alpha para volatilidade IVVB
   atr_window: 14       # Janela para ATR
   lookback_days: 180   # Dias de histórico mínimo
+  cod_indicador: 'VOLATILIDADE'  # Código do indicador de volatilidade de mercado
+  schema: ['dat_ref', 'cod_indicador', 'log_ret', 'ewma_var', 'ewma_vol', 'atr', 'score_ewma', 'score_atr', 'retorno_ivvb', 'vol_ivvb', 'score_ivvb', 'score_volatilidade_mercado']
 
 parameters_atividade_mercado:
+  lookback_days: 180        # Dias de histórico mínimo
   rolling_return_window: 3    # Janela para média móvel do retorno
   volume_mean_window: 30      # Janela para média móvel do volume
   volume_clip: 0.7            # Limite inferior para fator de volume
+  cod_indicador: 'ATIVIDADE'  # Código do indicador de atividade de mercado
+  schema: ['dat_ref', 'cod_indicador', 'retorno', 'desvio_relativo', 'score', 'score_atividade_mercado']
 
 parameters_confianca_mercado:
   rolling_return_window: 3    # Janela para média móvel do retorno
   lookback_days: 30           # Dias de histórico mínimo
+  cod_indicador: 'CONFIANCA_LOCAL'  # Código do indicador de confiança de mercado local
+  schema: ['dat_ref', 'cod_indicador', 'retorno', 'retorno_mm', 'desvio_relativo', 'score_confianca_mercado']
+
+parameters_sentimento_midia:
+  cod_indicador: 'SENTIMENTO_NOTICIAS'  # Código do indicador de sentimento de mídia
+  schema: ['dat_ref', 'cod_indicador', 'score_noticias']
+  lookback_days: 3           # Dias de histórico mínimo

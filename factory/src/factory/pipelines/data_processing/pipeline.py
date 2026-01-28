@@ -20,65 +20,73 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=indicador_risco_credito,
                 inputs=[
-                    "rw_cds_stage",
+                    "fato_transacao_mercado",
+                    "dim_tempo",
                     "params:parameters_indicador_risco_credito",
                     "parameters"
                 ],
                 outputs="indicador_risco_credito",
                 name="indicador_risco_credito_node",
+                tags=["pipeline-calculo_indicadores"],
             ),
             node(
                 func=indicador_retorno_mercado,
                 inputs=[
-                    "rw_ibov_stage",
+                    "fato_transacao_mercado",
+                    "dim_tempo",
                     "params:parameters_retorno_mercado",
                     "parameters"
                 ],
                 outputs="indicador_retorno_mercado",
                 name="indicador_retorno_mercado_node",
+                tags=["pipeline-calculo_indicadores"],
             ),
             node(
                 func=indicador_volatilidade_mercado,
                 inputs=[
-                    "rw_ibov_stage",
-                    "rw_ivvb_stage",
+                    "fato_transacao_mercado",
+                    "dim_tempo",
                     "params:parameters_volatilidade_mercado",
                     "parameters"
                 ],
                 outputs="indicador_volatilidade_mercado",
                 name="indicador_volatilidade_mercado_node",
+                tags=["pipeline-calculo_indicadores"],
             ),
             node(
                 func=indicador_atividade_mercado,
                 inputs=[
-                    "rw_ibov_stage",
+                    "fato_transacao_mercado",
+                    "dim_tempo",
                     "params:parameters_atividade_mercado",
                     "parameters"
                 ],
                 outputs="indicador_atividade_mercado",
                 name="indicador_atividade_mercado_node",
+                tags=["pipeline-calculo_indicadores"],
             ),
             node(
                 func=indicador_confianca_mercado_local,
                 inputs=[
-                    "rw_ifix_stage",
+                    "fato_transacao_mercado",
+                    "dim_tempo",
                     "params:parameters_confianca_mercado",
                     "parameters"
                 ],
                 outputs="indicador_confianca_mercado_local",
                 name="indicador_confianca_mercado_local_node",
+                tags=["pipeline-calculo_indicadores"],
             ),
             node(
                 func=indicador_sentimento_midia,
                 inputs=[
-                    "rw_infomoney_stage",
-                    "rw_moneytimes_stage",
-                    "rw_valorinveste_stage",
-                    "rw_seudinheiro_stage",
+                    "fato_transacao_noticias",
+                    "params:parameters_sentimento_midia",
                     "parameters"
                 ],
                 outputs="indicador_sentimento_noticias",
                 name="indicador_sentimento_noticias_node",
+                tags=["pipeline-calculo_indicadores"],
             ),
         ]
     )

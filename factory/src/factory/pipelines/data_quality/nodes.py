@@ -55,7 +55,11 @@ def validate_stage_noticias(df: pd.DataFrame, dataset_name: str, params_quality:
     logger.info(f"Quality thresholds: {params_quality}")
 
     if not process_full_data:
-        df = df[df["dat_ref"] == odate]
+        lookback_days = params_global.get("sample_period_news", 3)
+        data_limite = (pd.to_datetime(odate) - pd.Timedelta(days=lookback_days)).strftime('%Y-%m-%d')
+        logger.info("Data limite: %s (lookback_days=%d)", data_limite, lookback_days)
+
+        df = df[(df['dat_ref'] >= data_limite) & (df['dat_ref'] <= odate)]
 
     validator = DataQualityValidator(dataset_name, params_quality)
     logger.info(f"Validating dataset: {dataset_name} with {len(df)} records.")
@@ -155,7 +159,8 @@ def _pre_validation_metrics(validator, df, dataset_name, dat_ref):
         logger.warning(f"Valores Nulls presente: {null_counts}")
 
     # Valida duplicados
-    duplicate_count = validator.validade_duplicates(df, ['dat_ref'])
+    duplicate_keys = 'id_news' if 'id_news' in df.columns else 'dat_ref'
+    duplicate_count = validator.validade_duplicates(df, duplicate_keys)
 
     # Identificação de outliers
     numeric_cols = df.select_dtypes(include=['int64', 'float64', 'int32', 'float32']).columns.to_list()

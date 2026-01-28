@@ -31,7 +31,7 @@ class AppendCSVDataset(AbstractDataset):
             self._storage_options.update(fs_args)
         
         if self.environment == 'dev' or self.environment == 'test':
-            self._filepath = self._filepath.replace('data/', 'data/sandbox/dev/')
+            self._filepath = self._filepath.replace('/data/', '/data/sandbox/dev/')
 
     def _load(self) -> pd.DataFrame:
         if self._exists():
@@ -52,7 +52,12 @@ class AppendCSVDataset(AbstractDataset):
             combined = combined.drop_duplicates(subset=keys_order_subset, keep='first')
 
         elif 'fonte' in combined.columns:
-            keys_order_subset: List[str] = ['dat_ref', 'id_news', 'fonte']
+            keys_order_subset: List[str] = ['dat_ref', 'titulo', 'fonte']
+            combined = combined.sort_values(keys_order_subset, ascending=False)
+            combined = combined.drop_duplicates(subset=keys_order_subset, keep='last')
+
+        elif 'cod_fonte' in combined.columns:
+            keys_order_subset: List[str] = ['dat_ref', 'cod_fonte', 'txt_titulo']
             combined = combined.sort_values(keys_order_subset, ascending=False)
             combined = combined.drop_duplicates(subset=keys_order_subset, keep='last')
 
@@ -70,9 +75,21 @@ class AppendCSVDataset(AbstractDataset):
             combined = combined.sort_values(['dat_ref', 'cod_fonte'], ascending=False)
             combined = combined.drop_duplicates(subset=['dat_ref', 'cod_fonte'], keep='last')
 
+        elif ('dat_ref' in combined.columns) and ('indicator' in combined.columns):
+            combined = combined.sort_values(['dat_ref', 'indicator'], ascending=False)
+            combined = combined.drop_duplicates(subset=['dat_ref', 'indicator'], keep='last')
+
+        elif 'idx_a' in combined.columns and 'idx_b' in combined.columns:
+            combined = combined.sort_values(['dat_ref', 'idx_a', 'idx_b'], ascending=False)
+            combined = combined.drop_duplicates(subset=['dat_ref', 'idx_a', 'idx_b'], keep='last')
+        
+        elif 'entity_type' in combined.columns:
+            combined = combined.sort_values(['entity_type', 'entity_name', 'year'], ascending=False)
+            combined = combined.drop_duplicates(subset=['entity_type', 'entity_name', 'year'], keep='last')
+        
         else:
-            combined = combined.sort_values('dat_ref', ascending=False)
             combined = combined.drop_duplicates(subset=['dat_ref'], keep='last')
+            combined = combined.sort_values('dat_ref', ascending=False)
             if len(data) == 0:
                 raise ValueError("Dataset vazio!")
 
@@ -81,10 +98,10 @@ class AppendCSVDataset(AbstractDataset):
 
         save_kwargs = dict(self._save_args)
         save_kwargs.setdefault('storage_options', self._storage_options)
-        if self.environment == 'hk':
-            self._filepath = self._filepath.replace('data/', 'data/sandbox/')
 
-        combined.to_csv(self._filepath, index=False, **save_kwargs)
+        _filepath = self._filepath.replace('/data/', '/data/sandbox/') if self.environment == 'hk' else self._filepath
+
+        combined.to_csv(_filepath, index=False, **save_kwargs)
 
     def _exists(self) -> bool:
         storage_options: Dict[str, Any] = self._load_args.get('storage_options', {}) or self._storage_options or {}

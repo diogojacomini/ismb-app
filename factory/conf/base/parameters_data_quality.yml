@@ -20,3 +20,8 @@ quality_thresholds:
 
 sample_period_month:
   stage_cds: 12
+  stage_ibov: 6
+  stage_ivvb: 6
+  stage_ifix: 2
+
+sample_period_news: 3

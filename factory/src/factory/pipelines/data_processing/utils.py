@@ -14,10 +14,10 @@ except LookupError:
 
 def ewma_volatility(df, variacia=21, lambda_=0.94):
 
-    if df['close_price'].isnull().any():
+    if df['val_fechamento'].isnull().any():
         raise ValueError("A coluna 'close' contém valores nulos.")
 
-    df['retorno_diario'] = df['close_price'].pct_change()
+    df['retorno_diario'] = df['val_fechamento'].pct_change()
     var = df['retorno_diario'].dropna().var()  # variância
 
     variance = []

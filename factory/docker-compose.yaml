@@ -266,3 +266,16 @@ services:
       - airflow
     depends_on:
       <<: *airflow-common-depends-on
+
+  kedro-viz:
+    <<: *airflow-common
+    command: kedro viz run --autoreload --host 0.0.0.0 --port 4141
+    ports:
+      - "4141:4141"
+    environment:
+      <<: *airflow-common-env
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
