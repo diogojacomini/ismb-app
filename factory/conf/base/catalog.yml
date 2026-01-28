@@ -5,7 +5,7 @@
 
 # Parametros Globais
 _common_environment: &environment_default
-  environment: hk
+  environment: prd
 
 # Registra logs de execucao dos pipelines e de cada node
 pipeline_logs:

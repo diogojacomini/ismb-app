@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>ISMB</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: #f6f8fa;
+            margin: 0;
+            color: #222;
+            display: flex;
+        }
+        .sidebar {
+            background: #2E3133;
+            color: #fff;
+            width: 230px;
+            min-width: 230px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            z-index: 100;
+            transition: width 0.2s;
+        }
+        .sidebar-header {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 22px 0 12px 18px;
+        }
+        .sidebar .logo {
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 1.35em;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            margin-bottom: 18px;
+        }
+        .sidebar nav {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-top: 0;
+            padding-left: 8px;
+        }
+        .sidebar nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 0 12px 16px;
+            font-size: 0.95em;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+            border-radius: 6px;
+            width: 92%;
+            text-align: left;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .sidebar nav a.active, .sidebar nav a:focus {
+            background: #fff;
+            color: #2E3133;
+            border-left: 3px solid #00bcd4;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(0,188,212,0.08);
+        }
+        .sidebar nav a:hover {
+            background: #232526;
+            color: #00bcd4;
+        }
+        .sidebar-footer {
+            margin-top: auto;
+            width: 100%;
+            padding: 14px 0 14px 0;
+            font-size: 0.93em;
+            color: #bbb;
+            border-top: 1px solid #232526;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .sidebar-footer .footer-icons {
+            display: flex;
+            flex-direction: row;
+            gap: 18px;
+            margin-top: 8px;
+            margin-bottom: 0;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            color: #00bcd4;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 0;
+            font-size: 0.98em;
+            transition: color 0.2s;
+            padding: 0;
+        }
+        .sidebar-footer a:hover svg {
+            fill: #00bcd4;
+            stroke: #00bcd4;
+        }
+        .sidebar-footer svg {
+            width: 22px;
+            height: 22px;
+            fill: #fff;
+            stroke: #fff;
+            flex-shrink: 0;
+            display: inline-block;
+            transition: fill 0.2s, stroke 0.2s;
+        }
+        .main-content {
+            margin-left: 180px;
+            max-width: 100vw;
+            width: 100%;
+            padding: 0 8vw 32px 8vw;
+            transition: margin-left 0.2s;
+        }
+        @media (max-width: 900px) {
+            .sidebar { width: 110px; min-width: 110px; }
+            .main-content { margin-left: 110px; padding-left: 2vw; padding-right: 2vw; }
+        }
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 48px 0 0 0;
+            width: 100%;
+            max-width: 100vw;
+        }
+        .hero-title {
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 2.7em;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .hero-desc {
+            color: #607d8b;
+            font-size: 1.18em;
+            text-align: left;
+            max-width: 1300px;
+            margin: 0 auto 32px auto;
+            font-weight: 500;
+        }
+        .gauge-box {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 40px 48px 32px 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 40px;
+            min-width: 600px;
+            max-width: 1200px;
+            width: 1100px;
+            gap: 18px;
+            align-self: center;
+        }
+        .gauge-label {
+            font-size: 1.18em;
+            color: #222;
+            margin-bottom: 8px;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .gauge-value {
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #00bcd4;
+            margin-bottom: 0;
+            letter-spacing: 2px;
+        }
+        .gauge-status {
+            font-size: 0.93em;
+            font-weight: 700;
+            margin-bottom: 0;
+            color: #fff;
+            background: #8b8b8b;
+            border-radius: 10px;
+            padding: 7px 28px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+            letter-spacing: 0.5px;
+        }
+        .gauge-bar {
+            width: 900px;
+            max-width: 98vw;
+            height: 28px;
+            background: linear-gradient(90deg, #e53935 0%, #fbc02d 25%, #fbc02d 45%, #43a047 55%, #43a047 80%, #388e3c 100%);
+            border-radius: 14px;
+            position: relative;
+            margin-bottom: 0;
+        }
+        .gauge-pointer {
+            position: absolute;
+            top: -10px;
+            width: 4px;
+            height: 48px;
+            background: #222;
+            left: calc(var(--gauge-pos, 50) * 1% - 2px);
+            border-radius: 2px;
+            z-index: 2;
+        }
+        .gauge-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 900px;
+            max-width: 98vw;
+            font-size: 0.93em;
+            color: #888;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+        .gauge-intervals {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            width: 100%;
+            max-width: 900px;
+            margin: 18px auto 0 auto;
+            gap: 0;
+        }
+        .gauge-interval {
+            flex: 1 1 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 0 0 0;
+            min-width: 90px;
+            max-width: 180px;
+        }
+        .gauge-interval-label {
+            font-size: 0.93em;
+            font-weight: 700;
+            color: #222;
+            background: #f6f8fa;
+            border-radius: 8px 8px 0 0;
+            padding: 4px 10px 2px 10px;
+            margin-bottom: 2px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .gauge-interval-range {
+            font-size: 0.98em;
+            color: #607d8b;
+            font-weight: 500;
+            background: #eaf6fa;
+            border-radius: 0 0 8px 8px;
+            padding: 2px 10px 4px 10px;
+            letter-spacing: 0.5px;
+        }
+        @media (max-width: 1100px) {
+            .gauge-box, .gauge-bar, .gauge-labels, .gauge-intervals { width: 98vw; min-width: 180px; max-width: 98vw; }
+            .gauge-box { width: 98vw; }
+            .gauge-intervals { max-width: 98vw; }
+        }
+        @media (max-width: 900px) {
+            .gauge-box { min-width: 180px; max-width: 98vw; width: 98vw; padding-left: 10px; padding-right: 10px; }
+            .gauge-bar, .gauge-labels, .gauge-intervals { width: 98vw; min-width: 120px; max-width: 98vw; }
+            .gauge-interval { min-width: 60px; }
+        }
+        .main-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            padding: 32px 24px 24px 24px;
+            margin-bottom: 32px;
+        }
+        .main-card h3 {
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 1.18em;
+            margin-bottom: 18px;
+            color: #2d3e50;
+        }
+        .indicadores-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            justify-content: space-between;
+            margin-bottom: 32px;
+        }
+        .indicador-card {
+            background: #f4f6fa;
+            border-radius: 10px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+            padding: 18px 18px 12px 18px;
+            min-width: 140px;
+            flex: 1 1 140px;
+            text-align: center;
+            transition: box-shadow 0.2s, transform 0.2s;
+            cursor: pointer;
+        }
+        .indicador-card:hover {
+            box-shadow: 0 4px 16px rgba(0,188,212,0.13);
+            transform: translateY(-2px) scale(1.03);
+        }
+        .indicador-nome {
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 1.00em;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .indicador-valor {
+            font-size: 1.38em;
+            color: #00bcd4;
+            font-weight: 800;
+            margin-bottom: 2px;
+            text-align: center;
+        }
+        .indicador-var {
+            font-size: 1.00em;
+            color: #43a047;
+        }
+        .indicador-sentimento-indice {
+            display: block;
+            font-size: 0.90em;
+            font-weight: 600;
+            color: #555;
+            background: #eaf6fa;
+            border-radius: 8px;
+            padding: 3px 14px;
+            margin: 0 auto 6px auto;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            text-align: center;
+            width: fit-content;
+        }
+        .indicador-detalhe {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 32px;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+        .indicador-info {
+            flex: 1 1 220px;
+            min-width: 200px;
+            max-width: 340px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .indicador-valor-destaque {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #00bcd4;
+        }
+        .indicador-sentimento {
+            font-size: 1.08em;
+            font-weight: 600;
+            color: #ffffff;
+            background: #8b8b8b;
+            border-radius: 8px;
+            padding: 3px 14px;
+            width: fit-content;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+        }
+        .indicador-descricao {
+            font-size: 1em;
+            color: #607d8b;
+            margin-bottom: 8px;
+        }
+        .indicador-btn {
+            background: #00bcd4;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 18px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: fit-content;
+        }
+        .indicador-btn:hover {
+            background: #0097a7;
+        }
+        .indicador-grafico {
+            flex: 2 1 320px;
+            min-width: 220px;
+        }
+        .indicador-grafico canvas {
+            height: 240px !important;
+            max-height: 240px !important;
+        }
+        #graficoIndice {
+            height: 260px !important;
+            max-height: 260px !important;
+        }
+        /* Modal flutuante para Saiba Mais */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(34, 34, 34, 0.45);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+        .modal-box {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            width: 900px;
+            max-width: 90vw;
+            min-width: 320px;
+            height: 70vh;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 0 0 24px 0;
+            position: relative;
+            animation: modalIn 0.4s;
+        }
+        @keyframes modalIn {
+            from { transform: translateY(40px) scale(0.98); opacity: 0; }
+            to { transform: none; opacity: 1; }
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 28px 10px 28px;
+            border-radius: 16px 16px 0 0;
+            background: #f4f6fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .modal-title {
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 1.25em;
+            font-weight: 700;
+            color: #222;
+        }
+        .modal-close {
+            font-size: 1.5em;
+            color: #888;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            transition: color 0.2s;
+            margin-left: 12px;
+        }
+        .modal-close:hover { color: #e53935; }
+        .modal-content {
+            padding: 18px 28px 0 28px;
+            color: #444;
+            font-size: 0.90em;
+            line-height: 1.25;
+        }
+        .modal-calc {
+            background: #eaf6fa;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-top: 18px;
+            color: #00796b;
+            font-weight: 600;
+            font-size: 1.08em;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+    </style>
+</head>
+<body>
+    <!-- Arquivo migrado para frontend/templates/index.html -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="logo">ISMB</span>
+        </div>
+        <nav>
+            <a href="#" class="active">Home</a>
+            <a href="#grafico">Histórico do Índice</a>
+            <a href="#indicadorA">Indicadores</a>
+        </nav>
+        <div class="sidebar-footer">
+            <span style="color:#fff;font-weight:600">Diogo Jacomini</span>
+            <div class="footer-icons">
+                <a href="https://www.linkedin.com/in/diogojacomini" target="_blank" title="LinkedIn">
+                    <svg viewBox="0 0 24 24"><circle cx="4.98" cy="4.98" r="2.5"/><rect x="2" y="9" width="6" height="13" rx="1.5"/><rect x="9" y="9" width="6" height="2" rx="1"/><rect x="9" y="13" width="6" height="9" rx="1.5"/><rect x="16" y="9" width="6" height="13" rx="1.5"/></svg>
+                </a>
+                <a href="https://github.com/diogojacomini" target="_blank" title="GitHub">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.49 2.87 8.3 6.84 9.64.5.09.68-.22.68-.48 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.36-3.37-1.36-.45-1.18-1.1-1.5-1.1-1.5-.9-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05A9.38 9.38 0 0 1 12 6.84c.85.004 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.07.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12.26C22 6.58 17.52 2 12 2z"/></svg>
+                </a>
+                <a href="mailto:diogojacomini@outlook.com" title="E-mail">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><polyline points="2,6 12,13 22,6" fill="none" stroke="#fff" stroke-width="2"/></svg>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="main-content" id="main-content">
+        <div class="hero">
+            <div class="hero-title">ISMB</div>
+            <div class="hero-desc">
+                 ISMB (Índice de Sentimento do Mercado Brasileiro) é um índice analítico que mede o humor do mercado brasileiro a partir de dados objetivos e comportamentais. Ele combina métricas financeiras, variações de ativos, volume de negociação e análise de sentimento digital para gerar uma leitura diária do mercado. O resultado é classificado em cinco categorias de sentimento: Medo Extremo, Medo, Neutro, Ganância e Ganância Extrema.
+            </div>
+            <div class="gauge-box">
+                <div class="gauge-label">Emoção que está impulsionando o mercado agora:</div>
+                <div class="gauge-value" id="gauge-value">62</div>
+                <div class="gauge-status" id="gauge-status">Neutro</div>
+                <div class="gauge-bar">
+                    <div class="gauge-pointer" id="gauge-pointer"></div>
+                </div>
+                <div class="gauge-labels">
+                    <span>Medo Extremo</span>
+                    <span>Medo</span>
+                    <span>Neutro</span>
+                    <span>Ganância</span>
+                    <span>Ganância Extrema</span>
+                </div>
+                <!-- <div class="gauge-intervals">
+                    <div class="gauge-interval">
+                        <div class="gauge-interval-label">Medo Extremo</div>
+                        <div class="gauge-interval-range">0-20</div>
+                    </div>
+                    <div class="gauge-interval">
+                        <div class="gauge-interval-label">Medo</div>
+                        <div class="gauge-interval-range">21-44</div>
+                    </div>
+                    <div class="gauge-interval">
+                        <div class="gauge-interval-label">Neutro</div>
+                        <div class="gauge-interval-range">45-54</div>
+                    </div>
+                    <div class="gauge-interval">
+                        <div class="gauge-interval-label">Ganância</div>
+                        <div class="gauge-interval-range">55-79</div>
+                    </div>
+                    <div class="gauge-interval">
+                        <div class="gauge-interval-label">Ganância Extrema</div>
+                        <div class="gauge-interval-range">80-100</div>
+                    </div>
+                </div> -->
+            </div>
+        </div>
+        <div class="main-card" id="indicadores">
+            <h3>Indicadores que compõem o índice</h3>
+            <div class="indicadores-list">
+                <div class="indicador-card" onclick="scrollToIndicador('A')">
+                    <div class="indicador-nome">Risco de Crédito</div>
+                    <span class="indicador-sentimento-indice" id="sentimentoA-card">--</span>
+                    <div class="indicador-valor" id="valorA">--</div>
+                    <div class="indicador-var" id="varA">--</div>
+                </div>
+                <div class="indicador-card" onclick="scrollToIndicador('B')">
+                    <div class="indicador-nome">Retorno do Mercado</div>
+                    <span class="indicador-sentimento-indice" id="sentimentoB-card">--</span>
+                    <div class="indicador-valor" id="valorB">--</div>
+                    <div class="indicador-var" id="varB">--</div>
+                </div>
+                <div class="indicador-card" onclick="scrollToIndicador('C')">
+                    <div class="indicador-nome">Volatilidade do Mercado</div>
+                    <span class="indicador-sentimento-indice" id="sentimentoC-card">--</span>
+                    <div class="indicador-valor" id="valorC">--</div>
+                    <div class="indicador-var" id="varC">--</div>
+                </div>
+                <div class="indicador-card" onclick="scrollToIndicador('D')">
+                    <div class="indicador-nome">Atividade do Mercado</div>
+                    <span class="indicador-sentimento-indice" id="sentimentoD-card">--</span>
+                    <div class="indicador-valor" id="valorD">--</div>
+                    <div class="indicador-var" id="varD">--</div>
+                </div>
+                <div class="indicador-card" onclick="scrollToIndicador('E')">
+                    <div class="indicador-nome">Confiança do Mercado Local</div>
+                    <span class="indicador-sentimento-indice" id="sentimentoE-card">--</span>
+                    <div class="indicador-valor" id="valorE">--</div>
+                    <div class="indicador-var" id="varE">--</div>
+                </div>
+                <div class="indicador-card" onclick="scrollToIndicador('F')">
+                    <div class="indicador-nome">Sentimento da Mídia</div>
+                    <span class="indicador-sentimento-indice" id="sentimentoF-card">--</span>
+                    <div class="indicador-valor" id="valorF">--</div>
+                    <div class="indicador-var" id="varF">--</div>
+                </div>
+            </div>
+        </div>
+        <div class="main-card" id="grafico">
+            <h3>Histórico do Índice</h3>
+            <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:18px">
+                <label for="rangeDias">Período:</label>
+                <select id="rangeDias" onchange="atualizaGraficoIndice()">
+                    <option value="30">Últimos 30 dias</option>
+                    <option value="90">Últimos 90 dias</option>
+                    <option value="180">Últimos 180 dias</option>
+                    <option value="365">Últimos 365 dias</option>
+                    <option value="custom">Personalizado</option>
+                </select>
+                <input type="date" id="dataInicio" style="display:none" onchange="atualizaGraficoIndice()">
+                <span style="display:none">até</span>
+                <input type="date" id="dataFim" style="display:none" onchange="atualizaGraficoIndice()">
+            </div>
+            <canvas id="graficoIndice"></canvas>
+        </div>
+        <div class="main-card indicador-section" id="indicadorA">
+            <h3>Indicador de Risco de Crédito</h3>
+            <div class="indicador-detalhe">
+                <div class="indicador-info">
+                    <div class="indicador-valor-destaque">Valor atual: <span id="valorA-detalhe">--</span></div>
+                    <div class="indicador-sentimento"><span id="sentimentoA">--</span></div>
+                    <div class="indicador-descricao">Este indicador avalia o apetite por risco dos investidores ao combinar oscilações recentes de preços com o desempenho do mercado.</div>
+                    <button class="indicador-btn" onclick="saibaMais('A')">Saiba mais</button>
+                </div>
+                <div class="indicador-grafico">
+                    <canvas id="graficoA"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="main-card indicador-section" id="indicadorB">
+            <h3>Indicador de Retorno do Mercado</h3>
+            <div class="indicador-detalhe">
+                <div class="indicador-info">
+                    <div class="indicador-valor-destaque">Valor atual: <span id="valorB-detalhe">--</span></div>
+                    <div class="indicador-sentimento"><span id="sentimentoB">--</span></div>
+                    <div class="indicador-descricao">Este indicador resume como o desempenho recente do Ibovespa se compara ao seu padrão histórico, considerando também a força do volume de negociações.</div>
+                    <button class="indicador-btn" onclick="saibaMais('B')">Saiba mais</button>
+                </div>
+                <div class="indicador-grafico">
+                    <canvas id="graficoB"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="main-card indicador-section" id="indicadorC">
+            <h3>Indicador de Volatilidade do Mercado</h3>
+            <div class="indicador-detalhe">
+                <div class="indicador-info">
+                    <div class="indicador-valor-destaque">Valor atual: <span id="valorC-detalhe">--</span></div>
+                    <div class="indicador-sentimento"><span id="sentimentoC">--</span></div>
+                    <div class="indicador-descricao">Este indicador mede o nível de nervosismo do mercado ao observar o quanto os preços têm oscilado recentemente no Brasil (Ibovespa) e como essas oscilações se alinham ao humor externo (IVVB11).</div>
+                    <button class="indicador-btn" onclick="saibaMais('C')">Saiba mais</button>
+                </div>
+                <div class="indicador-grafico">
+                    <canvas id="graficoC"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="main-card indicador-section" id="indicadorD">
+            <h3>Indicador de Atividade do Mercado</h3>
+            <div class="indicador-detalhe">
+                <div class="indicador-info">
+                    <div class="indicador-valor-destaque">Valor atual: <span id="valorD-detalhe">--</span></div>
+                    <div class="indicador-sentimento"><span id="sentimentoD">--</span></div>
+                    <div class="indicador-descricao">Este indicador mede a intensidade diária do mercado, avaliando se o dia foi fraco, normal ou forte em relação ao ritmo recente. Considera que retornos sem volume têm menos qualidade, enquanto movimentos acompanhados de volume elevado são mais representativos.</div>
+                    <button class="indicador-btn" onclick="saibaMais('D')">Saiba mais</button>
+                </div>
+                <div class="indicador-grafico">
+                    <canvas id="graficoD"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="main-card indicador-section" id="indicadorE">
+            <h3>Indicador de Confiança do Mercado Local</h3>
+            <div class="indicador-detalhe">
+                <div class="indicador-info">
+                    <div class="indicador-valor-destaque">Valor atual: <span id="valorE-detalhe">--</span></div>
+                    <div class="indicador-sentimento"><span id="sentimentoE">--</span></div>
+                    <div class="indicador-descricao">Este indicador mede a confiança do mercado brasileiro por meio do IFIX, avaliando se o desempenho diário foi melhor, igual ou pior em relação ao ritmo recente.</div>
+                    <button class="indicador-btn" onclick="saibaMais('E')">Saiba mais</button>
+                </div>
+                <div class="indicador-grafico">
+                    <canvas id="graficoE"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="main-card indicador-section" id="indicadorF">
+            <h3>Indicador de Sentimento da Mídia</h3>
+            <div class="indicador-detalhe">
+                <div class="indicador-info">
+                    <div class="indicador-valor-destaque">Valor atual: <span id="valorF-detalhe">--</span></div>
+                    <div class="indicador-sentimento"><span id="sentimentoF">--</span></div>
+                    <div class="indicador-descricao">Este indicador capta o “humor” das notícias econômicas do dia, analisando o tom dos títulos (positivo, negativo ou neutro) para resumir o clima informacional predominante.</div>
+                    <button class="indicador-btn" onclick="saibaMais('F')">Saiba mais</button>
+                </div>
+                <div class="indicador-grafico">
+                    <canvas id="graficoF"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="modalSaibaMais" style="display:none"></div>
+    <script>
+        // Sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main-content');
+            sidebar.classList.toggle('collapsed');
+            if(sidebar.classList.contains('collapsed')) {
+                main.style.marginLeft = '60px';
+            } else {
+                main.style.marginLeft = '250px';
+            }
+        }
+        // Busca dados do índice principal via API
+        async function fetchIndice() {
+            const resp = await fetch('http://localhost:8000/api/indice?indice=ismb');
+            return await resp.json();
+        }
+        // Busca dados de um indicador via API
+        async function fetchIndicador(nome) {
+            const resp = await fetch(`http://localhost:8000/api/indice?indice=${nome}`);
+            return await resp.json();
+        }
+        // Atualiza o gauge e gráfico principal com dados reais
+        async function atualizaIndiceReal() {
+            const dados = await fetchIndice();
+            if (!dados || !dados.length) return;
+            // Ordena por data crescente
+            const ordenados = dados.slice().sort((a,b)=>{
+                if (a.data < b.data) return -1;
+                if (a.data > b.data) return 1;
+                return 0;
+            });
+            // Filtro de período
+            let range = document.getElementById('rangeDias').value;
+            let dadosFiltrados = ordenados;
+            if (range === 'custom') {
+                const dataInicio = document.getElementById('dataInicio').value;
+                const dataFim = document.getElementById('dataFim').value;
+                if (dataInicio && dataFim) {
+                    dadosFiltrados = ordenados.filter(e => e.data >= dataInicio && e.data <= dataFim);
+                }
+            } else {
+                const dias = parseInt(range);
+                if (!isNaN(dias) && ordenados.length > dias) {
+                    dadosFiltrados = ordenados.slice(-dias);
+                }
+            }
+            // Atualiza gauge
+            const valorAtual = dadosFiltrados[dadosFiltrados.length-1].valor;
+            document.getElementById('gauge-value').innerText = valorAtual;
+            document.getElementById('gauge-pointer').style.setProperty('--gauge-pos', valorAtual);
+            let status = '';
+            if(valorAtual < 20) status = 'Medo Extremo';
+            else if(valorAtual < 45) status = 'Medo';
+            else if(valorAtual < 55) status = 'Neutro';
+            else if(valorAtual < 80) status = 'Ganância';
+            else status = 'Ganância Extrema';
+            document.getElementById('gauge-status').innerText = status;
+            // Atualiza gráfico principal
+            if(window.chartIndice) window.chartIndice.destroy();
+            window.chartIndice = new Chart(document.getElementById('graficoIndice').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: dadosFiltrados.map(e => e.data),
+                    datasets: [{
+                        data: dadosFiltrados.map(e => e.valor),
+                        fill: true,
+                        borderColor: '#00bcd4',
+                        backgroundColor: 'rgba(0,188,212,0.08)',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {
+                                linha50: {
+                                    type: 'line',
+                                    yMin: 50,
+                                    yMax: 50,
+                                    borderColor: 'gray',
+                                    borderWidth: 2,
+                                    borderDash: [6, 6],
+                                    label: {
+                                        display: true,
+                                        content: '50',
+                                        position: 'end',
+                                        color: 'gray',
+                                        backgroundColor: 'white',
+                                        font: { weight: 'bold' }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: false }, grid: { display: false } },
+                        y: { title: { display: false }, beginAtZero: true, min: 0, max: 100, grid: { display: false } }
+                    }
+                }
+            });
+        }
+        // Atualiza os cards e gráficos dos indicadores com dados reais
+        async function atualizaIndicadorReal(nome, canvasId, valorId, varId) {
+            let dados = await fetchIndicador(nome);
+            if (!dados || !dados.length) return;
+            // Ordena por data crescente
+            dados = dados.slice().sort((a, b) => {
+                if (a.data < b.data) return -1;
+                if (a.data > b.data) return 1;
+                return 0;
+            });
+            const valor = dados[dados.length-1].valor;
+            const anterior = dados[dados.length-2]?.valor || valor;
+            const variacao = valor-anterior;
+            document.getElementById(valorId).innerText = valor;
+            // Atualiza valor detalhado
+            const valorDetalhe = document.getElementById('valor'+nome+'-detalhe');
+            if(valorDetalhe) valorDetalhe.innerText = valor;
+            // Classificação com base na nova tabela (em português)
+            let sentimento = '';
+            if(valor < 20) sentimento = 'Medo Extremo';
+            else if(valor < 45) sentimento = 'Medo';
+            else if(valor < 55) sentimento = 'Neutro';
+            else if(valor < 80) sentimento = 'Ganância';
+            else sentimento = 'Ganância Extrema';
+            const sentSpan = document.getElementById('sentimento'+nome);
+            if(sentSpan) sentSpan.innerText = sentimento;
+            // Atualiza sentimento no card
+            const sentCard = document.getElementById('sentimento'+nome+'-card');
+            if(sentCard) sentCard.innerText = sentimento;
+            // Atualiza variação e cor (arredondado para 1 casa decimal)
+            const varElem = document.getElementById(varId);
+            varElem.innerText = (variacao>=0?'+':'')+variacao.toFixed(1);
+            varElem.style.color = variacao>=0 ? '#43a047' : '#e53935';
+            // Gráfico
+            new Chart(document.getElementById(canvasId).getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: dados.map(e => e.data),
+                    datasets: [{
+                        data: dados.map(e => e.valor),
+                        fill: true,
+                        borderColor: '#2d3e50',
+                        backgroundColor: 'rgba(44,62,80,0.08)',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {
+                                linha50: {
+                                    type: 'line',
+                                    yMin: 50,
+                                    yMax: 50,
+                                    borderColor: 'gray',
+                                    borderWidth: 2,
+                                    borderDash: [6, 6],
+                                    label: { display: false }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: false }, grid: { display: false } },
+                        y: { title: { display: false }, beginAtZero: true, min: 0, max: 100, grid: { display: false } }
+                    }
+                }
+            });
+        }
+        // Scroll suave para o gráfico do indicador
+        function scrollToIndicador(letra) {
+            const el = document.getElementById('indicador' + letra);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+        // Chama as funções reais ao carregar
+        window.addEventListener('DOMContentLoaded', () => {
+            atualizaIndiceReal();
+            atualizaIndicadorReal('A','graficoA','valorA','varA');
+            atualizaIndicadorReal('B','graficoB','valorB','varB');
+            atualizaIndicadorReal('C','graficoC','valorC','varC');
+            atualizaIndicadorReal('D','graficoD','valorD','varD');
+            atualizaIndicadorReal('E','graficoE','valorE','varE');
+            atualizaIndicadorReal('F','graficoF','valorF','varF');
+        });
+        async function saibaMais(letra) {
+            const nomes = {
+                'A': 'Indicador de Risco de Crédito',
+                'B': 'Indicador de Retorno do Mercado',
+                'C': 'Indicador de Volatilidade do Mercado',
+                'D': 'Indicador de Atividade do Mercado',
+                'E': 'Indicador de Confiança do Mercado Local',
+                'F': 'Indicador de Sentimento da Mídia'
+            };
+            const modal = document.getElementById('modalSaibaMais');
+            // Busca HTML estático gerado em docs/indicadorX.html
+            try {
+                const resp = await fetch(`docs/indicador${letra}.html`);
+                if (!resp.ok) throw new Error('Erro ao buscar conteúdo');
+                const html = await resp.text();
+                modal.innerHTML = `
+                    <div class="modal-overlay" id="modalOverlay">
+                        <div class="modal-box" role="dialog" aria-modal="true">
+                            <div class="modal-header">
+                                <span class="modal-title">${nomes[letra]}</span>
+                                <button class="modal-close" id="modalCloseBtn" aria-label="Fechar">&times;</button>
+                            </div>
+                            <div class="modal-content">${html}</div>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                modal.innerHTML = `<div class='modal-overlay'><div class='modal-box'><div class='modal-header'><span class='modal-title'>${nomes[letra]}</span><button class='modal-close' id='modalCloseBtn' aria-label='Fechar'>&times;</button></div><div class='modal-content'>Erro ao carregar conteúdo.</div></div></div>`;
+            }
+            modal.style.display = '';
+            // Fechar ao clicar no X
+            document.getElementById('modalCloseBtn').onclick = fecharModalSaibaMais;
+            // Fechar ao clicar fora da caixa
+            document.getElementById('modalOverlay').onclick = function(e) {
+                if(e.target === this) fecharModalSaibaMais();
+            };
+            // Fechar com ESC
+            document.onkeydown = function(e) {
+                if(e.key === 'Escape') fecharModalSaibaMais();
+            };
+        }
+        function fecharModalSaibaMais() {
+            const modal = document.getElementById('modalSaibaMais');
+            modal.style.display = 'none';
+            modal.innerHTML = '';
+            document.onkeydown = null;
+        }
+        // Exibe/esconde inputs de data conforme seleção
+        document.addEventListener('DOMContentLoaded', function() {
+            const range = document.getElementById('rangeDias');
+            const dataInicio = document.getElementById('dataInicio');
+            const dataFim = document.getElementById('dataFim');
+            const ateSpan = dataInicio.nextElementSibling;
+            range.addEventListener('change', function() {
+                if (range.value === 'custom') {
+                    dataInicio.style.display = '';
+                    dataFim.style.display = '';
+                    if (ateSpan) ateSpan.style.display = '';
+                } else {
+                    dataInicio.style.display = 'none';
+                    dataFim.style.display = 'none';
+                    if (ateSpan) ateSpan.style.display = 'none';
+                }
+                atualizaIndiceReal();
+            });
+            dataInicio.addEventListener('change', atualizaIndiceReal);
+            dataFim.addEventListener('change', atualizaIndiceReal);
+        });
+    </script>
+</body>
+</html>
