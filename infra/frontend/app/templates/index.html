@@ -1,956 +1,1290 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>ISMB</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', Arial, sans-serif;
-            background: #f6f8fa;
-            margin: 0;
-            color: #222;
-            display: flex;
-        }
-        .sidebar {
-            background: #2E3133;
-            color: #fff;
-            width: 230px;
-            min-width: 230px;
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            z-index: 100;
-            transition: width 0.2s;
-        }
-        .sidebar-header {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: center;
-            padding: 22px 0 12px 18px;
-        }
-        .sidebar .logo {
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-size: 1.35em;
-            font-weight: 700;
-            letter-spacing: 1px;
-            white-space: nowrap;
-            margin-bottom: 18px;
-        }
-        .sidebar nav {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            margin-top: 0;
-            padding-left: 8px;
-        }
-        .sidebar nav a {
-            color: #fff;
-            text-decoration: none;
-            padding: 12px 0 12px 16px;
-            font-size: 0.95em;
-            font-weight: 500;
-            border-left: 3px solid transparent;
-            border-radius: 6px;
-            width: 92%;
-            text-align: left;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
-            margin-bottom: 4px;
-            display: block;
-        }
-        .sidebar nav a.active, .sidebar nav a:focus {
-            background: #fff;
-            color: #2E3133;
-            border-left: 3px solid #00bcd4;
-            font-weight: 700;
-            box-shadow: 0 2px 8px rgba(0,188,212,0.08);
-        }
-        .sidebar nav a:hover {
-            background: #232526;
-            color: #00bcd4;
-        }
-        .sidebar-footer {
-            margin-top: auto;
-            width: 100%;
-            padding: 14px 0 14px 0;
-            font-size: 0.93em;
-            color: #bbb;
-            border-top: 1px solid #232526;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .sidebar-footer .footer-icons {
-            display: flex;
-            flex-direction: row;
-            gap: 18px;
-            margin-top: 8px;
-            margin-bottom: 0;
-            align-items: center;
-            justify-content: center;
-        }
-        .sidebar-footer a {
-            display: flex;
-            align-items: center;
-            color: #00bcd4;
-            text-decoration: none;
-            font-weight: 600;
-            margin: 0;
-            font-size: 0.98em;
-            transition: color 0.2s;
-            padding: 0;
-        }
-        .sidebar-footer a:hover svg {
-            fill: #00bcd4;
-            stroke: #00bcd4;
-        }
-        .sidebar-footer svg {
-            width: 22px;
-            height: 22px;
-            fill: #fff;
-            stroke: #fff;
-            flex-shrink: 0;
-            display: inline-block;
-            transition: fill 0.2s, stroke 0.2s;
-        }
-        .main-content {
-            margin-left: 180px;
-            max-width: 100vw;
-            width: 100%;
-            padding: 0 8vw 32px 8vw;
-            transition: margin-left 0.2s;
-        }
-        @media (max-width: 900px) {
-            .sidebar { width: 110px; min-width: 110px; }
-            .main-content { margin-left: 110px; padding-left: 2vw; padding-right: 2vw; }
-        }
-        .hero {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            padding: 48px 0 0 0;
-            width: 100%;
-            max-width: 100vw;
-        }
-        .hero-title {
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-size: 2.7em;
-            font-weight: 800;
-            margin-bottom: 8px;
-            text-align: center;
-            letter-spacing: 1px;
-        }
-        .hero-desc {
-            color: #607d8b;
-            font-size: 1.18em;
-            text-align: left;
-            max-width: 1300px;
-            margin: 0 auto 32px auto;
-            font-weight: 500;
-        }
-        .gauge-box {
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            padding: 40px 48px 32px 48px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 40px;
-            min-width: 600px;
-            max-width: 1200px;
-            width: 1100px;
-            gap: 18px;
-            align-self: center;
-        }
-        .gauge-label {
-            font-size: 1.18em;
-            color: #222;
-            margin-bottom: 8px;
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-        .gauge-value {
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-size: 2.2em;
-            font-weight: 700;
-            color: #00bcd4;
-            margin-bottom: 0;
-            letter-spacing: 2px;
-        }
-        .gauge-status {
-            font-size: 0.93em;
-            font-weight: 700;
-            margin-bottom: 0;
-            color: #fff;
-            background: #8b8b8b;
-            border-radius: 10px;
-            padding: 7px 28px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-            letter-spacing: 0.5px;
-        }
-        .gauge-bar {
-            width: 900px;
-            max-width: 98vw;
-            height: 28px;
-            background: linear-gradient(90deg, #e53935 0%, #fbc02d 25%, #fbc02d 45%, #43a047 55%, #43a047 80%, #388e3c 100%);
-            border-radius: 14px;
-            position: relative;
-            margin-bottom: 0;
-        }
-        .gauge-pointer {
-            position: absolute;
-            top: -10px;
-            width: 4px;
-            height: 48px;
-            background: #222;
-            left: calc(var(--gauge-pos, 50) * 1% - 2px);
-            border-radius: 2px;
-            z-index: 2;
-        }
-        .gauge-labels {
-            display: flex;
-            justify-content: space-between;
-            width: 900px;
-            max-width: 98vw;
-            font-size: 0.93em;
-            color: #888;
-            margin-top: 8px;
-            font-weight: 600;
-        }
-        .gauge-intervals {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            width: 100%;
-            max-width: 900px;
-            margin: 18px auto 0 auto;
-            gap: 0;
-        }
-        .gauge-interval {
-            flex: 1 1 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 8px 0 0 0;
-            min-width: 90px;
-            max-width: 180px;
-        }
-        .gauge-interval-label {
-            font-size: 0.93em;
-            font-weight: 700;
-            color: #222;
-            background: #f6f8fa;
-            border-radius: 8px 8px 0 0;
-            padding: 4px 10px 2px 10px;
-            margin-bottom: 2px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-        }
-        .gauge-interval-range {
-            font-size: 0.98em;
-            color: #607d8b;
-            font-weight: 500;
-            background: #eaf6fa;
-            border-radius: 0 0 8px 8px;
-            padding: 2px 10px 4px 10px;
-            letter-spacing: 0.5px;
-        }
-        @media (max-width: 1100px) {
-            .gauge-box, .gauge-bar, .gauge-labels, .gauge-intervals { width: 98vw; min-width: 180px; max-width: 98vw; }
-            .gauge-box { width: 98vw; }
-            .gauge-intervals { max-width: 98vw; }
-        }
-        @media (max-width: 900px) {
-            .gauge-box { min-width: 180px; max-width: 98vw; width: 98vw; padding-left: 10px; padding-right: 10px; }
-            .gauge-bar, .gauge-labels, .gauge-intervals { width: 98vw; min-width: 120px; max-width: 98vw; }
-            .gauge-interval { min-width: 60px; }
-        }
-        .main-card {
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-            padding: 32px 24px 24px 24px;
-            margin-bottom: 32px;
-        }
-        .main-card h3 {
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-size: 1.18em;
-            margin-bottom: 18px;
-            color: #2d3e50;
-        }
-        .indicadores-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 18px;
-            justify-content: space-between;
-            margin-bottom: 32px;
-        }
-        .indicador-card {
-            background: #f4f6fa;
-            border-radius: 10px;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.04);
-            padding: 18px 18px 12px 18px;
-            min-width: 140px;
-            flex: 1 1 140px;
-            text-align: center;
-            transition: box-shadow 0.2s, transform 0.2s;
-            cursor: pointer;
-        }
-        .indicador-card:hover {
-            box-shadow: 0 4px 16px rgba(0,188,212,0.13);
-            transform: translateY(-2px) scale(1.03);
-        }
-        .indicador-nome {
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-size: 1.00em;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-        .indicador-valor {
-            font-size: 1.38em;
-            color: #00bcd4;
-            font-weight: 800;
-            margin-bottom: 2px;
-            text-align: center;
-        }
-        .indicador-var {
-            font-size: 1.00em;
-            color: #43a047;
-        }
-        .indicador-sentimento-indice {
-            display: block;
-            font-size: 0.90em;
-            font-weight: 600;
-            color: #555;
-            background: #eaf6fa;
-            border-radius: 8px;
-            padding: 3px 14px;
-            margin: 0 auto 6px auto;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-            text-align: center;
-            width: fit-content;
-        }
-        .indicador-detalhe {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 32px;
-            align-items: flex-start;
-            justify-content: space-between;
-        }
-        .indicador-info {
-            flex: 1 1 220px;
-            min-width: 200px;
-            max-width: 340px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .indicador-valor-destaque {
-            font-size: 1.3em;
-            font-weight: 700;
-            color: #00bcd4;
-        }
-        .indicador-sentimento {
-            font-size: 1.08em;
-            font-weight: 600;
-            color: #ffffff;
-            background: #8b8b8b;
-            border-radius: 8px;
-            padding: 3px 14px;
-            width: fit-content;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-        }
-        .indicador-descricao {
-            font-size: 1em;
-            color: #607d8b;
-            margin-bottom: 8px;
-        }
-        .indicador-btn {
-            background: #00bcd4;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 8px 18px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            width: fit-content;
-        }
-        .indicador-btn:hover {
-            background: #0097a7;
-        }
-        .indicador-grafico {
-            flex: 2 1 320px;
-            min-width: 220px;
-        }
-        .indicador-grafico canvas {
-            height: 240px !important;
-            max-height: 240px !important;
-        }
-        #graficoIndice {
-            height: 260px !important;
-            max-height: 260px !important;
-        }
-        /* Modal flutuante para Saiba Mais */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(34, 34, 34, 0.45);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.2s;
-        }
-        .modal-box {
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-            width: 900px;
-            max-width: 90vw;
-            min-width: 320px;
-            height: 70vh;
-            max-height: 90vh;
-            overflow-y: auto;
-            padding: 0 0 24px 0;
-            position: relative;
-            animation: modalIn 0.4s;
-        }
-        @keyframes modalIn {
-            from { transform: translateY(40px) scale(0.98); opacity: 0; }
-            to { transform: none; opacity: 1; }
-        }
-        .modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 22px 28px 10px 28px;
-            border-radius: 16px 16px 0 0;
-            background: #f4f6fa;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .modal-title {
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-size: 1.25em;
-            font-weight: 700;
-            color: #222;
-        }
-        .modal-close {
-            font-size: 1.5em;
-            color: #888;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-weight: 700;
-            transition: color 0.2s;
-            margin-left: 12px;
-        }
-        .modal-close:hover { color: #e53935; }
-        .modal-content {
-            padding: 18px 28px 0 28px;
-            color: #444;
-            font-size: 0.90em;
-            line-height: 1.25;
-        }
-        .modal-calc {
-            background: #eaf6fa;
-            border-radius: 8px;
-            padding: 10px 16px;
-            margin-top: 18px;
-            color: #00796b;
-            font-weight: 600;
-            font-size: 1.08em;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>ISMB · Índice de Sentimento do Mercado Brasileiro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <style>
+    /* ── Reset & Variables ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --sidebar-w: 220px;
+      --sidebar-bg: #0d1117;
+      --sidebar-border: #21262d;
+      --primary: #00bcd4;
+      --primary-dark: #0097a7;
+      --primary-light: rgba(0,188,212,0.12);
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --surface2: #f8fafc;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text2: #64748b;
+      --text3: #94a3b8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --fear-ext: #ef4444;
+      --fear: #f97316;
+      --neutral: #eab308;
+      --greed: #22c55e;
+      --greed-ext: #16a34a;
+      --font-sans: 'Inter', sans-serif;
+      --font-display: 'Montserrat', sans-serif;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --transition: 0.2s ease;
+    }
+    html { font-size: 15px; }
+    body { font-family: var(--font-sans); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ──────────────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      height: 100vh;
+      position: fixed;
+      left: 0; top: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--sidebar-border);
+      z-index: 200;
+      overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 22px 20px 16px;
+      border-bottom: 1px solid var(--sidebar-border);
+    }
+    .sidebar-logo .brand {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+    .sidebar-logo .tagline {
+      font-size: 0.72rem;
+      color: #6b7280;
+      margin-top: 2px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+    .sidebar-section { padding: 10px 10px 0; }
+    .sidebar-section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #4b5563;
+      padding: 6px 10px 4px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 7px;
+      cursor: pointer;
+      color: #9ca3af;
+      font-size: 0.87rem;
+      font-weight: 500;
+      transition: background var(--transition), color var(--transition);
+      user-select: none;
+      margin-bottom: 1px;
+    }
+    .nav-item svg { width: 17px; height: 17px; flex-shrink: 0; opacity: 0.7; }
+    .nav-item:hover { background: #161b22; color: #e5e7eb; }
+    .nav-item:hover svg { opacity: 1; }
+    .nav-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+    .nav-item.active svg { opacity: 1; fill: var(--primary); }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px 16px;
+      border-top: 1px solid var(--sidebar-border);
+    }
+    .sidebar-footer .author { font-size: 0.82rem; color: #9ca3af; font-weight: 500; margin-bottom: 8px; }
+    .sidebar-footer .socials { display: flex; gap: 12px; }
+    .sidebar-footer .socials a { color: #6b7280; display:flex; align-items:center; transition: color var(--transition); }
+    .sidebar-footer .socials a:hover { color: var(--primary); }
+    .sidebar-footer .socials svg { width:18px; height:18px; fill:currentColor; }
+
+    /* ── Main Layout ──────────────────────────────────────────────────── */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+    .topbar-title { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text); }
+    .topbar-right { display: flex; align-items: center; gap: 14px; }
+    .topbar-date { font-size: 0.82rem; color: var(--text2); background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; }
+    .ismb-badge {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .page { display: none; padding: 24px 28px 40px; max-width: 1400px; }
+    .page.active { display: block; }
+    .page-title { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
+    .page-subtitle { color: var(--text2); margin-bottom: 22px; font-size: 0.9rem; }
+
+    /* ── Cards ────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title svg { width:15px; height:15px; opacity: 0.5; }
+
+    /* ── Gauge ────────────────────────────────────────────────────────── */
+    .gauge-card { text-align: center; padding: 28px 24px 22px; }
+    .gauge-wrap { display: flex; flex-direction: column; align-items: center; }
+    #gaugeCanvas { max-width: 340px; width: 100%; }
+    .gauge-value-label {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+      margin-top: -12px;
+    }
+    .gauge-status-label {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 4px;
+      padding: 5px 22px;
+      border-radius: 20px;
+      color: #fff;
+      display: inline-block;
+    }
+    .gauge-subtext { font-size: 0.78rem; color: var(--text3); margin-top: 6px; }
+
+    /* ── Indicadores mini-grid ─────────────────────────────────────────── */
+    .ind-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .ind-mini-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 16px 18px 14px;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
+    }
+    .ind-mini-card:hover { box-shadow: var(--shadow-lg); border-color: var(--primary); transform: translateY(-2px); }
+    .ind-mini-name { font-size: 0.78rem; font-weight: 600; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .ind-mini-value { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--text); line-height: 1; }
+    .ind-mini-row { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+    .ind-mini-sent { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; color: #fff; }
+    .ind-mini-var { font-size: 0.82rem; font-weight: 600; }
+
+    /* ── Two-column layout ─────────────────────────────────────────────── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .two-col .card { margin-bottom: 0; }
+    @media (max-width: 980px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── Period selector ──────────────────────────────────────────────── */
+    .period-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .period-btn {
+      font-size: 0.78rem; font-weight: 600; padding: 5px 12px; border-radius: 6px;
+      border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2);
+      cursor: pointer; transition: all var(--transition);
+    }
+    .period-btn.active, .period-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .period-label { font-size: 0.82rem; color: var(--text2); margin-right: 4px; font-weight: 600; }
+
+    /* ── Tabs ──────────────────────────────────────────────────────────── */
+    .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
+    .tab-btn {
+      font-size: 0.85rem; font-weight: 600; padding: 10px 18px;
+      cursor: pointer; color: var(--text2); border-bottom: 2px solid transparent;
+      margin-bottom: -2px; transition: all var(--transition); user-select: none; background: none;
+      border-top: none; border-left: none; border-right: none;
+      font-family: var(--font-sans);
+    }
+    .tab-btn:hover { color: var(--primary); }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+
+    /* ── Stat row ─────────────────────────────────────────────────────── */
+    .stat-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+    .stat-item { flex: 1 1 120px; background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 14px; border: 1px solid var(--border); }
+    .stat-item-label { font-size: 0.72rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+    .stat-item-value { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--text); }
+    .stat-item-sub { font-size: 0.75rem; color: var(--text2); margin-top: 2px; }
+
+    /* ── Indicador detail ─────────────────────────────────────────────── */
+    .ind-detail-grid { display: grid; grid-template-columns: 260px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 800px) { .ind-detail-grid { grid-template-columns: 1fr; } }
+    .ind-info-card { background: var(--surface2); border-radius: var(--radius); padding: 18px; border: 1px solid var(--border); }
+    .ind-info-value { font-family: var(--font-display); font-size: 2.6rem; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 8px; }
+    .ind-info-sent { display: inline-block; font-size: 0.82rem; font-weight: 700; padding: 4px 14px; border-radius: 20px; color: #fff; margin-bottom: 12px; }
+    .ind-info-desc { font-size: 0.83rem; color: var(--text2); line-height: 1.55; margin-bottom:10px; }
+    .ind-info-label { font-size: 0.72rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
+    .toggle-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .toggle-item { display: flex; align-items: center; gap: 5px; font-size: 0.78rem; font-weight: 600; cursor: pointer; color: var(--text2); }
+    .toggle-item input[type=checkbox] { cursor: pointer; }
+
+    /* ── Correlation matrix ─────────────────────────────────────────── */
+    .corr-matrix { display: inline-block; }
+    .corr-row { display: flex; }
+    .corr-cell {
+      width: 78px; height: 68px; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; font-size: 0.75rem; font-weight: 600; border-radius: 4px;
+      margin: 2px; cursor: default; transition: transform var(--transition);
+    }
+    .corr-cell:hover { transform: scale(1.06); z-index: 2; position: relative; }
+    .corr-label-row { display: flex; align-items: center; }
+    .corr-header-cell { width: 78px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; color: var(--text2); margin: 2px; }
+    .corr-row-label { width: 78px; height: 68px; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; color: var(--text2); margin: 2px; }
+    .corr-value { font-size: 1rem; font-weight: 800; }
+    .corr-pair { font-size: 0.63rem; color: #94a3b8; margin-top: 2px; }
+    .corr-grid-wrap { overflow-x: auto; padding-bottom: 8px; }
+
+    /* ── KPI table ─────────────────────────────────────────────────────── */
+    .kpi-table-wrap { overflow-x: auto; }
+    table.kpi-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    table.kpi-table thead tr { border-bottom: 2px solid var(--border); }
+    table.kpi-table th { padding: 8px 12px; text-align: left; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text3); }
+    table.kpi-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+    table.kpi-table tbody tr:last-child td { border-bottom: none; }
+    table.kpi-table tbody tr:hover { background: var(--surface2); }
+    .kpi-year { font-weight: 700; color: var(--text); }
+    .kpi-return-pos { color: var(--success); font-weight: 700; }
+    .kpi-return-neg { color: var(--danger); font-weight: 700; }
+    .kpi-drawdown { color: var(--danger); }
+
+    /* ── Quality cards ──────────────────────────────────────────────── */
+    .quality-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .quality-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 16px 18px;
+      border-left: 4px solid var(--border);
+    }
+    .quality-card.ok { border-left-color: var(--success); }
+    .quality-card.warn { border-left-color: var(--warning); }
+    .quality-card.err { border-left-color: var(--danger); }
+    .quality-name { font-size: 0.78rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .quality-score { font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; }
+    .quality-meta { font-size: 0.72rem; color: var(--text3); margin-top: 4px; }
+
+    /* ── Generic table ────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table.data-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    table.data-table thead tr { background: var(--surface2); }
+    table.data-table th { padding: 9px 12px; text-align: left; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text3); border-bottom: 1.5px solid var(--border); white-space: nowrap; }
+    table.data-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    table.data-table tbody tr:last-child td { border-bottom: none; }
+    table.data-table tbody tr:hover { background: var(--surface2); }
+
+    /* ── Loading spinner ─────────────────────────────────────────────── */
+    .spinner-wrap { display: flex; align-items: center; justify-content: center; height: 120px; }
+    .spinner { width: 34px; height: 34px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Sentiment ──────────────────────────────────────────────────── */
+    .sent-medo-ext  { background: var(--fear-ext); }
+    .sent-medo      { background: var(--fear); }
+    .sent-neutro    { background: var(--neutral); }
+    .sent-ganancia  { background: var(--greed); }
+    .sent-ganancia-ext { background: var(--greed-ext); }
+
+    /* ── Section header ────────────────────────────────────────────────── */
+    .section-hdr { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .section-hdr .left h2 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 800; }
+    .section-hdr .left p { font-size: 0.82rem; color: var(--text2); margin-top: 2px; }
+
+    /* ── Misc ─────────────────────────────────────────────────────────── */
+    canvas { display: block; width: 100% !important; }
+    .chart-container { position: relative; }
+    .chart-sm { height: 220px; }
+    .chart-md { height: 280px; }
+    .chart-lg { height: 340px; }
+    .badge { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); }
+    .pos { color: var(--success); }
+    .neg { color: var(--danger); }
+
+    @media (max-width: 700px) {
+      :root { --sidebar-w: 0px; }
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .page { padding: 16px 14px 30px; }
+      .topbar { padding: 10px 14px; }
+    }
+  </style>
 </head>
 <body>
-    <!-- Arquivo migrado para frontend/templates/index.html -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <span class="logo">ISMB</span>
-        </div>
-        <nav>
-            <a href="#" class="active">Home</a>
-            <a href="#grafico">Histórico do Índice</a>
-            <a href="#indicadorA">Indicadores</a>
-        </nav>
-        <div class="sidebar-footer">
-            <span style="color:#fff;font-weight:600">Diogo Jacomini</span>
-            <div class="footer-icons">
-                <a href="https://www.linkedin.com/in/diogojacomini" target="_blank" title="LinkedIn">
-                    <svg viewBox="0 0 24 24"><circle cx="4.98" cy="4.98" r="2.5"/><rect x="2" y="9" width="6" height="13" rx="1.5"/><rect x="9" y="9" width="6" height="2" rx="1"/><rect x="9" y="13" width="6" height="9" rx="1.5"/><rect x="16" y="9" width="6" height="13" rx="1.5"/></svg>
-                </a>
-                <a href="https://github.com/diogojacomini" target="_blank" title="GitHub">
-                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.49 2.87 8.3 6.84 9.64.5.09.68-.22.68-.48 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.36-3.37-1.36-.45-1.18-1.1-1.5-1.1-1.5-.9-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05A9.38 9.38 0 0 1 12 6.84c.85.004 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.07.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12.26C22 6.58 17.52 2 12 2z"/></svg>
-                </a>
-                <a href="mailto:diogojacomini@outlook.com" title="E-mail">
-                    <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><polyline points="2,6 12,13 22,6" fill="none" stroke="#fff" stroke-width="2"/></svg>
-                </a>
-            </div>
-        </div>
+
+<!-- ═══════  SIDEBAR  ═══════════════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">ISMB</div>
+    <div class="tagline">Índice de Sentimento do Mercado Brasileiro</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Painel</div>
+    <div class="nav-item active" data-page="dashboard" onclick="showPage('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+      Dashboard
     </div>
-    <div class="main-content" id="main-content">
-        <div class="hero">
-            <div class="hero-title">ISMB</div>
-            <div class="hero-desc">
-                 ISMB (Índice de Sentimento do Mercado Brasileiro) é um índice analítico que mede o humor do mercado brasileiro a partir de dados objetivos e comportamentais. Ele combina métricas financeiras, variações de ativos, volume de negociação e análise de sentimento digital para gerar uma leitura diária do mercado. O resultado é classificado em cinco categorias de sentimento: Medo Extremo, Medo, Neutro, Ganância e Ganância Extrema.
-            </div>
-            <div class="gauge-box">
-                <div class="gauge-label">Emoção que está impulsionando o mercado agora:</div>
-                <div class="gauge-value" id="gauge-value">62</div>
-                <div class="gauge-status" id="gauge-status">Neutro</div>
-                <div class="gauge-bar">
-                    <div class="gauge-pointer" id="gauge-pointer"></div>
-                </div>
-                <div class="gauge-labels">
-                    <span>Medo Extremo</span>
-                    <span>Medo</span>
-                    <span>Neutro</span>
-                    <span>Ganância</span>
-                    <span>Ganância Extrema</span>
-                </div>
-                <!-- <div class="gauge-intervals">
-                    <div class="gauge-interval">
-                        <div class="gauge-interval-label">Medo Extremo</div>
-                        <div class="gauge-interval-range">0-20</div>
-                    </div>
-                    <div class="gauge-interval">
-                        <div class="gauge-interval-label">Medo</div>
-                        <div class="gauge-interval-range">21-44</div>
-                    </div>
-                    <div class="gauge-interval">
-                        <div class="gauge-interval-label">Neutro</div>
-                        <div class="gauge-interval-range">45-54</div>
-                    </div>
-                    <div class="gauge-interval">
-                        <div class="gauge-interval-label">Ganância</div>
-                        <div class="gauge-interval-range">55-79</div>
-                    </div>
-                    <div class="gauge-interval">
-                        <div class="gauge-interval-label">Ganância Extrema</div>
-                        <div class="gauge-interval-range">80-100</div>
-                    </div>
-                </div> -->
-            </div>
-        </div>
-        <div class="main-card" id="indicadores">
-            <h3>Indicadores que compõem o índice</h3>
-            <div class="indicadores-list">
-                <div class="indicador-card" onclick="scrollToIndicador('A')">
-                    <div class="indicador-nome">Risco de Crédito</div>
-                    <span class="indicador-sentimento-indice" id="sentimentoA-card">--</span>
-                    <div class="indicador-valor" id="valorA">--</div>
-                    <div class="indicador-var" id="varA">--</div>
-                </div>
-                <div class="indicador-card" onclick="scrollToIndicador('B')">
-                    <div class="indicador-nome">Retorno do Mercado</div>
-                    <span class="indicador-sentimento-indice" id="sentimentoB-card">--</span>
-                    <div class="indicador-valor" id="valorB">--</div>
-                    <div class="indicador-var" id="varB">--</div>
-                </div>
-                <div class="indicador-card" onclick="scrollToIndicador('C')">
-                    <div class="indicador-nome">Volatilidade do Mercado</div>
-                    <span class="indicador-sentimento-indice" id="sentimentoC-card">--</span>
-                    <div class="indicador-valor" id="valorC">--</div>
-                    <div class="indicador-var" id="varC">--</div>
-                </div>
-                <div class="indicador-card" onclick="scrollToIndicador('D')">
-                    <div class="indicador-nome">Atividade do Mercado</div>
-                    <span class="indicador-sentimento-indice" id="sentimentoD-card">--</span>
-                    <div class="indicador-valor" id="valorD">--</div>
-                    <div class="indicador-var" id="varD">--</div>
-                </div>
-                <div class="indicador-card" onclick="scrollToIndicador('E')">
-                    <div class="indicador-nome">Confiança do Mercado Local</div>
-                    <span class="indicador-sentimento-indice" id="sentimentoE-card">--</span>
-                    <div class="indicador-valor" id="valorE">--</div>
-                    <div class="indicador-var" id="varE">--</div>
-                </div>
-                <div class="indicador-card" onclick="scrollToIndicador('F')">
-                    <div class="indicador-nome">Sentimento da Mídia</div>
-                    <span class="indicador-sentimento-indice" id="sentimentoF-card">--</span>
-                    <div class="indicador-valor" id="valorF">--</div>
-                    <div class="indicador-var" id="varF">--</div>
-                </div>
-            </div>
-        </div>
-        <div class="main-card" id="grafico">
-            <h3>Histórico do Índice</h3>
-            <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:18px">
-                <label for="rangeDias">Período:</label>
-                <select id="rangeDias" onchange="atualizaGraficoIndice()">
-                    <option value="30">Últimos 30 dias</option>
-                    <option value="90">Últimos 90 dias</option>
-                    <option value="180">Últimos 180 dias</option>
-                    <option value="365">Últimos 365 dias</option>
-                    <option value="custom">Personalizado</option>
-                </select>
-                <input type="date" id="dataInicio" style="display:none" onchange="atualizaGraficoIndice()">
-                <span style="display:none">até</span>
-                <input type="date" id="dataFim" style="display:none" onchange="atualizaGraficoIndice()">
-            </div>
-            <canvas id="graficoIndice"></canvas>
-        </div>
-        <div class="main-card indicador-section" id="indicadorA">
-            <h3>Indicador de Risco de Crédito</h3>
-            <div class="indicador-detalhe">
-                <div class="indicador-info">
-                    <div class="indicador-valor-destaque">Valor atual: <span id="valorA-detalhe">--</span></div>
-                    <div class="indicador-sentimento"><span id="sentimentoA">--</span></div>
-                    <div class="indicador-descricao">Este indicador avalia o apetite por risco dos investidores ao combinar oscilações recentes de preços com o desempenho do mercado.</div>
-                    <button class="indicador-btn" onclick="saibaMais('A')">Saiba mais</button>
-                </div>
-                <div class="indicador-grafico">
-                    <canvas id="graficoA"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="main-card indicador-section" id="indicadorB">
-            <h3>Indicador de Retorno do Mercado</h3>
-            <div class="indicador-detalhe">
-                <div class="indicador-info">
-                    <div class="indicador-valor-destaque">Valor atual: <span id="valorB-detalhe">--</span></div>
-                    <div class="indicador-sentimento"><span id="sentimentoB">--</span></div>
-                    <div class="indicador-descricao">Este indicador resume como o desempenho recente do Ibovespa se compara ao seu padrão histórico, considerando também a força do volume de negociações.</div>
-                    <button class="indicador-btn" onclick="saibaMais('B')">Saiba mais</button>
-                </div>
-                <div class="indicador-grafico">
-                    <canvas id="graficoB"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="main-card indicador-section" id="indicadorC">
-            <h3>Indicador de Volatilidade do Mercado</h3>
-            <div class="indicador-detalhe">
-                <div class="indicador-info">
-                    <div class="indicador-valor-destaque">Valor atual: <span id="valorC-detalhe">--</span></div>
-                    <div class="indicador-sentimento"><span id="sentimentoC">--</span></div>
-                    <div class="indicador-descricao">Este indicador mede o nível de nervosismo do mercado ao observar o quanto os preços têm oscilado recentemente no Brasil (Ibovespa) e como essas oscilações se alinham ao humor externo (IVVB11).</div>
-                    <button class="indicador-btn" onclick="saibaMais('C')">Saiba mais</button>
-                </div>
-                <div class="indicador-grafico">
-                    <canvas id="graficoC"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="main-card indicador-section" id="indicadorD">
-            <h3>Indicador de Atividade do Mercado</h3>
-            <div class="indicador-detalhe">
-                <div class="indicador-info">
-                    <div class="indicador-valor-destaque">Valor atual: <span id="valorD-detalhe">--</span></div>
-                    <div class="indicador-sentimento"><span id="sentimentoD">--</span></div>
-                    <div class="indicador-descricao">Este indicador mede a intensidade diária do mercado, avaliando se o dia foi fraco, normal ou forte em relação ao ritmo recente. Considera que retornos sem volume têm menos qualidade, enquanto movimentos acompanhados de volume elevado são mais representativos.</div>
-                    <button class="indicador-btn" onclick="saibaMais('D')">Saiba mais</button>
-                </div>
-                <div class="indicador-grafico">
-                    <canvas id="graficoD"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="main-card indicador-section" id="indicadorE">
-            <h3>Indicador de Confiança do Mercado Local</h3>
-            <div class="indicador-detalhe">
-                <div class="indicador-info">
-                    <div class="indicador-valor-destaque">Valor atual: <span id="valorE-detalhe">--</span></div>
-                    <div class="indicador-sentimento"><span id="sentimentoE">--</span></div>
-                    <div class="indicador-descricao">Este indicador mede a confiança do mercado brasileiro por meio do IFIX, avaliando se o desempenho diário foi melhor, igual ou pior em relação ao ritmo recente.</div>
-                    <button class="indicador-btn" onclick="saibaMais('E')">Saiba mais</button>
-                </div>
-                <div class="indicador-grafico">
-                    <canvas id="graficoE"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="main-card indicador-section" id="indicadorF">
-            <h3>Indicador de Sentimento da Mídia</h3>
-            <div class="indicador-detalhe">
-                <div class="indicador-info">
-                    <div class="indicador-valor-destaque">Valor atual: <span id="valorF-detalhe">--</span></div>
-                    <div class="indicador-sentimento"><span id="sentimentoF">--</span></div>
-                    <div class="indicador-descricao">Este indicador capta o “humor” das notícias econômicas do dia, analisando o tom dos títulos (positivo, negativo ou neutro) para resumir o clima informacional predominante.</div>
-                    <button class="indicador-btn" onclick="saibaMais('F')">Saiba mais</button>
-                </div>
-                <div class="indicador-grafico">
-                    <canvas id="graficoF"></canvas>
-                </div>
-            </div>
-        </div>
+    <div class="nav-item" data-page="indicadores" onclick="showPage('indicadores',this)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+      Indicadores
     </div>
-    <div id="modalSaibaMais" style="display:none"></div>
-    <script>
-        // Sidebar toggle
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('main-content');
-            sidebar.classList.toggle('collapsed');
-            if(sidebar.classList.contains('collapsed')) {
-                main.style.marginLeft = '60px';
-            } else {
-                main.style.marginLeft = '250px';
-            }
+    <div class="nav-item" data-page="analise" onclick="showPage('analise',this)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+      Análise
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Dados</div>
+    <div class="nav-item" data-page="kpis" onclick="showPage('kpis',this)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2C6.81 2 3 5.81 3 10.5S6.81 19 11.5 19h.5v3c4.86-2.34 8-7 8-11.5C20 5.81 16.19 2 11.5 2zm1 14.5h-2v-2h2v2zm0-4h-2c0-3.25 3-3 3-5 0-1.1-.9-2-2-2s-2 .9-2 2h-2c0-2.21 1.79-4 4-4s4 1.79 4 4c0 2.5-3 2.75-3 5z"/></svg>
+      KPIs &amp; Performance
+    </div>
+    <div class="nav-item" data-page="mercado" onclick="showPage('mercado',this)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 8c0 1.1-.9 2-2 2-.18 0-.35-.02-.51-.07l-3.56 3.55c.05.16.07.34.07.52 0 1.1-.9 2-2 2s-2-.9-2-2c0-.18.02-.36.07-.52l-2.55-2.55c-.16.05-.34.07-.52.07s-.36-.02-.52-.07l-4.55 4.56c.05.16.07.33.07.51 0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2c.18 0 .35.02.51.07l4.56-4.55C8.02 9.36 8 9.18 8 9c0-1.1.9-2 2-2s2 .9 2 2c0 .18-.02.36-.07.52l2.55 2.55c.16-.05.34-.07.52-.07s.36.02.52.07l3.56-3.56C19.02 8.35 19 8.18 19 8c0-1.1.9-2 2-2s2 .9 2 2z"/></svg>
+      Mercado
+    </div>
+    <div class="nav-item" data-page="governanca" onclick="showPage('governanca',this)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+      Governança
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="author">Diogo Jacomini</div>
+    <div class="socials">
+      <a href="https://www.linkedin.com/in/diogojacomini" target="_blank" title="LinkedIn">
+        <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      </a>
+      <a href="https://github.com/diogojacomini" target="_blank" title="GitHub">
+        <svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      </a>
+      <a href="mailto:diogojacomini@outlook.com" title="E-mail">
+        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      </a>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════  MAIN  ════════════════════════════════════════════════════== -->
+<div class="main">
+
+  <header class="topbar">
+    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbarDate">—</span>
+      <span class="ismb-badge" id="topbarBadge">ISMB —</span>
+    </div>
+  </header>
+
+  <!-- ── DASHBOARD ─────────────────────────────────────────────────────── -->
+  <div class="page active" id="page-dashboard">
+    <div class="section-hdr">
+      <div class="left">
+        <h2>Dashboard Principal</h2>
+        <p>Leitura diária do humor do mercado brasileiro baseada em dados objetivos.</p>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="card gauge-card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+          Índice ISMB Atual
+        </div>
+        <div class="gauge-wrap">
+          <canvas id="gaugeCanvas" width="340" height="200"></canvas>
+          <div class="gauge-value-label" id="gaugeValue">—</div>
+          <div class="gauge-status-label sent-neutro" id="gaugeStatus">Carregando…</div>
+          <div class="gauge-subtext">Última atualização: <span id="gaugeDate">—</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"/></svg>
+          Composição do Índice
+        </div>
+        <div class="chart-container chart-sm"><canvas id="chartRadar"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+        Histórico do Índice ISMB
+      </div>
+      <div class="period-bar">
+        <span class="period-label">Período:</span>
+        <button class="period-btn" onclick="setDashPeriod(30,this)">30d</button>
+        <button class="period-btn active" onclick="setDashPeriod(90,this)">90d</button>
+        <button class="period-btn" onclick="setDashPeriod(180,this)">180d</button>
+        <button class="period-btn" onclick="setDashPeriod(365,this)">1a</button>
+        <button class="period-btn" onclick="setDashPeriod(9999,this)">Tudo</button>
+      </div>
+      <div class="chart-container chart-lg"><canvas id="chartISMB"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
+        Indicadores Componentes
+      </div>
+      <div class="ind-grid" id="indicadoresGrid">
+        <div class="spinner-wrap"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INDICADORES ───────────────────────────────────────────────────── -->
+  <div class="page" id="page-indicadores">
+    <div class="section-hdr">
+      <div class="left">
+        <h2>Indicadores Detalhados</h2>
+        <p>Análise aprofundada de cada componente do ISMB.</p>
+      </div>
+    </div>
+    <div class="tabs" id="indTabs">
+      <button class="tab-btn active" onclick="switchIndTab('risco_credito',this)">Risco de Crédito</button>
+      <button class="tab-btn" onclick="switchIndTab('retorno_mercado',this)">Retorno do Mercado</button>
+      <button class="tab-btn" onclick="switchIndTab('volatilidade_mercado',this)">Volatilidade</button>
+      <button class="tab-btn" onclick="switchIndTab('atividade_mercado',this)">Atividade</button>
+      <button class="tab-btn" onclick="switchIndTab('confianca_mercado_local',this)">Confiança</button>
+      <button class="tab-btn" onclick="switchIndTab('sentimento_noticias',this)">Sentimento Mídia</button>
+    </div>
+    <div id="indTabContent"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- ── ANÁLISE ───────────────────────────────────────────────────────── -->
+  <div class="page" id="page-analise">
+    <div class="section-hdr">
+      <div class="left">
+        <h2>Análise Técnica</h2>
+        <p>Bandas de Bollinger, médias móveis e matriz de correlação entre ativos.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+        Série Temporal ISMB com Bandas de Bollinger
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:14px;flex-wrap:wrap;">
+        <div class="period-bar" style="margin:0">
+          <span class="period-label">Período:</span>
+          <button class="period-btn" onclick="setAnalisePeriod(90,this)">90d</button>
+          <button class="period-btn active" onclick="setAnalisePeriod(180,this)">180d</button>
+          <button class="period-btn" onclick="setAnalisePeriod(365,this)">1a</button>
+          <button class="period-btn" onclick="setAnalisePeriod(9999,this)">Tudo</button>
+        </div>
+        <div class="toggle-row" style="margin:0">
+          <label class="toggle-item"><input type="checkbox" id="togBB" checked onchange="redrawBBChart()"> <span style="color:#78909c">Bandas BB</span></label>
+          <label class="toggle-item"><input type="checkbox" id="togMA7" checked onchange="redrawBBChart()"> <span style="color:#ff7043">MA 7</span></label>
+          <label class="toggle-item"><input type="checkbox" id="togMA21" checked onchange="redrawBBChart()"> <span style="color:#5c6bc0">MA 21</span></label>
+          <label class="toggle-item"><input type="checkbox" id="togZScore" onchange="redrawBBChart()"> <span style="color:#ab47bc">Z-Score</span></label>
+        </div>
+      </div>
+      <div class="chart-container chart-lg"><canvas id="chartBB"></canvas></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+          Matriz de Correlação
+        </div>
+        <div class="corr-grid-wrap" id="corrMatrix"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2C6.81 2 3 5.81 3 10.5S6.81 19 11.5 19h.5v3c4.86-2.34 8-7 8-11.5C20 5.81 16.19 2 11.5 2zm1 14.5h-2v-2h2v2zm0-4h-2c0-3.25 3-3 3-5 0-1.1-.9-2-2-2s-2 .9-2 2h-2c0-2.21 1.79-4 4-4s4 1.79 4 4c0 2.5-3 2.75-3 5z"/></svg>
+          Volatilidade Anualizada (rolling)
+        </div>
+        <div class="chart-container chart-md"><canvas id="chartVol"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── KPIs ──────────────────────────────────────────────────────────── -->
+  <div class="page" id="page-kpis">
+    <div class="section-hdr">
+      <div class="left">
+        <h2>KPIs &amp; Performance</h2>
+        <p>Retorno anual, volatilidade e drawdown máximo por entidade.</p>
+      </div>
+    </div>
+    <div class="tabs" id="kpiTabs">
+      <button class="tab-btn active" onclick="switchKpiTab('ISMB',this)">ISMB</button>
+      <button class="tab-btn" onclick="switchKpiTab('IBOV',this)">IBOV</button>
+      <button class="tab-btn" onclick="switchKpiTab('IFIX',this)">IFIX</button>
+      <button class="tab-btn" onclick="switchKpiTab('IVVB',this)">IVVB</button>
+      <button class="tab-btn" onclick="switchKpiTab('CDS',this)">CDS</button>
+    </div>
+    <div id="kpiTabContent"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- ── MERCADO ───────────────────────────────────────────────────────── -->
+  <div class="page" id="page-mercado">
+    <div class="section-hdr">
+      <div class="left">
+        <h2>Dados de Mercado</h2>
+        <p>Preço, volume e variação diária dos índices de referência.</p>
+      </div>
+    </div>
+    <div class="tabs" id="mktTabs">
+      <button class="tab-btn active" onclick="switchMktTab('IBOV',this)">IBOV</button>
+      <button class="tab-btn" onclick="switchMktTab('IFIX',this)">IFIX</button>
+      <button class="tab-btn" onclick="switchMktTab('IVVB',this)">IVVB</button>
+      <button class="tab-btn" onclick="switchMktTab('CDS',this)">CDS</button>
+    </div>
+    <div class="period-bar">
+      <span class="period-label">Período:</span>
+      <button class="period-btn active" onclick="setMktPeriod(30,this)">30d</button>
+      <button class="period-btn" onclick="setMktPeriod(90,this)">90d</button>
+      <button class="period-btn" onclick="setMktPeriod(180,this)">180d</button>
+      <button class="period-btn" onclick="setMktPeriod(365,this)">1a</button>
+    </div>
+    <div id="mktTabContent"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- ── GOVERNANÇA ────────────────────────────────────────────────────── -->
+  <div class="page" id="page-governanca">
+    <div class="section-hdr">
+      <div class="left">
+        <h2>Governança de Dados</h2>
+        <p>Relatório de qualidade dos datasets processados pelo pipeline.</p>
+      </div>
+    </div>
+    <div id="qualityContent"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+</div><!-- /.main -->
+
+<!-- ═══════  JAVASCRIPT  ═════════════════════════════════════════════════ -->
+<script>
+/* ─── Config ──────────────────────────────────────────────────────────── */
+const API = 'http://localhost:8000/api';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#64748b';
+Chart.register(window['chartjs-plugin-annotation']);
+
+/* ─── Global state ────────────────────────────────────────────────────── */
+const _charts = {};
+let _ismb_series = [];
+let _bb_series   = [];
+let _kpis        = [];
+let _corr        = [];
+let _quality     = [];
+let _mkt_data    = [];
+let _ind_full    = {};
+let _dash_period    = 90;
+let _analise_period = 180;
+let _mkt_period     = 30;
+let _current_ind    = 'risco_credito';
+let _current_kpi    = 'ISMB';
+let _current_mkt    = 'IBOV';
+
+/* ─── Sentiment ───────────────────────────────────────────────────────── */
+function sentimentClass(v) {
+  if (v == null) return 'sent-neutro';
+  if (v < 20)   return 'sent-medo-ext';
+  if (v < 45)   return 'sent-medo';
+  if (v < 55)   return 'sent-neutro';
+  if (v < 80)   return 'sent-ganancia';
+  return 'sent-ganancia-ext';
+}
+function sentimentLabel(v) {
+  if (v == null) return '—';
+  if (v < 20)   return 'Medo Extremo';
+  if (v < 45)   return 'Medo';
+  if (v < 55)   return 'Neutro';
+  if (v < 80)   return 'Ganância';
+  return 'Ganância Extrema';
+}
+function sentimentColor(v) {
+  const m = {'sent-medo-ext':'#ef4444','sent-medo':'#f97316','sent-neutro':'#eab308','sent-ganancia':'#22c55e','sent-ganancia-ext':'#16a34a'};
+  return m[sentimentClass(v)] || '#94a3b8';
+}
+function fmtNum(v, dec=2) { return v != null ? Number(v).toFixed(dec) : '—'; }
+
+/* ─── Gauge (Canvas semi-circle) ──────────────────────────────────────── */
+function drawGauge(canvas, value) {
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  const cx = W / 2, cy = H - 18;
+  const R = Math.min(W * 0.44, (H - 18) * 0.9);
+  const ri = R * 0.68;
+
+  const segs = [
+    ['#ef4444', 0,  20],
+    ['#f97316',20,  45],
+    ['#eab308',45,  55],
+    ['#22c55e',55,  80],
+    ['#16a34a',80, 100],
+  ];
+
+  function ang(v) { return Math.PI - (v / 100) * Math.PI; }
+
+  // Draw segments
+  segs.forEach(([color, v1, v2]) => {
+    ctx.beginPath();
+    ctx.moveTo(cx + ri * Math.cos(ang(v1)), cy - ri * Math.sin(ang(v1)));
+    ctx.arc(cx, cy, R,  -ang(v1), -ang(v2), false);
+    ctx.arc(cx, cy, ri, -ang(v2), -ang(v1), true);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  });
+
+  // Gap between segments
+  ctx.beginPath();
+  ctx.arc(cx, cy, R + 1, Math.PI, 0, false);
+  ctx.arc(cx, cy, ri - 1, 0, Math.PI, true);
+  ctx.closePath();
+  ctx.fillStyle = 'transparent';
+
+  // Needle
+  if (value != null) {
+    const na = ang(Number(value));
+    const nx = cx + R * Math.cos(na);
+    const ny = cy - R * Math.sin(na);
+    const nb = 8;
+    ctx.save();
+    ctx.translate(cx, cy);
+    const nRad = Math.atan2(-(ny - cy), nx - cx);
+    ctx.rotate(-nRad);
+    ctx.beginPath();
+    ctx.moveTo(-nb, 0);
+    ctx.lineTo(0, -(R - 6));
+    ctx.lineTo(nb, 0);
+    ctx.closePath();
+    ctx.fillStyle = '#1e293b';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Center hub
+  ctx.beginPath();
+  ctx.arc(cx, cy, ri * 0.3, 0, Math.PI * 2);
+  ctx.fillStyle = '#f0f4f8';
+  ctx.fill();
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Tick labels
+  ctx.font = `600 ${Math.round(R * 0.09)}px Inter, sans-serif`;
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  [0, 25, 50, 75, 100].forEach(v => {
+    const a = ang(v);
+    const tx = cx + (R + 15) * Math.cos(a);
+    const ty = cy - (R + 15) * Math.sin(a);
+    ctx.fillText(v, tx, ty);
+  });
+}
+
+/* ─── API ─────────────────────────────────────────────────────────────── */
+async function apiFetch(path) {
+  const r = await fetch(API + path);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+/* ─── Chart helpers ───────────────────────────────────────────────────── */
+function destroyChart(id) {
+  if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+}
+
+const LINE50 = {
+  annotations: {
+    mid: {
+      type: 'line', yMin: 50, yMax: 50,
+      borderColor: 'rgba(148,163,184,0.5)', borderWidth: 1.5, borderDash: [5,5],
+    }
+  }
+};
+
+function mkLine(id, labels, datasets, opts) {
+  opts = opts || {};
+  destroyChart(id);
+  const el = document.getElementById(id);
+  if (!el) return;
+  _charts[id] = new Chart(el.getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: opts.legend !== undefined ? opts.legend : { display: false },
+        tooltip: { callbacks: { label: c => ' ' + c.dataset.label + ': ' + Number(c.raw).toFixed(2) } },
+        annotation: opts.annotation || {},
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 10, maxRotation: 0 } },
+        y: Object.assign({ grid: { color: '#f1f5f9' } }, opts.yOpts || {}),
+      },
+      elements: { point: { radius: 0, hoverRadius: 4 } },
+    }
+  });
+  if (opts.y2) {
+    _charts[id].options.scales.y2 = Object.assign({ position: 'right', grid: { display: false }, type: 'linear' }, opts.y2);
+    _charts[id].update();
+  }
+}
+
+function mkBar(id, labels, datasets, opts) {
+  opts = opts || {};
+  destroyChart(id);
+  const el = document.getElementById(id);
+  if (!el) return;
+  _charts[id] = new Chart(el.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: opts.legend !== undefined ? opts.legend : { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 12, maxRotation: 0 } },
+        y: Object.assign({ grid: { color: '#f1f5f9' } }, opts.yOpts || {}),
+      }
+    }
+  });
+}
+
+function mkRadar(id, labels, values) {
+  destroyChart(id);
+  const el = document.getElementById(id);
+  if (!el) return;
+  _charts[id] = new Chart(el.getContext('2d'), {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: 'rgba(0,188,212,0.15)',
+        borderColor: '#00bcd4',
+        borderWidth: 2,
+        pointBackgroundColor: '#00bcd4',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          grid: { color: '#f1f5f9' },
+          ticks: { display: false },
+          pointLabels: { font: { size: 11, weight: '600' }, color: '#64748b' }
         }
-        // Busca dados do índice principal via API
-        async function fetchIndice() {
-            const resp = await fetch('http://localhost:8000/api/indice?indice=ismb');
-            return await resp.json();
-        }
-        // Busca dados de um indicador via API
-        async function fetchIndicador(nome) {
-            const resp = await fetch(`http://localhost:8000/api/indice?indice=${nome}`);
-            return await resp.json();
-        }
-        // Atualiza o gauge e gráfico principal com dados reais
-        async function atualizaIndiceReal() {
-            const dados = await fetchIndice();
-            if (!dados || !dados.length) return;
-            // Ordena por data crescente
-            const ordenados = dados.slice().sort((a,b)=>{
-                if (a.data < b.data) return -1;
-                if (a.data > b.data) return 1;
-                return 0;
-            });
-            // Filtro de período
-            let range = document.getElementById('rangeDias').value;
-            let dadosFiltrados = ordenados;
-            if (range === 'custom') {
-                const dataInicio = document.getElementById('dataInicio').value;
-                const dataFim = document.getElementById('dataFim').value;
-                if (dataInicio && dataFim) {
-                    dadosFiltrados = ordenados.filter(e => e.data >= dataInicio && e.data <= dataFim);
-                }
-            } else {
-                const dias = parseInt(range);
-                if (!isNaN(dias) && ordenados.length > dias) {
-                    dadosFiltrados = ordenados.slice(-dias);
-                }
-            }
-            // Atualiza gauge
-            const valorAtual = dadosFiltrados[dadosFiltrados.length-1].valor;
-            document.getElementById('gauge-value').innerText = valorAtual;
-            document.getElementById('gauge-pointer').style.setProperty('--gauge-pos', valorAtual);
-            let status = '';
-            if(valorAtual < 20) status = 'Medo Extremo';
-            else if(valorAtual < 45) status = 'Medo';
-            else if(valorAtual < 55) status = 'Neutro';
-            else if(valorAtual < 80) status = 'Ganância';
-            else status = 'Ganância Extrema';
-            document.getElementById('gauge-status').innerText = status;
-            // Atualiza gráfico principal
-            if(window.chartIndice) window.chartIndice.destroy();
-            window.chartIndice = new Chart(document.getElementById('graficoIndice').getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: dadosFiltrados.map(e => e.data),
-                    datasets: [{
-                        data: dadosFiltrados.map(e => e.valor),
-                        fill: true,
-                        borderColor: '#00bcd4',
-                        backgroundColor: 'rgba(0,188,212,0.08)',
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        annotation: {
-                            annotations: {
-                                linha50: {
-                                    type: 'line',
-                                    yMin: 50,
-                                    yMax: 50,
-                                    borderColor: 'gray',
-                                    borderWidth: 2,
-                                    borderDash: [6, 6],
-                                    label: {
-                                        display: true,
-                                        content: '50',
-                                        position: 'end',
-                                        color: 'gray',
-                                        backgroundColor: 'white',
-                                        font: { weight: 'bold' }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { title: { display: false }, grid: { display: false } },
-                        y: { title: { display: false }, beginAtZero: true, min: 0, max: 100, grid: { display: false } }
-                    }
-                }
-            });
-        }
-        // Atualiza os cards e gráficos dos indicadores com dados reais
-        async function atualizaIndicadorReal(nome, canvasId, valorId, varId) {
-            let dados = await fetchIndicador(nome);
-            if (!dados || !dados.length) return;
-            // Ordena por data crescente
-            dados = dados.slice().sort((a, b) => {
-                if (a.data < b.data) return -1;
-                if (a.data > b.data) return 1;
-                return 0;
-            });
-            const valor = dados[dados.length-1].valor;
-            const anterior = dados[dados.length-2]?.valor || valor;
-            const variacao = valor-anterior;
-            document.getElementById(valorId).innerText = valor;
-            // Atualiza valor detalhado
-            const valorDetalhe = document.getElementById('valor'+nome+'-detalhe');
-            if(valorDetalhe) valorDetalhe.innerText = valor;
-            // Classificação com base na nova tabela (em português)
-            let sentimento = '';
-            if(valor < 20) sentimento = 'Medo Extremo';
-            else if(valor < 45) sentimento = 'Medo';
-            else if(valor < 55) sentimento = 'Neutro';
-            else if(valor < 80) sentimento = 'Ganância';
-            else sentimento = 'Ganância Extrema';
-            const sentSpan = document.getElementById('sentimento'+nome);
-            if(sentSpan) sentSpan.innerText = sentimento;
-            // Atualiza sentimento no card
-            const sentCard = document.getElementById('sentimento'+nome+'-card');
-            if(sentCard) sentCard.innerText = sentimento;
-            // Atualiza variação e cor (arredondado para 1 casa decimal)
-            const varElem = document.getElementById(varId);
-            varElem.innerText = (variacao>=0?'+':'')+variacao.toFixed(1);
-            varElem.style.color = variacao>=0 ? '#43a047' : '#e53935';
-            // Gráfico
-            new Chart(document.getElementById(canvasId).getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: dados.map(e => e.data),
-                    datasets: [{
-                        data: dados.map(e => e.valor),
-                        fill: true,
-                        borderColor: '#2d3e50',
-                        backgroundColor: 'rgba(44,62,80,0.08)',
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        annotation: {
-                            annotations: {
-                                linha50: {
-                                    type: 'line',
-                                    yMin: 50,
-                                    yMax: 50,
-                                    borderColor: 'gray',
-                                    borderWidth: 2,
-                                    borderDash: [6, 6],
-                                    label: { display: false }
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { title: { display: false }, grid: { display: false } },
-                        y: { title: { display: false }, beginAtZero: true, min: 0, max: 100, grid: { display: false } }
-                    }
-                }
-            });
-        }
-        // Scroll suave para o gráfico do indicador
-        function scrollToIndicador(letra) {
-            const el = document.getElementById('indicador' + letra);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
-        // Chama as funções reais ao carregar
-        window.addEventListener('DOMContentLoaded', () => {
-            atualizaIndiceReal();
-            atualizaIndicadorReal('A','graficoA','valorA','varA');
-            atualizaIndicadorReal('B','graficoB','valorB','varB');
-            atualizaIndicadorReal('C','graficoC','valorC','varC');
-            atualizaIndicadorReal('D','graficoD','valorD','varD');
-            atualizaIndicadorReal('E','graficoE','valorE','varE');
-            atualizaIndicadorReal('F','graficoF','valorF','varF');
-        });
-        async function saibaMais(letra) {
-            const nomes = {
-                'A': 'Indicador de Risco de Crédito',
-                'B': 'Indicador de Retorno do Mercado',
-                'C': 'Indicador de Volatilidade do Mercado',
-                'D': 'Indicador de Atividade do Mercado',
-                'E': 'Indicador de Confiança do Mercado Local',
-                'F': 'Indicador de Sentimento da Mídia'
-            };
-            const modal = document.getElementById('modalSaibaMais');
-            // Busca HTML estático gerado em docs/indicadorX.html
-            try {
-                const resp = await fetch(`docs/indicador${letra}.html`);
-                if (!resp.ok) throw new Error('Erro ao buscar conteúdo');
-                const html = await resp.text();
-                modal.innerHTML = `
-                    <div class="modal-overlay" id="modalOverlay">
-                        <div class="modal-box" role="dialog" aria-modal="true">
-                            <div class="modal-header">
-                                <span class="modal-title">${nomes[letra]}</span>
-                                <button class="modal-close" id="modalCloseBtn" aria-label="Fechar">&times;</button>
-                            </div>
-                            <div class="modal-content">${html}</div>
-                        </div>
-                    </div>
-                `;
-            } catch (e) {
-                modal.innerHTML = `<div class='modal-overlay'><div class='modal-box'><div class='modal-header'><span class='modal-title'>${nomes[letra]}</span><button class='modal-close' id='modalCloseBtn' aria-label='Fechar'>&times;</button></div><div class='modal-content'>Erro ao carregar conteúdo.</div></div></div>`;
-            }
-            modal.style.display = '';
-            // Fechar ao clicar no X
-            document.getElementById('modalCloseBtn').onclick = fecharModalSaibaMais;
-            // Fechar ao clicar fora da caixa
-            document.getElementById('modalOverlay').onclick = function(e) {
-                if(e.target === this) fecharModalSaibaMais();
-            };
-            // Fechar com ESC
-            document.onkeydown = function(e) {
-                if(e.key === 'Escape') fecharModalSaibaMais();
-            };
-        }
-        function fecharModalSaibaMais() {
-            const modal = document.getElementById('modalSaibaMais');
-            modal.style.display = 'none';
-            modal.innerHTML = '';
-            document.onkeydown = null;
-        }
-        // Exibe/esconde inputs de data conforme seleção
-        document.addEventListener('DOMContentLoaded', function() {
-            const range = document.getElementById('rangeDias');
-            const dataInicio = document.getElementById('dataInicio');
-            const dataFim = document.getElementById('dataFim');
-            const ateSpan = dataInicio.nextElementSibling;
-            range.addEventListener('change', function() {
-                if (range.value === 'custom') {
-                    dataInicio.style.display = '';
-                    dataFim.style.display = '';
-                    if (ateSpan) ateSpan.style.display = '';
-                } else {
-                    dataInicio.style.display = 'none';
-                    dataFim.style.display = 'none';
-                    if (ateSpan) ateSpan.style.display = 'none';
-                }
-                atualizaIndiceReal();
-            });
-            dataInicio.addEventListener('change', atualizaIndiceReal);
-            dataFim.addEventListener('change', atualizaIndiceReal);
-        });
-    </script>
+      }
+    }
+  });
+}
+
+/* ─── Navigation ──────────────────────────────────────────────────────── */
+const PAGE_TITLES = {
+  dashboard:  'Dashboard',
+  indicadores:'Indicadores',
+  analise:    'Análise Técnica',
+  kpis:       'KPIs & Performance',
+  mercado:    'Dados de Mercado',
+  governanca: 'Governança de Dados',
+};
+
+function showPage(name, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  document.getElementById('topbarTitle').textContent = PAGE_TITLES[name] || name;
+
+  if (name === 'indicadores' && !_ind_full[_current_ind]) loadIndTab(_current_ind);
+  if (name === 'analise')    loadAnalise();
+  if (name === 'kpis')       loadKpis();
+  if (name === 'mercado')    loadMercado();
+  if (name === 'governanca') loadGovernanca();
+}
+
+/* ─── DASHBOARD ───────────────────────────────────────────────────────── */
+async function loadDashboard() {
+  try {
+    const [ismbData, serie] = await Promise.all([
+      apiFetch('/indice?indice=ismb'),
+      apiFetch('/serie_temporal?days=9999'),
+    ]);
+    _ismb_series = (ismbData || []).filter(d => d.valor != null).sort((a,b)=>a.data<b.data?-1:1);
+    _bb_series   = (serie   || []).sort((a,b)=>a.dat_ref<b.dat_ref?-1:1);
+
+    const latest = _ismb_series[_ismb_series.length - 1];
+    if (latest) {
+      const v = Number(latest.valor);
+      const canvas = document.getElementById('gaugeCanvas');
+      drawGauge(canvas, v);
+      document.getElementById('gaugeValue').textContent = Math.round(v);
+      const sl = document.getElementById('gaugeStatus');
+      sl.textContent = sentimentLabel(v);
+      sl.className = 'gauge-status-label ' + sentimentClass(v);
+      document.getElementById('gaugeDate').textContent = latest.data;
+      document.getElementById('topbarBadge').textContent = 'ISMB ' + Math.round(v);
+      document.getElementById('topbarDate').textContent = latest.data;
+    }
+    drawISMBChart();
+    await loadIndicadorCards();
+  } catch(e) { console.error('Dashboard error', e); }
+}
+
+function drawISMBChart() {
+  const filtered = _dash_period >= 9999 ? _ismb_series : _ismb_series.slice(-_dash_period);
+  mkLine('chartISMB',
+    filtered.map(d => d.data),
+    [{
+      label: 'ISMB',
+      data: filtered.map(d => d.valor),
+      borderColor: '#00bcd4',
+      backgroundColor: 'rgba(0,188,212,0.08)',
+      fill: true, borderWidth: 2, tension: 0.3,
+    }],
+    { yOpts: { min: 0, max: 100 }, annotation: LINE50 }
+  );
+}
+
+function setDashPeriod(d, btn) {
+  _dash_period = d;
+  document.querySelectorAll('#page-dashboard .period-bar .period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  drawISMBChart();
+}
+
+async function loadIndicadorCards() {
+  const defs = [
+    { key:'a', nome:'Risco de Crédito',       page:'risco_credito' },
+    { key:'b', nome:'Retorno do Mercado',      page:'retorno_mercado' },
+    { key:'c', nome:'Volatilidade',            page:'volatilidade_mercado' },
+    { key:'d', nome:'Atividade',               page:'atividade_mercado' },
+    { key:'e', nome:'Confiança Local',         page:'confianca_mercado_local' },
+    { key:'f', nome:'Sentimento Mídia',        page:'sentimento_noticias' },
+  ];
+  const results = await Promise.all(defs.map(d => apiFetch('/indice?indice=' + d.key).catch(()=>[])));
+  const grid = document.getElementById('indicadoresGrid');
+  grid.innerHTML = '';
+
+  defs.forEach((def, i) => {
+    const rows = (results[i] || []).filter(r => r.valor != null).sort((a,b)=>a.data<b.data?-1:1);
+    const lat  = rows[rows.length-1];
+    const prev = rows[rows.length-2];
+    const v    = lat  ? Number(lat.valor)  : null;
+    const vp   = prev ? Number(prev.valor) : null;
+    const diff = v != null && vp != null ? v - vp : null;
+    const sc   = sentimentClass(v);
+    const sl   = sentimentLabel(v);
+    const card = document.createElement('div');
+    card.className = 'ind-mini-card';
+    card.onclick = () => {
+      document.querySelectorAll('#indTabs .tab-btn').forEach((b,ix) => { if(ix===i) b.classList.add('active'); else b.classList.remove('active'); });
+      _current_ind = def.page;
+      showPage('indicadores', document.querySelector('[data-page="indicadores"]'));
+    };
+    card.innerHTML =
+      '<div class="ind-mini-name">' + def.nome + '</div>' +
+      '<div class="ind-mini-value">' + (v != null ? Math.round(v) : '—') + '</div>' +
+      '<div class="ind-mini-row">' +
+        '<span class="ind-mini-sent ' + sc + '">' + sl + '</span>' +
+        '<span class="ind-mini-var ' + (diff!=null?(diff>=0?'pos':'neg'):'') + '">' +
+          (diff!=null ? (diff>=0?'+':'') + diff.toFixed(1) : '—') +
+        '</span>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+
+  const radLabels = defs.map(d => d.nome);
+  const radValues = results.map(rows => {
+    const r = (rows||[]).filter(x=>x.valor!=null).sort((a,b)=>a.data<b.data?-1:1);
+    const l = r[r.length-1];
+    return l ? Number(l.valor) : 0;
+  });
+  mkRadar('chartRadar', radLabels, radValues);
+}
+
+/* ─── INDICADORES PAGE ────────────────────────────────────────────────── */
+const IND_META = {
+  risco_credito:         { nome:'Risco de Crédito',           colScore:'score_risco_credito',       desc:'Avalia o apetite por risco dos investidores combinando oscilações de preços com o desempenho do CDS Brasil 5 anos.' },
+  retorno_mercado:       { nome:'Retorno do Mercado',          colScore:'score_retorno_mercado',      desc:'Resume como o desempenho recente do Ibovespa se compara ao seu padrão histórico, considerando o volume de negociações.' },
+  volatilidade_mercado:  { nome:'Volatilidade do Mercado',     colScore:'score_volatilidade_mercado', desc:'Mede o nervosismo do mercado observando oscilações no IBOV e no mercado externo via IVVB11.' },
+  atividade_mercado:     { nome:'Atividade do Mercado',        colScore:'score_atividade_mercado',    desc:'Mede a intensidade diária do mercado, avaliando se o dia foi fraco, normal ou forte em relação ao ritmo recente.' },
+  confianca_mercado_local:{ nome:'Confiança do Mercado Local', colScore:'score_confianca_mercado',    desc:'Mede a confiança por meio do IFIX, avaliando se o desempenho diário foi melhor ou pior em relação ao ritmo recente.' },
+  sentimento_noticias:   { nome:'Sentimento da Mídia',         colScore:'score_noticias',             desc:'Capta o humor das notícias econômicas analisando o tom dos títulos (positivo, negativo, neutro).' },
+};
+
+async function switchIndTab(nome, btn) {
+  _current_ind = nome;
+  if (btn) {
+    document.querySelectorAll('#indTabs .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  await loadIndTab(nome);
+}
+
+async function loadIndTab(nome) {
+  const container = document.getElementById('indTabContent');
+  container.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+  if (!_ind_full[nome]) {
+    try {
+      const meta = IND_META[nome];
+      const raw = await apiFetch('/indicador_full/' + nome + '?days=9999');
+      _ind_full[nome] = (raw||[]).filter(r => r[meta && meta.colScore] != null).sort((a,b)=>a.dat_ref<b.dat_ref?-1:1);
+    } catch(e) {
+      container.innerHTML = '<p style="padding:20px;color:#ef4444">Erro ao carregar indicador.</p>';
+      return;
+    }
+  }
+  const data = _ind_full[nome];
+  const meta = IND_META[nome] || {};
+  const lat  = data[data.length-1];
+  const prev = data[data.length-2];
+  const v    = lat  ? Number(lat[meta.colScore])  : null;
+  const vp   = prev ? Number(prev[meta.colScore]) : null;
+  const diff = v != null && vp != null ? v - vp : null;
+  const vals = data.map(r => Number(r[meta.colScore])).filter(x => !isNaN(x));
+  const maxV = Math.max(...vals), minV = Math.min(...vals);
+  const avgV = vals.reduce((a,b)=>a+b,0)/vals.length;
+
+  container.innerHTML =
+    '<div class="card">' +
+      '<div class="ind-detail-grid">' +
+        '<div class="ind-info-card">' +
+          '<div class="ind-info-label">Valor Atual</div>' +
+          '<div class="ind-info-value">' + (v!=null?fmtNum(v,1):'—') + '</div>' +
+          '<div class="ind-info-sent ' + sentimentClass(v) + '">' + sentimentLabel(v) + '</div>' +
+          '<div class="ind-info-desc">' + (meta.desc||'') + '</div>' +
+          '<div class="stat-row">' +
+            '<div class="stat-item"><div class="stat-item-label">Variação</div><div class="stat-item-value ' + (diff!=null?(diff>=0?'pos':'neg'):'') + '">' + (diff!=null?(diff>=0?'+':'')+fmtNum(diff,1):'—') + '</div></div>' +
+            '<div class="stat-item"><div class="stat-item-label">Máx (hist)</div><div class="stat-item-value">' + fmtNum(maxV,1) + '</div></div>' +
+            '<div class="stat-item"><div class="stat-item-label">Mín (hist)</div><div class="stat-item-value">' + fmtNum(minV,1) + '</div></div>' +
+            '<div class="stat-item"><div class="stat-item-label">Média (hist)</div><div class="stat-item-value">' + fmtNum(avgV,1) + '</div></div>' +
+          '</div>' +
+        '</div>' +
+        '<div><div class="chart-container chart-md"><canvas id="chartInd_' + nome + '"></canvas></div></div>' +
+      '</div>' +
+    '</div>';
+
+  setTimeout(() => {
+    mkLine('chartInd_' + nome,
+      data.map(r => r.dat_ref),
+      [{
+        label: meta.nome,
+        data: data.map(r => Number(r[meta.colScore])),
+        borderColor: '#00bcd4',
+        backgroundColor: 'rgba(0,188,212,0.07)',
+        fill: true, borderWidth: 2, tension: 0.3,
+      }],
+      { yOpts: { min: 0, max: 100 }, annotation: LINE50 }
+    );
+  }, 50);
+}
+
+/* ─── ANÁLISE PAGE ────────────────────────────────────────────────────── */
+async function loadAnalise() {
+  if (!_bb_series.length) {
+    try { _bb_series = (await apiFetch('/serie_temporal?days=9999')).sort((a,b)=>a.dat_ref<b.dat_ref?-1:1); } catch(e){}
+  }
+  if (!_corr.length) {
+    try { _corr = await apiFetch('/correlacao'); } catch(e){}
+  }
+  redrawBBChart();
+  renderCorrMatrix();
+  renderVolChart();
+}
+
+function setAnalisePeriod(d, btn) {
+  _analise_period = d;
+  document.querySelectorAll('#page-analise .period-bar .period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  redrawBBChart();
+  renderVolChart();
+}
+
+function redrawBBChart() {
+  const showBB   = document.getElementById('togBB')?.checked;
+  const showMA7  = document.getElementById('togMA7')?.checked;
+  const showMA21 = document.getElementById('togMA21')?.checked;
+  const showZ    = document.getElementById('togZScore')?.checked;
+  const d = _analise_period >= 9999 ? _bb_series : _bb_series.slice(-_analise_period);
+  const labels = d.map(r => r.dat_ref);
+  const datasets = [];
+  if (showBB) {
+    datasets.push({ label:'BB Upper', data:d.map(r=>r.bb_upper), borderColor:'rgba(120,144,156,0.5)', borderWidth:1, fill:false, tension:0.3, borderDash:[3,3], pointRadius:0 });
+    datasets.push({ label:'BB Lower', data:d.map(r=>r.bb_lower), borderColor:'rgba(120,144,156,0.5)', borderWidth:1, fill:'-1', backgroundColor:'rgba(96,125,139,0.07)', tension:0.3, borderDash:[3,3], pointRadius:0 });
+  }
+  if (showMA21) datasets.push({ label:'MA 21', data:d.map(r=>r.ma_21), borderColor:'#5c6bc0', borderWidth:1.5, fill:false, tension:0.3, pointRadius:0 });
+  if (showMA7)  datasets.push({ label:'MA 7',  data:d.map(r=>r.ma_7),  borderColor:'#ff7043', borderWidth:1.5, fill:false, tension:0.3, pointRadius:0 });
+  if (showZ)    datasets.push({ label:'Z-Score', data:d.map(r=>r.ret_zscore), borderColor:'#ab47bc', borderWidth:1.5, fill:false, tension:0.3, pointRadius:0, yAxisID:'y2' });
+  datasets.push({ label:'ISMB', data:d.map(r=>r.value), borderColor:'#00bcd4', borderWidth:2.5, fill:false, tension:0.3 });
+  mkLine('chartBB', labels, datasets, {
+    legend: { display:true, labels:{ boxWidth:14, font:{ size:11 } } },
+    yOpts: { min:0, max:100 },
+    annotation: LINE50,
+    y2: showZ ? { title:{ display:true, text:'Z-Score' } } : null,
+  });
+}
+
+function renderVolChart() {
+  const d = _analise_period >= 9999 ? _bb_series : _bb_series.slice(-_analise_period);
+  mkLine('chartVol',
+    d.map(r => r.dat_ref),
+    [{ label:'Vol Anualizada (%)', data:d.map(r=>r.rolling_vol_annual!=null?Number(r.rolling_vol_annual)*100:null), borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,0.07)', fill:true, borderWidth:2, tension:0.3 }],
+    { yOpts:{ min:0 } }
+  );
+}
+
+function renderCorrMatrix() {
+  if (!_corr.length) return;
+  const entities = [...new Set(_corr.flatMap(r=>[r.idx_a,r.idx_b]))].sort();
+  const cm = {};
+  _corr.forEach(r => { cm[r.idx_a+'_'+r.idx_b]=Number(r.corr); cm[r.idx_b+'_'+r.idx_a]=Number(r.corr); });
+  entities.forEach(e => cm[e+'_'+e]=1);
+
+  function corrColor(c) {
+    if (c==null) return 'rgba(241,245,249,1)';
+    if (c>=0.7)  return 'rgba(22,163,74,0.85)';
+    if (c>=0.4)  return 'rgba(134,239,172,0.8)';
+    if (c>=0.1)  return 'rgba(187,247,208,0.8)';
+    if (c>=-0.1) return 'rgba(241,245,249,1)';
+    if (c>=-0.4) return 'rgba(252,165,165,0.8)';
+    if (c>=-0.7) return 'rgba(239,68,68,0.8)';
+    return 'rgba(185,28,28,0.85)';
+  }
+
+  let html = '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;font-size:0.76rem;color:var(--text2);align-items:center">' +
+    '<b style="color:var(--text)">Legenda:</b>' +
+    '<span><span style="display:inline-block;width:12px;height:12px;background:rgba(185,28,28,0.85);border-radius:2px;vertical-align:middle;margin-right:3px"></span>Neg forte</span>' +
+    '<span><span style="display:inline-block;width:12px;height:12px;background:rgba(239,68,68,0.8);border-radius:2px;vertical-align:middle;margin-right:3px"></span>Neg médio</span>' +
+    '<span><span style="display:inline-block;width:12px;height:12px;background:rgba(241,245,249,1);border:1px solid #e2e8f0;border-radius:2px;vertical-align:middle;margin-right:3px"></span>Neutro</span>' +
+    '<span><span style="display:inline-block;width:12px;height:12px;background:rgba(134,239,172,0.8);border-radius:2px;vertical-align:middle;margin-right:3px"></span>Pos médio</span>' +
+    '<span><span style="display:inline-block;width:12px;height:12px;background:rgba(22,163,74,0.85);border-radius:2px;vertical-align:middle;margin-right:3px"></span>Pos forte</span>' +
+  '</div><div class="corr-matrix"><div class="corr-label-row"><div class="corr-header-cell"></div>';
+  entities.forEach(e => html += '<div class="corr-header-cell">' + e + '</div>');
+  html += '</div>';
+  entities.forEach(e1 => {
+    html += '<div class="corr-row"><div class="corr-row-label">' + e1 + '</div>';
+    entities.forEach(e2 => {
+      const c = cm[e1+'_'+e2];
+      const cv = c != null ? c.toFixed(2) : '—';
+      html += '<div class="corr-cell" style="background:' + corrColor(c) + '">' +
+        '<div class="corr-value">' + cv + '</div>' +
+        (e1!==e2 ? '<div class="corr-pair">' + e1 + '×' + e2 + '</div>' : '') +
+        '</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  document.getElementById('corrMatrix').innerHTML = html;
+}
+
+/* ─── KPIs PAGE ───────────────────────────────────────────────────────── */
+async function loadKpis() {
+  if (!_kpis.length) {
+    document.getElementById('kpiTabContent').innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+    try { _kpis = await apiFetch('/kpis'); } catch(e) { document.getElementById('kpiTabContent').innerHTML='<p style="padding:20px;color:#ef4444">Erro ao carregar KPIs.</p>'; return; }
+  }
+  renderKpiTab(_current_kpi);
+}
+
+function switchKpiTab(entity, btn) {
+  _current_kpi = entity;
+  document.querySelectorAll('#kpiTabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderKpiTab(entity);
+}
+
+function renderKpiTab(entity) {
+  const rows = _kpis.filter(r=>r.entity_name===entity).sort((a,b)=>Number(b.year)-Number(a.year));
+  if (!rows.length) { document.getElementById('kpiTabContent').innerHTML='<p style="padding:20px;color:var(--text2)">Sem dados.</p>'; return; }
+  const years   = rows.map(r=>r.year);
+  const returns = rows.map(r=>Number(r.annual_return)*100);
+  const vols    = rows.map(r=>Number(r.annual_volatility)*100);
+
+  let html =
+    '<div class="two-col" style="margin-bottom:20px">' +
+      '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px"><div class="card-title">Retorno Anual — ' + entity + '</div><div class="chart-container chart-md"><canvas id="chartKpiReturn"></canvas></div></div>' +
+      '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px"><div class="card-title">Volatilidade Anual — ' + entity + '</div><div class="chart-container chart-md"><canvas id="chartKpiVol"></canvas></div></div>' +
+    '</div>' +
+    '<div class="card" style="margin-top:0"><div class="card-title">Dados Anuais — ' + entity + '</div>' +
+    '<div class="kpi-table-wrap"><table class="kpi-table"><thead><tr><th>Ano</th><th>Retorno Anual</th><th>Volatilidade</th><th>Drawdown Máx</th><th>Observações</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    const ret = Number(r.annual_return)*100;
+    html += '<tr><td class="kpi-year">' + r.year + '</td>' +
+      '<td class="' + (ret>=0?'kpi-return-pos':'kpi-return-neg') + '">' + (ret>=0?'+':'') + ret.toFixed(2) + '%</td>' +
+      '<td>' + (Number(r.annual_volatility)*100).toFixed(2) + '%</td>' +
+      '<td class="kpi-drawdown">' + (Number(r.max_drawdown)*100).toFixed(2) + '%</td>' +
+      '<td>' + r.n_obs + '</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  document.getElementById('kpiTabContent').innerHTML = html;
+
+  setTimeout(() => {
+    const ry=[...years].reverse(), rv=[...returns].reverse(), rvo=[...vols].reverse();
+    mkBar('chartKpiReturn', ry,
+      [{ label:'Retorno (%)', data:rv, backgroundColor:rv.map(v=>v>=0?'rgba(34,197,94,0.75)':'rgba(239,68,68,0.75)'), borderRadius:5, borderWidth:0 }],
+      {}
+    );
+    mkLine('chartKpiVol', ry,
+      [{ label:'Volatilidade (%)', data:rvo, borderColor:'#f97316', backgroundColor:'rgba(249,115,22,0.08)', fill:true, borderWidth:2, tension:0.3 }],
+      {}
+    );
+  }, 50);
+}
+
+/* ─── MERCADO PAGE ────────────────────────────────────────────────────── */
+async function loadMercado() {
+  if (!_mkt_data.length) {
+    document.getElementById('mktTabContent').innerHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
+    try { _mkt_data=(await apiFetch('/mercado?days=365')).sort((a,b)=>a.dat_ref<b.dat_ref?-1:1); }
+    catch(e) { document.getElementById('mktTabContent').innerHTML='<p style="padding:20px;color:#ef4444">Erro.</p>'; return; }
+  }
+  renderMktTab(_current_mkt);
+}
+
+function switchMktTab(s, btn) {
+  _current_mkt = s;
+  document.querySelectorAll('#mktTabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderMktTab(s);
+}
+
+function setMktPeriod(d, btn) {
+  _mkt_period = d;
+  document.querySelectorAll('#page-mercado .period-bar .period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMktTab(_current_mkt);
+}
+
+function renderMktTab(symbol) {
+  let rows = _mkt_data.filter(r=>r.cod_indice===symbol);
+  if (_mkt_period<9999) rows = rows.slice(-_mkt_period);
+  const colorMap = {IBOV:'#1565c0',IFIX:'#e65100',IVVB:'#6a1b9a',CDS:'#b71c1c'};
+  const color = colorMap[symbol]||'#00bcd4';
+  const lat  = rows[rows.length-1];
+  const prev = rows[rows.length-2];
+  const v    = lat  ? Number(lat.val_fechamento)  : null;
+  const vp   = prev ? Number(prev.val_fechamento) : null;
+  const diff = v!=null&&vp!=null ? v-vp : null;
+  const diffP= diff!=null&&vp ? diff/vp*100 : null;
+
+  let html =
+    '<div class="stat-row" style="margin-bottom:16px">' +
+      '<div class="stat-item"><div class="stat-item-label">Fechamento</div><div class="stat-item-value">' + (v!=null?v.toLocaleString('pt-BR'):'—') + '</div><div class="stat-item-sub">' + (lat&&lat.dat_ref||'—') + '</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Variação</div><div class="stat-item-value ' + (diff!=null?(diff>=0?'pos':'neg'):'') + '">' + (diff!=null?(diff>=0?'+':'')+diff.toFixed(2):'—') + '</div><div class="stat-item-sub">' + (diffP!=null?(diffP>=0?'+':'')+diffP.toFixed(2)+'%':'—') + '</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Volume</div><div class="stat-item-value">' + (lat&&lat.qtd_volume!=null?Number(lat.qtd_volume).toLocaleString('pt-BR'):'—') + '</div></div>' +
+    '</div>' +
+    '<div class="two-col">' +
+      '<div class="card" style="margin:0"><div class="card-title">Fechamento — ' + symbol + '</div><div class="chart-container chart-md"><canvas id="chartMktPrice"></canvas></div></div>' +
+      '<div class="card" style="margin:0"><div class="card-title">Dados Recentes — ' + symbol + '</div><div class="table-wrap"><table class="data-table"><thead><tr><th>Data</th><th>Fechamento</th><th>Mínima</th><th>Máxima</th><th>Volume</th></tr></thead><tbody>' +
+      [...rows].reverse().slice(0,15).map(r =>
+        '<tr><td>' + r.dat_ref + '</td>' +
+        '<td><b>' + (r.val_fechamento!=null?Number(r.val_fechamento).toLocaleString('pt-BR'):'—') + '</b></td>' +
+        '<td>' + (r.val_minima!=null?Number(r.val_minima).toLocaleString('pt-BR'):'—') + '</td>' +
+        '<td>' + (r.val_maxima!=null?Number(r.val_maxima).toLocaleString('pt-BR'):'—') + '</td>' +
+        '<td>' + (r.qtd_volume!=null?Number(r.qtd_volume).toLocaleString('pt-BR'):'—') + '</td></tr>'
+      ).join('') +
+      '</tbody></table></div></div>' +
+    '</div>';
+
+  document.getElementById('mktTabContent').innerHTML = html;
+  setTimeout(() => {
+    mkLine('chartMktPrice', rows.map(r=>r.dat_ref),
+      [{ label:symbol, data:rows.map(r=>r.val_fechamento), borderColor:color, backgroundColor:color.replace('rgb(','rgba(').replace(')',',0.08)'), fill:true, borderWidth:2, tension:0.2 }],
+      {}
+    );
+  }, 50);
+}
+
+/* ─── GOVERNANÇA PAGE ─────────────────────────────────────────────────── */
+async function loadGovernanca() {
+  if (_quality.length) { renderQuality(); return; }
+  document.getElementById('qualityContent').innerHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
+  try {
+    const raw = await apiFetch('/quality');
+    const byDS = {};
+    raw.forEach(r => { const k=r.dataset_name; if(!byDS[k]||r.check_timestamp>byDS[k].check_timestamp) byDS[k]=r; });
+    _quality = Object.values(byDS).sort((a,b)=>a.dataset_name.localeCompare(b.dataset_name));
+    renderQuality();
+  } catch(e) { document.getElementById('qualityContent').innerHTML='<p style="padding:20px;color:#ef4444">Erro ao carregar dados de qualidade.</p>'; }
+}
+
+function renderQuality() {
+  const avg  = _quality.length ? _quality.reduce((s,r)=>s+Number(r.quality_score||0),0)/_quality.length : 0;
+  const ok   = _quality.filter(r=>Number(r.quality_score||0)>=90).length;
+  const warn = _quality.filter(r=>Number(r.quality_score||0)<90&&Number(r.quality_score||0)>0).length;
+  const crit = _quality.filter(r=>Number(r.quality_score||0)===0).length;
+
+  let html =
+    '<div class="stat-row" style="margin-bottom:20px">' +
+      '<div class="stat-item"><div class="stat-item-label">Score Médio</div><div class="stat-item-value">' + avg.toFixed(1) + '</div><div class="stat-item-sub">de 100</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Datasets OK</div><div class="stat-item-value pos">' + ok + '</div><div class="stat-item-sub">score ≥ 90</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Warnings</div><div class="stat-item-value" style="color:var(--warning)">' + warn + '</div><div class="stat-item-sub">score < 90</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Sem dados</div><div class="stat-item-value neg">' + crit + '</div><div class="stat-item-sub">score = 0</div></div>' +
+    '</div>' +
+    '<div class="quality-grid">';
+  _quality.forEach(r => {
+    const sc  = Number(r.quality_score||0);
+    const cls = sc===0?'err':sc>=90?'ok':'warn';
+    html += '<div class="quality-card ' + cls + '">' +
+      '<div class="quality-name">' + r.dataset_name + '</div>' +
+      '<div class="quality-score ' + (sc===0?'neg':sc>=90?'pos':'') + '">' + sc.toFixed(1) + '</div>' +
+      '<div class="quality-meta">' + (r.total_records||0) + ' registros · ' + (r.dat_ref||'—') + '</div>' +
+      '<div class="quality-meta" style="margin-top:3px">Comp: ' + (r.completeness_pct||0) + '% · Valid: ' + (r.validity_pct||0) + '%</div>' +
+    '</div>';
+  });
+  html += '</div><div class="card"><div class="card-title">Relatório Detalhado</div><div class="table-wrap"><table class="data-table"><thead><tr><th>Dataset</th><th>Data</th><th>Registros</th><th>Completude</th><th>Validade</th><th>Consistência</th><th>Outliers</th><th>Score</th><th>Status</th></tr></thead><tbody>';
+  _quality.forEach(r => {
+    const sc=Number(r.quality_score||0);
+    html += '<tr><td><b>' + r.dataset_name + '</b></td><td>' + (r.dat_ref||'—') + '</td><td>' + (r.total_records||0) + '</td><td>' + (r.completeness_pct||0) + '%</td><td>' + (r.validity_pct||0) + '%</td><td>' + (r.consistency_pct||0) + '%</td><td>' + (r.outlier_count||0) + '</td><td><b>' + sc.toFixed(1) + '</b></td><td><span class="badge">' + (r.status||'—') + '</span></td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  document.getElementById('qualityContent').innerHTML = html;
+}
+
+/* ─── Init ────────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
 </body>
 </html>
