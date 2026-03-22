@@ -484,6 +484,14 @@
       <button class="tab-btn" onclick="switchIndTab('confianca_mercado_local',this)">Confiança</button>
       <button class="tab-btn" onclick="switchIndTab('sentimento_noticias',this)">Sentimento Mídia</button>
     </div>
+    <div class="period-bar" id="indPeriodBar">
+      <span class="period-label">Período:</span>
+      <button class="period-btn active" onclick="setIndPeriod(30,this)">30d</button>
+      <button class="period-btn" onclick="setIndPeriod(90,this)">90d</button>
+      <button class="period-btn" onclick="setIndPeriod(180,this)">180d</button>
+      <button class="period-btn" onclick="setIndPeriod(365,this)">1a</button>
+      <button class="period-btn" onclick="setIndPeriod(9999,this)">Tudo</button>
+    </div>
     <div id="indTabContent"><div class="spinner-wrap"><div class="spinner"></div></div></div>
   </div>
 
@@ -611,6 +619,7 @@ let _dash_period    = 90;
 let _analise_period = 180;
 let _mkt_period     = 30;
 let _current_ind    = 'risco_credito';
+let _ind_period     = 30;
 let _current_kpi    = 'ISMB';
 let _current_mkt    = 'IBOV';
 
@@ -954,6 +963,13 @@ const IND_META = {
   sentimento_noticias:   { nome:'Sentimento da Mídia',         colScore:'score_noticias',             desc:'Capta o humor das notícias econômicas analisando o tom dos títulos (positivo, negativo, neutro).' },
 };
 
+function setIndPeriod(d, btn) {
+  _ind_period = d;
+  document.querySelectorAll('#indPeriodBar .period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadIndTab(_current_ind);
+}
+
 async function switchIndTab(nome, btn) {
   _current_ind = nome;
   if (btn) {
@@ -976,16 +992,18 @@ async function loadIndTab(nome) {
       return;
     }
   }
-  const data = _ind_full[nome];
-  const meta = IND_META[nome] || {};
-  const lat  = data[data.length-1];
-  const prev = data[data.length-2];
+  const meta     = IND_META[nome] || {};
+  const fullData  = _ind_full[nome];
+  const data      = _ind_period >= 9999 ? fullData : fullData.slice(-_ind_period);
+  const lat  = fullData[fullData.length-1];
+  const prev = fullData[fullData.length-2];
   const v    = lat  ? Number(lat[meta.colScore])  : null;
   const vp   = prev ? Number(prev[meta.colScore]) : null;
   const diff = v != null && vp != null ? v - vp : null;
   const vals = data.map(r => Number(r[meta.colScore])).filter(x => !isNaN(x));
-  const maxV = Math.max(...vals), minV = Math.min(...vals);
-  const avgV = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const maxV = vals.length ? Math.max(...vals) : 0;
+  const minV = vals.length ? Math.min(...vals) : 0;
+  const avgV = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
 
   container.innerHTML =
     '<div class="card">' +
@@ -1121,11 +1139,66 @@ function renderCorrMatrix() {
 
 /* ─── KPIs PAGE ───────────────────────────────────────────────────────── */
 async function loadKpis() {
-  if (!_kpis.length) {
-    document.getElementById('kpiTabContent').innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
-    try { _kpis = await apiFetch('/kpis'); } catch(e) { document.getElementById('kpiTabContent').innerHTML='<p style="padding:20px;color:#ef4444">Erro ao carregar KPIs.</p>'; return; }
+  document.getElementById('kpiTabContent').innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+  try {
+    const promises = [];
+    if (!_ismb_series.length) promises.push(apiFetch('/indice?indice=ismb').then(d => { _ismb_series = (d||[]).filter(x=>x.valor!=null).sort((a,b)=>a.data<b.data?-1:1); }));
+    if (!_mkt_data.length)    promises.push(apiFetch('/mercado?days=9999').then(d => { _mkt_data = (d||[]).sort((a,b)=>a.dat_ref<b.dat_ref?-1:1); }));
+    await Promise.all(promises);
+  } catch(e) {
+    document.getElementById('kpiTabContent').innerHTML='<p style="padding:20px;color:#ef4444">Erro ao carregar KPIs.</p>';
+    return;
   }
   renderKpiTab(_current_kpi);
+}
+
+/* Computes correct annual financial stats from raw price series.
+   - annual_return : (last_close - first_close) / first_close
+   - volatility    : std(log(P_t / P_t-1)) × √252   (annualised, on log-returns)
+   - max_drawdown  : min( P_t / running_peak - 1 )   (peak-to-trough) */
+function _buildMktYearStats(symbol) {
+  const prices = _mkt_data
+    .filter(r => r.cod_indice === symbol && r.val_fechamento != null)
+    .map(r => ({ date: r.dat_ref, close: Number(r.val_fechamento) }))
+    .sort((a, b) => a.date < b.date ? -1 : 1);
+
+  const byYear = {};
+  prices.forEach(p => {
+    const y = p.date.slice(0, 4);
+    if (!byYear[y]) byYear[y] = [];
+    byYear[y].push(p.close);
+  });
+
+  const currentYear = new Date().getFullYear().toString();
+  const years = Object.keys(byYear).filter(y => y !== currentYear).sort();
+  const stats = years.map(y => {
+    const closes = byYear[y];
+    const n      = closes.length;
+    const ret    = n >= 2 ? (closes[n-1] - closes[0]) / closes[0] * 100 : null;
+
+    // log-returns for volatility
+    const logRets = [];
+    for (let i = 1; i < closes.length; i++) {
+      if (closes[i-1] > 0) logRets.push(Math.log(closes[i] / closes[i-1]));
+    }
+    let vol = null;
+    if (logRets.length > 1) {
+      const mu  = logRets.reduce((s, v) => s + v, 0) / logRets.length;
+      const variance = logRets.reduce((s, v) => s + (v - mu) ** 2, 0) / logRets.length;
+      vol = Math.sqrt(variance) * Math.sqrt(252) * 100;
+    }
+
+    // peak-to-trough drawdown
+    let peak = closes[0], mdd = 0;
+    closes.forEach(c => {
+      if (c > peak) peak = c;
+      const dd = (c - peak) / peak * 100;
+      if (dd < mdd) mdd = dd;
+    });
+
+    return { year: y, ret, vol, mdd, n, min: Math.min(...closes), max: Math.max(...closes) };
+  });
+  return stats.reverse();
 }
 
 function switchKpiTab(entity, btn) {
@@ -1135,40 +1208,140 @@ function switchKpiTab(entity, btn) {
   renderKpiTab(entity);
 }
 
+/* Computes year-by-year sentiment stats from the ISMB series (score 0-100).
+   Financial metrics (volatility, drawdown) are meaningless for a 0-100 index. */
+function _buildIsmbYearStats() {
+  const byYear = {};
+  _ismb_series.forEach(d => {
+    const y = d.data.slice(0, 4);
+    if (!byYear[y]) byYear[y] = [];
+    byYear[y].push(Number(d.valor));
+  });
+  const years = Object.keys(byYear).sort();
+  // First pass: build stats without YoY
+  const stats = years.map(y => {
+    const vals = byYear[y];
+    const n    = vals.length;
+    const mean = vals.reduce((s,v)=>s+v,0)/n;
+    const std  = Math.sqrt(vals.reduce((s,v)=>s+(v-mean)**2,0)/n);
+    const min  = Math.min(...vals);
+    const max  = Math.max(...vals);
+    const dFear   = vals.filter(v=>v<45).length;
+    const dGreed  = vals.filter(v=>v>55).length;
+    const dNeutral= n - dFear - dGreed;
+    return { year:y, mean, std, min, max, n, dFear, dNeutral, dGreed, yoy: null };
+  });
+  // Second pass: compute YoY now that all means exist
+  stats.forEach((s, i) => {
+    if (i > 0) {
+      const prevMean = stats[i-1].mean;
+      s.yoy = prevMean !== 0 ? ((s.mean - prevMean) / prevMean * 100) : null;
+    }
+  });
+  return stats.reverse(); // most recent first
+}
+
 function renderKpiTab(entity) {
-  const rows = _kpis.filter(r=>r.entity_name===entity).sort((a,b)=>Number(b.year)-Number(a.year));
-  if (!rows.length) { document.getElementById('kpiTabContent').innerHTML='<p style="padding:20px;color:var(--text2)">Sem dados.</p>'; return; }
-  const years   = rows.map(r=>r.year);
-  const returns = rows.map(r=>Number(r.annual_return)*100);
-  const vols    = rows.map(r=>Number(r.annual_volatility)*100);
+  // ── ISMB: use sentiment-appropriate metrics ──────────────────────────
+  if (entity === 'ISMB') {
+    if (!_ismb_series.length) {
+      document.getElementById('kpiTabContent').innerHTML='<p style="padding:20px;color:var(--text2)">Série ISMB não carregada. Acesse o Dashboard primeiro.</p>';
+      return;
+    }
+    const stats = _buildIsmbYearStats();
+    const ry   = [...stats].reverse().map(s=>s.year);
+    const rmean= [...stats].reverse().map(s=>+s.mean.toFixed(2));
+    const ryoy = [...stats].reverse().map(s=>s.yoy!=null?+s.yoy.toFixed(2):null);
+
+    let html =
+      '<div class="two-col" style="margin-bottom:20px">' +
+        '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px">' +
+          '<div class="card-title">Sentimento Médio por Ano — ISMB</div>' +
+          '<div class="chart-container chart-md"><canvas id="chartKpiReturn"></canvas></div>' +
+        '</div>' +
+        '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px">' +
+          '<div class="card-title">Variação YoY do Sentimento — ISMB</div>' +
+          '<div class="chart-container chart-md"><canvas id="chartKpiVol"></canvas></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card" style="margin-top:0">' +
+        '<div class="card-title">Análise Anual do Índice ISMB (score 0–100)</div>' +
+        '<div class="kpi-table-wrap"><table class="kpi-table"><thead><tr>' +
+          '<th>Ano</th><th>Média</th><th>Var YoY</th><th>Desvio Padrão</th><th>Mín</th><th>Máx</th>' +
+          '<th title="Score < 45">Dias Medo</th><th title="45 ≤ Score ≤ 55">Dias Neutro</th><th title="Score > 55">Dias Ganância</th><th>Obs</th>' +
+        '</tr></thead><tbody>';
+    stats.forEach(s => {
+      const yoyFmt = s.yoy!=null ? ('<span class="'+(s.yoy>=0?'kpi-return-pos':'kpi-return-neg')+'">'+(s.yoy>=0?'+':'')+s.yoy.toFixed(1)+'%</span>') : '—';
+      html += '<tr>' +
+        '<td class="kpi-year">' + s.year + '</td>' +
+        '<td><b>' + s.mean.toFixed(1) + '</b></td>' +
+        '<td>' + yoyFmt + '</td>' +
+        '<td>' + s.std.toFixed(1) + '</td>' +
+        '<td>' + s.min.toFixed(1) + '</td>' +
+        '<td>' + s.max.toFixed(1) + '</td>' +
+        '<td style="color:var(--fear)">' + s.dFear + '</td>' +
+        '<td style="color:var(--neutral)">' + s.dNeutral + '</td>' +
+        '<td style="color:var(--greed)">' + s.dGreed + '</td>' +
+        '<td>' + s.n + '</td>' +
+      '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+    document.getElementById('kpiTabContent').innerHTML = html;
+
+    setTimeout(() => {
+      mkBar('chartKpiReturn', ry,
+        [{ label:'Sentimento Médio', data:rmean, backgroundColor:rmean.map(v=>v>=50?'rgba(0,188,212,0.75)':'rgba(249,115,22,0.75)'), borderRadius:5, borderWidth:0 }],
+        { yOpts:{ min:0, max:100 }, annotation: LINE50 }
+      );
+      mkBar('chartKpiVol', ry,
+        [{ label:'Var YoY (%)', data:ryoy, backgroundColor:ryoy.map(v=>v==null?'#e2e8f0':v>=0?'rgba(34,197,94,0.75)':'rgba(239,68,68,0.75)'), borderRadius:5, borderWidth:0 }],
+        {}
+      );
+    }, 50);
+    return;
+  }
+
+  // ── Other indices (IBOV, IFIX, IVVB, CDS): financial metrics from raw prices ─────
+  const stats = _buildMktYearStats(entity);
+  if (!stats.length) { document.getElementById('kpiTabContent').innerHTML='<p style="padding:20px;color:var(--text2)">Sem dados de mercado para ' + entity + '.</p>'; return; }
+
+  const ry  = [...stats].reverse().map(s => s.year);
+  const rv  = [...stats].reverse().map(s => s.ret  != null ? +s.ret.toFixed(2)  : null);
+  const rvo = [...stats].reverse().map(s => s.vol  != null ? +s.vol.toFixed(2)  : null);
 
   let html =
     '<div class="two-col" style="margin-bottom:20px">' +
       '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px"><div class="card-title">Retorno Anual — ' + entity + '</div><div class="chart-container chart-md"><canvas id="chartKpiReturn"></canvas></div></div>' +
-      '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px"><div class="card-title">Volatilidade Anual — ' + entity + '</div><div class="chart-container chart-md"><canvas id="chartKpiVol"></canvas></div></div>' +
+      '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px"><div class="card-title">Volatilidade Anualizada — ' + entity + '</div><div class="chart-container chart-md"><canvas id="chartKpiVol"></canvas></div></div>' +
     '</div>' +
     '<div class="card" style="margin-top:0"><div class="card-title">Dados Anuais — ' + entity + '</div>' +
-    '<div class="kpi-table-wrap"><table class="kpi-table"><thead><tr><th>Ano</th><th>Retorno Anual</th><th>Volatilidade</th><th>Drawdown Máx</th><th>Observações</th></tr></thead><tbody>';
-  rows.forEach(r => {
-    const ret = Number(r.annual_return)*100;
-    html += '<tr><td class="kpi-year">' + r.year + '</td>' +
-      '<td class="' + (ret>=0?'kpi-return-pos':'kpi-return-neg') + '">' + (ret>=0?'+':'') + ret.toFixed(2) + '%</td>' +
-      '<td>' + (Number(r.annual_volatility)*100).toFixed(2) + '%</td>' +
-      '<td class="kpi-drawdown">' + (Number(r.max_drawdown)*100).toFixed(2) + '%</td>' +
-      '<td>' + r.n_obs + '</td></tr>';
+    '<div class="kpi-table-wrap"><table class="kpi-table"><thead><tr>' +
+      '<th>Ano</th><th>Retorno Anual</th><th>Volatilidade <small style="font-weight:400">(std log-ret × √252)</small></th>' +
+      '<th>Drawdown Máx <small style="font-weight:400">(peak-to-trough)</small></th><th>Mín</th><th>Máx</th><th>Obs</th>' +
+    '</tr></thead><tbody>';
+  stats.forEach(r => {
+    const ret = r.ret;
+    html += '<tr>' +
+      '<td class="kpi-year">' + r.year + '</td>' +
+      '<td class="' + (ret!=null?(ret>=0?'kpi-return-pos':'kpi-return-neg'):'') + '">' + (ret!=null?(ret>=0?'+':'')+ret.toFixed(2)+'%':'—') + '</td>' +
+      '<td>' + (r.vol!=null?r.vol.toFixed(2)+'%':'—') + '</td>' +
+      '<td class="kpi-drawdown">' + (r.mdd!=null?r.mdd.toFixed(2)+'%':'—') + '</td>' +
+      '<td>' + r.min.toLocaleString('pt-BR') + '</td>' +
+      '<td>' + r.max.toLocaleString('pt-BR') + '</td>' +
+      '<td>' + r.n + '</td>' +
+    '</tr>';
   });
   html += '</tbody></table></div></div>';
   document.getElementById('kpiTabContent').innerHTML = html;
 
   setTimeout(() => {
-    const ry=[...years].reverse(), rv=[...returns].reverse(), rvo=[...vols].reverse();
     mkBar('chartKpiReturn', ry,
-      [{ label:'Retorno (%)', data:rv, backgroundColor:rv.map(v=>v>=0?'rgba(34,197,94,0.75)':'rgba(239,68,68,0.75)'), borderRadius:5, borderWidth:0 }],
+      [{ label:'Retorno (%)', data:rv, backgroundColor:rv.map(v=>v==null?'#e2e8f0':v>=0?'rgba(34,197,94,0.75)':'rgba(239,68,68,0.75)'), borderRadius:5, borderWidth:0 }],
       {}
     );
     mkLine('chartKpiVol', ry,
       [{ label:'Volatilidade (%)', data:rvo, borderColor:'#f97316', backgroundColor:'rgba(249,115,22,0.08)', fill:true, borderWidth:2, tension:0.3 }],
-      {}
+      { yOpts:{ min:0 } }
     );
   }, 50);
 }
