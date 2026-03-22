@@ -1,128 +1,117 @@
-from pathlib import Path
+"""
+CSV reading layer — pure I/O, no routing or business logic.
+
+All public readers are decorated with @cached(ttl=300) so repeated requests
+within a 5-minute window hit an in-process store instead of the filesystem.
+"""
+
 import csv
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import Any, Dict, List
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
-FACTORY_DIR = REPO_ROOT / 'factory'
-INDICE_PATH = FACTORY_DIR / 'data' / '02_curated' / 'facts' / 'fato_indice_ismb.csv'
-ANALYTICS_DIR = FACTORY_DIR / 'data' / '04_analytics'
-INDICATORS_DIR = FACTORY_DIR / 'data' / '03_indicators'
-GOVERNANCE_DIR = FACTORY_DIR / 'data' / '00_governance' / 'data_quality'
-FACTS_DIR = FACTORY_DIR / 'data' / '02_curated' / 'facts'
+from ..core.cache import cached
+from ..core.config import DataPaths
 
+
+# ── low-level reader ──────────────────────────────────────────────────────
 
 def _read_csv_file(path: Path) -> List[Dict[str, Any]]:
-	path = Path(path)
-	if not path.exists():
-		raise FileNotFoundError(str(path))
-	data: List[Dict[str, Any]] = []
-	with path.open(newline='', encoding='utf-8') as f:
-		reader = csv.DictReader(f)
-		for row in reader:
+    """Read a CSV, coercing numeric strings to float and blanks to None."""
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(str(path))
 
-			for k, v in list(row.items()):
-				if v is None or v == '':
-					row[k] = None
-					continue
-
-				if k.lower().startswith('dat') or k.lower().startswith('date'):
-					row[k] = v
-					continue
-
-				try:
-					row[k] = float(v)
-				except Exception:
-					row[k] = v
-			data.append(row)
-
-	return data
+    data: List[Dict[str, Any]] = []
+    with path.open(newline="", encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            for k, v in list(row.items()):
+                if v is None or v == "":
+                    row[k] = None
+                    continue
+                if k.lower().startswith("dat") or k.lower().startswith("date"):
+                    # Preserve date strings as-is
+                    row[k] = v
+                    continue
+                try:
+                    row[k] = float(v)
+                except (ValueError, TypeError):
+                    row[k] = v
+            data.append(dict(row))
+    return data
 
 
-def ler_csv(key_or_path: str):
-	if key_or_path == 'indice':
-		return _read_csv_file(INDICE_PATH)
+# ── cached domain readers ─────────────────────────────────────────────────
 
-	p = Path(key_or_path)
-	if p.exists():
-		return _read_csv_file(p)
+@cached(ttl=300)
+def read_indice() -> List[Dict[str, Any]]:
+    return _read_csv_file(DataPaths.INDICE_PATH)
 
-	raise FileNotFoundError(key_or_path)
 
+@cached(ttl=300)
+def read_serie_temporal() -> List[Dict[str, Any]]:
+    return _read_csv_file(DataPaths.SERIE_TEMPORAL_PATH)
+
+
+@cached(ttl=300)
+def read_correlacao() -> List[Dict[str, Any]]:
+    return _read_csv_file(DataPaths.CORRELACAO_PATH)
+
+
+@cached(ttl=300)
+def read_kpis() -> List[Dict[str, Any]]:
+    return _read_csv_file(DataPaths.KPIS_PATH)
+
+
+@cached(ttl=300)
+def read_dashboard_diario() -> List[Dict[str, Any]]:
+    return _read_csv_file(DataPaths.DASHBOARD_DIARIO_PATH)
+
+
+@cached(ttl=300)
+def read_quality() -> List[Dict[str, Any]]:
+    if not DataPaths.QUALITY_PATH.exists():
+        return []
+    return _read_csv_file(DataPaths.QUALITY_PATH)
+
+
+@cached(ttl=300)
+def read_indicador_full(nome: str) -> List[Dict[str, Any]]:
+    filename = DataPaths.INDICATOR_FILES.get(nome.lower())
+    if not filename:
+        raise FileNotFoundError(nome)
+    return _read_csv_file(DataPaths.INDICATORS_DIR / filename)
+
+
+@cached(ttl=300)
+def read_mercado() -> List[Dict[str, Any]]:
+    return _read_csv_file(DataPaths.MERCADO_PATH)
+
+
+# ── analytics helpers (uncached — directory listing is fast) ──────────────
 
 def list_analytics() -> List[str]:
-	if not ANALYTICS_DIR.exists():
-		return []
-	files = [p.name for p in sorted(ANALYTICS_DIR.glob('*.csv'))]
-	return files
+    if not DataPaths.ANALYTICS_DIR.exists():
+        return []
+    return [p.name for p in sorted(DataPaths.ANALYTICS_DIR.glob("*.csv"))]
 
 
 def read_analytics(filename: str) -> List[Dict[str, Any]]:
-	if Path(filename).name != filename:
-		raise FileNotFoundError(filename)
-
-	p = ANALYTICS_DIR / filename
-	if not p.exists():
-		p = p.with_suffix('.csv')
-	if not p.exists():
-		raise FileNotFoundError(filename)
-
-	return _read_csv_file(p)
-
-
-def get_indicador(nome: str):
-	if not ANALYTICS_DIR.exists():
-		raise FileNotFoundError(str(ANALYTICS_DIR))
-
-	for p in ANALYTICS_DIR.glob('*.csv'):
-		if p.stem.lower() == nome.lower() or nome.lower() in p.name.lower():
-			return _read_csv_file(p)
-
-	raise FileNotFoundError(nome)
+    """Read a file from the analytics directory by (safe) filename."""
+    if Path(filename).name != filename:
+        raise FileNotFoundError(filename)
+    p = DataPaths.ANALYTICS_DIR / filename
+    if not p.exists():
+        p = p.with_suffix(".csv")
+    if not p.exists():
+        raise FileNotFoundError(filename)
+    return _read_csv_file(p)
 
 
-# ---------------------------------------------------------------------------
-# New data-source helpers
-# ---------------------------------------------------------------------------
-
-_INDICATOR_FILES = {
-	'risco_credito': 'indicador_risco_credito.csv',
-	'retorno_mercado': 'indicador_retorno_mercado.csv',
-	'volatilidade_mercado': 'indicador_volatilidade_mercado.csv',
-	'atividade_mercado': 'indicador_atividade_mercado.csv',
-	'confianca_mercado_local': 'indicador_confianca_mercado_local.csv',
-	'sentimento_noticias': 'indicador_sentimento_noticias.csv',
-}
-
-
-def read_serie_temporal() -> List[Dict[str, Any]]:
-	return _read_csv_file(ANALYTICS_DIR / 'analytics_serie_temporal_ismb.csv')
-
-
-def read_correlacao() -> List[Dict[str, Any]]:
-	return _read_csv_file(ANALYTICS_DIR / 'analytics_correlacao.csv')
-
-
-def read_kpis() -> List[Dict[str, Any]]:
-	return _read_csv_file(ANALYTICS_DIR / 'analytics_kpis_agregados.csv')
-
-
-def read_dashboard_diario() -> List[Dict[str, Any]]:
-	return _read_csv_file(ANALYTICS_DIR / 'analytics_dashboard_diario.csv')
-
-
-def read_quality() -> List[Dict[str, Any]]:
-	path = GOVERNANCE_DIR / 'data_quality_report.csv'
-	if not path.exists():
-		return []
-	return _read_csv_file(path)
-
-
-def read_indicador_full(nome: str) -> List[Dict[str, Any]]:
-	filename = _INDICATOR_FILES.get(nome.lower())
-	if not filename:
-		raise FileNotFoundError(nome)
-	return _read_csv_file(INDICATORS_DIR / filename)
-
-
-def read_mercado() -> List[Dict[str, Any]]:
-	return _read_csv_file(FACTS_DIR / 'fato_transacao_mercado.csv')
+def get_indicador(nome: str) -> List[Dict[str, Any]]:
+    """Legacy fuzzy search inside the analytics directory."""
+    if not DataPaths.ANALYTICS_DIR.exists():
+        raise FileNotFoundError(str(DataPaths.ANALYTICS_DIR))
+    for p in DataPaths.ANALYTICS_DIR.glob("*.csv"):
+        if p.stem.lower() == nome.lower() or nome.lower() in p.name.lower():
+            return _read_csv_file(p)
+    raise FileNotFoundError(nome)

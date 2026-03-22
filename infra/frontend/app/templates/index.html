@@ -856,9 +856,10 @@ function showPage(name, navEl) {
 /* ─── DASHBOARD ───────────────────────────────────────────────────────── */
 async function loadDashboard() {
   try {
-    const [ismbData, serie] = await Promise.all([
+    const [ismbData, serie, resumo] = await Promise.all([
       apiFetch('/indice?indice=ismb'),
       apiFetch('/serie_temporal?days=9999'),
+      apiFetch('/resumo'),
     ]);
     _ismb_series = (ismbData || []).filter(d => d.valor != null).sort((a,b)=>a.data<b.data?-1:1);
     _bb_series   = (serie   || []).sort((a,b)=>a.dat_ref<b.dat_ref?-1:1);
@@ -877,7 +878,7 @@ async function loadDashboard() {
       document.getElementById('topbarDate').textContent = latest.data;
     }
     drawISMBChart();
-    await loadIndicadorCards();
+    buildIndicadorCards(resumo || []);
   } catch(e) { console.error('Dashboard error', e); }
 }
 
@@ -904,27 +905,35 @@ function setDashPeriod(d, btn) {
 }
 
 async function loadIndicadorCards() {
+  try {
+    const resumo = await apiFetch('/resumo');
+    buildIndicadorCards(resumo || []);
+  } catch(e) { console.error('loadIndicadorCards error', e); }
+}
+
+function buildIndicadorCards(resumo) {
+  // resumo = last 2 rows of fato_indice_ismb — all scores already in one call
+  const latest = resumo[resumo.length - 1] || {};
+  const prev   = resumo[resumo.length - 2] || {};
+
   const defs = [
-    { key:'a', nome:'Risco de Crédito',       page:'risco_credito' },
-    { key:'b', nome:'Retorno do Mercado',      page:'retorno_mercado' },
-    { key:'c', nome:'Volatilidade',            page:'volatilidade_mercado' },
-    { key:'d', nome:'Atividade',               page:'atividade_mercado' },
-    { key:'e', nome:'Confiança Local',         page:'confianca_mercado_local' },
-    { key:'f', nome:'Sentimento Mídia',        page:'sentimento_noticias' },
+    { colScore:'score_risco_credito',        nome:'Risco de Crédito',    page:'risco_credito' },
+    { colScore:'score_retorno_mercado',       nome:'Retorno do Mercado',  page:'retorno_mercado' },
+    { colScore:'score_volatilidade_mercado',  nome:'Volatilidade',        page:'volatilidade_mercado' },
+    { colScore:'score_atividade_mercado',     nome:'Atividade',           page:'atividade_mercado' },
+    { colScore:'score_confianca_mercado',     nome:'Confiança Local',     page:'confianca_mercado_local' },
+    { colScore:'score_noticias',              nome:'Sentimento Mídia',    page:'sentimento_noticias' },
   ];
-  const results = await Promise.all(defs.map(d => apiFetch('/indice?indice=' + d.key).catch(()=>[])));
+
   const grid = document.getElementById('indicadoresGrid');
   grid.innerHTML = '';
 
   defs.forEach((def, i) => {
-    const rows = (results[i] || []).filter(r => r.valor != null).sort((a,b)=>a.data<b.data?-1:1);
-    const lat  = rows[rows.length-1];
-    const prev = rows[rows.length-2];
-    const v    = lat  ? Number(lat.valor)  : null;
-    const vp   = prev ? Number(prev.valor) : null;
+    const v   = latest[def.colScore] != null ? Number(latest[def.colScore]) : null;
+    const vp  = prev[def.colScore]   != null ? Number(prev[def.colScore])   : null;
     const diff = v != null && vp != null ? v - vp : null;
-    const sc   = sentimentClass(v);
-    const sl   = sentimentLabel(v);
+    const sc  = sentimentClass(v);
+    const sl  = sentimentLabel(v);
     const card = document.createElement('div');
     card.className = 'ind-mini-card';
     card.onclick = () => {
@@ -945,11 +954,7 @@ async function loadIndicadorCards() {
   });
 
   const radLabels = defs.map(d => d.nome);
-  const radValues = results.map(rows => {
-    const r = (rows||[]).filter(x=>x.valor!=null).sort((a,b)=>a.data<b.data?-1:1);
-    const l = r[r.length-1];
-    return l ? Number(l.valor) : 0;
-  });
+  const radValues = defs.map(d => latest[d.colScore] != null ? Number(latest[d.colScore]) : 0);
   mkRadar('chartRadar', radLabels, radValues);
 }
 
