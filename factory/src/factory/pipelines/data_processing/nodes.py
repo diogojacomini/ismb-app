@@ -7,6 +7,8 @@ from .utils import (
     ewma_volatility,
     normalizar_escala,
     analisar_sentimento,
+    filtrar_noticias_financeiras,
+    calcular_score_dia,
     logger
 )
 
@@ -353,59 +355,106 @@ def indicador_confianca_mercado_local(df_ifix: pd.DataFrame, dim_tempo: pd.DataF
 
 def indicador_sentimento_midia(df_consolidated_noticias, parms_indicador, parameters: dict):
     """
-    Calcula indicador de sentimento da mídia.
+    Calcula o indicador de sentimento da mídia financeira.
 
-    Combina notícias de múltiplas fontes de mídia financeira, aplica análise
-    de sentimento nos títulos e gera um score diário.
+    Melhorias v2:
+      1. Pré-filtro de relevância — mantém apenas notícias de economia,
+         mercado e política; descarta off-topic (esportes, entretenimento…).
+      2. Léxico VADER calibrado para PT-BR financeiro — termos como "dispara",
+         "recessão", "calote", "dividendo" têm polaridade ajustada ao contexto.
+      3. Score volátil via tanh amplificado — elimina a compressão ao centro
+         típica de médias simples; sinais leves já afastam o score de 50.
+      4. Ponderação por força do sinal — títulos com |compound| alto contam
+         mais no score diário; títulos quase-neutros são descartados.
 
-    Score próximo de 0: Sentimento muito negativo
-    Score próximo de 50: Sentimento neutro
-    Score próximo de 100: Sentimento muito positivo
+    Parâmetros relevantes (parameters_data_processing.yml):
+      amplificacao       — fator k do tanh (default 2.0; maior = mais volátil)
+      threshold_neutro   — títulos com neutro > valor são ignorados (default 0.80)
+      min_compound_abs   — |compound| mínimo para considerar o título (default 0.05)
+      min_noticias_dia   — mínimo de títulos válidos por dia (default 3)
 
-    - score_noticias: Score médio diário de sentimento (0-100)
+    Score:
+      0   → Sentimento muito negativo
+      50  → Equilíbrio neutro
+      100 → Sentimento muito positivo
     """
-    odate = parameters.get("odate")
+    odate             = parameters.get("odate")
     process_full_data = parameters.get("process_full_data", False)
+    amplificacao      = parms_indicador.get("amplificacao",     2.0)
+    threshold_neutro  = parms_indicador.get("threshold_neutro", 0.80)
+    min_compound_abs  = parms_indicador.get("min_compound_abs", 0.05)
+    min_noticias_dia  = parms_indicador.get("min_noticias_dia", 3)
+
     logger.info("Parameters - Odate: %s, Full Data: %s", odate, process_full_data)
 
     if parameters.get("environment") == 'test':
         return _make_data_test('indicador_sentimento_midia', odate)
 
-    df = df_consolidated_noticias
+    df = df_consolidated_noticias.copy()
+    df['dat_ref'] = pd.to_datetime(df['dat_ref'], errors='coerce').dt.strftime('%Y-%m-%d')
     df = df.drop_duplicates(subset=['txt_titulo'])
 
-    df['dat_ref'] = pd.to_datetime(df['dat_ref'], errors='coerce').dt.strftime('%Y-%m-%d')
-
+    # ── Janela temporal ───────────────────────────────────────────────────────
     if not process_full_data:
         lookback_days = parms_indicador.get("lookback_days", 3)
-        data_limite = (pd.to_datetime(odate) - pd.Timedelta(days=lookback_days)).strftime('%Y-%m-%d')
-        logger.info("Data limite: %s (lookback_days=%d)", data_limite, lookback_days)
-
-        df = df[(df['dat_ref'] >= data_limite) & (df['dat_ref'] <= odate)]
+        data_limite   = (pd.to_datetime(odate) - pd.Timedelta(days=lookback_days)).strftime('%Y-%m-%d')
+        logger.info("Janela: %s → %s (lookback=%d)", data_limite, odate, lookback_days)
+        df = df[(df['dat_ref'] >= data_limite) & (df['dat_ref'] <= odate)].copy()
         df['dat_ref'] = odate
 
-    # nada para processar: retorna DF vazio com schema esperado
     if df.empty:
+        logger.warning("Nenhuma notícia no período — retornando DataFrame vazio.")
         return pd.DataFrame(columns=['dat_ref', 'cod_indicador', 'score_noticias'])
 
-    # garante string e trata nulos para análise de sentimento
+    # ── 1. Pré-filtro de relevância ───────────────────────────────────────────
     df['txt_titulo'] = df['txt_titulo'].fillna('').astype(str)
+    df = filtrar_noticias_financeiras(df, coluna='txt_titulo')
 
-    sentimentos = df["txt_titulo"].apply(analisar_sentimento)
-    df_sent = pd.DataFrame(list(sentimentos)).reindex(columns=["negativo", "neutro", "positivo", "compound"])  # type: ignore[arg-type]
+    if df.empty:
+        logger.warning("Nenhuma notícia relevante após filtro de relevância.")
+        return pd.DataFrame(columns=['dat_ref', 'cod_indicador', 'score_noticias'])
+
+    # ── 2. Análise de sentimento (VADER + léxico PT-BR) ───────────────────────
+    sentimentos = df['txt_titulo'].apply(analisar_sentimento)
+    df_sent     = pd.DataFrame(list(sentimentos))
     df = pd.concat([df.reset_index(drop=True), df_sent.reset_index(drop=True)], axis=1)
 
-    # score
-    pos = df.get("positivo", pd.Series(0, index=df.index))
-    neg = df.get("negativo", pd.Series(0, index=df.index))
-    denom = (pd.concat([pos, neg], axis=1).sum(axis=1) + 1e-5).replace(0, 1e-5)
-    df["score_sentimento"] = (pos - neg) * 100 / denom
+    # ── 3. Score diário volátil com ponderação por força do sinal ─────────────
+    scores_por_dia = []
 
-    # normalizar para 0–100
-    df['score_noticias'] = normalizar_escala(df['score_sentimento'])
-    sentimento_dia = df.groupby('dat_ref', as_index=False)['score_noticias'].mean()
-    sentimento_dia['cod_indicador'] = parms_indicador.get("cod_indicador")
+    for dat, grupo in df.groupby('dat_ref'):
+        total_titulos = len(grupo)
+        score = calcular_score_dia(
+            grupo,
+            amplificacao=amplificacao,
+            threshold_neutro=threshold_neutro,
+            min_compound_abs=min_compound_abs,
+        )
 
+        if score is None:
+            # Menos títulos válidos que o mínimo: usa 50 (neutro) com aviso
+            validos = int((grupo['compound'].abs() >= min_compound_abs).sum())
+            logger.warning(
+                "Data %s: apenas %d/%d títulos válidos (min=%d) → score=50 (neutro).",
+                dat, validos, total_titulos, min_noticias_dia,
+            )
+            score = 50.0
+
+        validos = int(
+            ((grupo['compound'].abs() >= min_compound_abs) &
+             (grupo['neutro'] <= threshold_neutro)).sum()
+        )
+        logger.info(
+            "Data %s: %d válidos / %d totais → score=%.2f",
+            dat, validos, total_titulos, score,
+        )
+        scores_por_dia.append({
+            'dat_ref':       dat,
+            'cod_indicador': parms_indicador.get("cod_indicador"),
+            'score_noticias': round(score, 4),
+        })
+
+    sentimento_dia = pd.DataFrame(scores_por_dia)
     return sentimento_dia[parms_indicador.get("schema")]
 
 

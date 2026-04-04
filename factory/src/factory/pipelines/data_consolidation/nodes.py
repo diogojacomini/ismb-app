@@ -95,6 +95,7 @@ def _select_columns_transacoes(df: pd.DataFrame, cod_indice: list) -> pd.DataFra
 def _select_columns_news(df: pd.DataFrame, cod_fonte: list) -> pd.DataFrame:
     column_mapping = {
         'titulo': 'txt_titulo',
+        'id_news': 'id_noticia',
     }
 
     df = df.rename(columns={k: v for k, v in column_mapping.items() if k in df.columns})
@@ -102,7 +103,4 @@ def _select_columns_news(df: pd.DataFrame, cod_fonte: list) -> pd.DataFrame:
     # cod fonte
     df['cod_fonte'] = cod_fonte
 
-    return df[['dat_ref',
-               'cod_fonte',
-              'txt_titulo',
-              ]]
+    return df[['id_noticia', 'dat_ref', 'cod_fonte', 'txt_titulo']]
