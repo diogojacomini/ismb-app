@@ -118,10 +118,10 @@ COMMENT ON COLUMN curated.dim_fonte_noticia.confiabilidade IS 'Grau de confiabil
 CREATE TABLE IF NOT EXISTS curated.fato_transacao_mercado (
     dat_ref        VARCHAR(10)  NOT NULL,
     cod_indice     VARCHAR(16)  NOT NULL,
-    val_fechamento NUMERIC(14, 4),
-    val_abertura   NUMERIC(14, 4),
-    val_maxima     NUMERIC(14, 4),
-    val_minima     NUMERIC(14, 4),
+    val_fechamento NUMERIC(14, 2),
+    val_abertura   NUMERIC(14, 2),
+    val_maxima     NUMERIC(14, 2),
+    val_minima     NUMERIC(14, 2),
     qtd_volume     NUMERIC(20, 2),
     CONSTRAINT pk_fato_transacao_mercado PRIMARY KEY (dat_ref, cod_indice),
     CONSTRAINT fk_fato_mercado_indice

@@ -130,7 +130,7 @@ def build_dash_diario(df_consolidado_mercado, df_dim_tempo, df_tim_indice, df_is
     result["ismb_abs_change"] = ismb_abs
     result["ismb_pct_change"] = ismb_pct
 
-    result['dat_ref'] = odate
+    result['dat_ref'] = odate.strftime("%Y-%m-%d")
     final = result
 
     # select
@@ -460,7 +460,7 @@ def build_analise_correlacao(df_fato_mercado, df_dim_tempo, df_dim_indice, df_is
             })
 
     df_pairs = pd.DataFrame(pairs).sort_values("corr", key=lambda s: s.abs(), ascending=False).reset_index(drop=True)
-    df_pairs['dat_ref'] = odate
+    df_pairs['dat_ref'] = pd.to_datetime(odate).strftime("%Y-%m-%d")
     return df_pairs
 
 
@@ -540,7 +540,7 @@ def build_kpis_agregados(df_ismb: pd.DataFrame, df_fato_mercado: pd.DataFrame, d
         })
 
     df_kpis = pd.DataFrame(rows)
-    df_kpis['dat_ref'] = odate
+    df_kpis['dat_ref'] = pd.to_datetime(odate).strftime("%Y-%m-%d")
     df_kpis = df_kpis.sort_values(["entity_type", "entity_name", "dat_ref"]).reset_index(drop=True)
 
     return df_kpis

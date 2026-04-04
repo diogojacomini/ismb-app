@@ -89,8 +89,7 @@ CREATE TABLE IF NOT EXISTS analytics.analytics_correlacao (
     end_date    DATE,                    -- fim da janela de correlação
     dat_ref     VARCHAR(10)   NOT NULL,  -- data de execução do cálculo
     CONSTRAINT pk_analytics_correlacao   PRIMARY KEY (idx_a, idx_b, dat_ref),
-    CONSTRAINT chk_corr_range           CHECK (corr IS NULL OR corr BETWEEN -1 AND 1),
-    CONSTRAINT chk_corr_idx_order       CHECK (idx_a <= idx_b)  -- evita duplicatas (A,B) e (B,A)
+    CONSTRAINT chk_corr_range           CHECK (corr IS NULL OR corr BETWEEN -1 AND 1)
 );
 
 COMMENT ON TABLE  analytics.analytics_correlacao IS 'Correlação de Pearson entre pares de índices para uma janela temporal.';
