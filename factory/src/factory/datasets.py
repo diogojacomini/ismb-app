@@ -1,8 +1,8 @@
 """
 Datasets customizados para particionamento automático por odate e append em CSV/SQL.
 
-AppendCSVDataset  — grava em arquivo CSV com deduplicação por chave natural.
-AppendSQLDataset  — grava em tabela PostgreSQL com upsert (prd) ou
+AppendCSVDataset  - grava em arquivo CSV com deduplicação por chave natural.
+AppendSQLDataset  - grava em tabela PostgreSQL com upsert (prd) ou
                     truncate+insert (sandbox/dev/test/hk), replicando a mesma
                     lógica de deduplicação do AppendCSVDataset.
 """
@@ -139,13 +139,13 @@ class AppendSQLDataset(AbstractDataset):
     deduplicação do AppendCSVDataset.
 
     Estratégias por environment:
-        prd        — upsert nativo PostgreSQL:
+        prd        - upsert nativo PostgreSQL:
                      INSERT ... ON CONFLICT (pk_columns) DO UPDATE SET ...
                      Apenas as linhas novas/alteradas tocam o banco.
-        sandbox    — lógica espelho do CSV: lê a tabela sandbox.<table>,
+        sandbox    - lógica espelho do CSV: lê a tabela sandbox.<table>,
                      concatena, deduplica e reescreve via TRUNCATE + INSERT.
-        dev / test — igual sandbox (aponta para sandbox.<table>).
-        hk         — igual sandbox.
+        dev / test - igual sandbox (aponta para sandbox.<table>).
+        hk         - igual sandbox.
 
     Parâmetros do catalog.yml
     ─────────────────────────
@@ -227,7 +227,7 @@ class AppendSQLDataset(AbstractDataset):
         with self._engine() as engine:
             if not inspect(engine).has_table(self._table, schema=schema):
                 logger.warning(
-                    "AppendSQLDataset._load: tabela %s.%s não existe — retornando DataFrame vazio.",
+                    "AppendSQLDataset._load: tabela %s.%s não existe - retornando DataFrame vazio.",
                     schema, self._table,
                 )
                 return pd.DataFrame()
@@ -314,12 +314,12 @@ class AppendSQLDataset(AbstractDataset):
                     total += len(records)
 
             logger.info(
-                "AppendSQLDataset.upsert → %s.%s: %d linhas processadas.",
+                "AppendSQLDataset.upsert -> %s.%s: %d linhas processadas.",
                 schema, self._table, total,
             )
 
     # -------------------------------------------------------------------------
-    # Estratégia sandbox/dev/test/hk: ler → concat → dedup → TRUNCATE + INSERT
+    # Estratégia sandbox/dev/test/hk: ler -> concat -> dedup -> TRUNCATE + INSERT
     # -------------------------------------------------------------------------
 
     def _save_sandbox(self, data: pd.DataFrame, schema: str) -> None:
@@ -352,7 +352,7 @@ class AppendSQLDataset(AbstractDataset):
                 )
 
         logger.info(
-            "AppendSQLDataset.sandbox → %s.%s: %d linhas gravadas.",
+            "AppendSQLDataset.sandbox -> %s.%s: %d linhas gravadas.",
             schema, self._table, len(combined),
         )
 
@@ -363,7 +363,7 @@ class AppendSQLDataset(AbstractDataset):
     def _dedup(self, combined: pd.DataFrame) -> pd.DataFrame:
         """
         Remove duplicatas pela PK configurada, mantendo o registro mais recente
-        (último na ordem da PK — equivalente ao keep='last' do AppendCSVDataset).
+        (último na ordem da PK - equivalente ao keep='last' do AppendCSVDataset).
         """
         if combined.empty or not self._pk_columns:
             return combined

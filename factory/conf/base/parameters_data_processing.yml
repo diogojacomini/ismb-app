@@ -50,7 +50,7 @@ parameters_sentimento_midia:
   cod_indicador: 'SENTIMENTO_NOTICIAS'
   schema: ['dat_ref', 'cod_indicador', 'score_noticias']
   lookback_days: 3          # Dias de lookback para cálculo incremental
-  min_noticias_dia:  3      # Mínimo de títulos válidos por dia; abaixo → score=50
+  min_noticias_dia:  3      # Mínimo de títulos válidos por dia; abaixo -> score=50
   min_compound_abs:  0.05   # Descartar títulos com |compound| < valor (ruído puro)
   threshold_neutro:  0.80   # Descartar títulos com score neutro VADER > valor
   amplificacao: 2.0

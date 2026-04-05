@@ -408,8 +408,8 @@
   <header class="topbar">
     <div class="topbar-title" id="topbarTitle">Dashboard</div>
     <div class="topbar-right">
-      <span class="topbar-date" id="topbarDate">—</span>
-      <span class="ismb-badge" id="topbarBadge">ISMB —</span>
+      <span class="topbar-date" id="topbarDate">-</span>
+      <span class="ismb-badge" id="topbarBadge">ISMB -</span>
     </div>
   </header>
 
@@ -429,9 +429,9 @@
         </div>
         <div class="gauge-wrap">
           <canvas id="gaugeCanvas" width="340" height="200"></canvas>
-          <div class="gauge-value-label" id="gaugeValue">—</div>
+          <div class="gauge-value-label" id="gaugeValue">-</div>
           <div class="gauge-status-label sent-neutro" id="gaugeStatus">Carregando…</div>
-          <div class="gauge-subtext">Última atualização: <span id="gaugeDate">—</span></div>
+          <div class="gauge-subtext">Última atualização: <span id="gaugeDate">-</span></div>
         </div>
       </div>
       <div class="card">
@@ -633,7 +633,7 @@ function sentimentClass(v) {
   return 'sent-ganancia-ext';
 }
 function sentimentLabel(v) {
-  if (v == null) return '—';
+  if (v == null) return '-';
   if (v < 20)   return 'Medo Extremo';
   if (v < 45)   return 'Medo';
   if (v < 55)   return 'Neutro';
@@ -644,7 +644,7 @@ function sentimentColor(v) {
   const m = {'sent-medo-ext':'#ef4444','sent-medo':'#f97316','sent-neutro':'#eab308','sent-ganancia':'#22c55e','sent-ganancia-ext':'#16a34a'};
   return m[sentimentClass(v)] || '#94a3b8';
 }
-function fmtNum(v, dec=2) { return v != null ? Number(v).toFixed(dec) : '—'; }
+function fmtNum(v, dec=2) { return v != null ? Number(v).toFixed(dec) : '-'; }
 
 /* ─── Gauge (Canvas semi-circle) ──────────────────────────────────────── */
 function drawGauge(canvas, value) {
@@ -909,7 +909,7 @@ async function loadIndicadorCards() {
 }
 
 function buildIndicadorCards(resumo) {
-  // resumo = last 2 rows of fato_indice_ismb — all scores already in one call
+  // resumo = last 2 rows of fato_indice_ismb - all scores already in one call
   const latest = resumo[resumo.length - 1] || {};
   const prev   = resumo[resumo.length - 2] || {};
 
@@ -940,11 +940,11 @@ function buildIndicadorCards(resumo) {
     };
     card.innerHTML =
       '<div class="ind-mini-name">' + def.nome + '</div>' +
-      '<div class="ind-mini-value">' + (v != null ? Math.round(v) : '—') + '</div>' +
+      '<div class="ind-mini-value">' + (v != null ? Math.round(v) : '-') + '</div>' +
       '<div class="ind-mini-row">' +
         '<span class="ind-mini-sent ' + sc + '">' + sl + '</span>' +
         '<span class="ind-mini-var ' + (diff!=null?(diff>=0?'pos':'neg'):'') + '">' +
-          (diff!=null ? (diff>=0?'+':'') + diff.toFixed(1) : '—') +
+          (diff!=null ? (diff>=0?'+':'') + diff.toFixed(1) : '-') +
         '</span>' +
       '</div>';
     grid.appendChild(card);
@@ -1012,11 +1012,11 @@ async function loadIndTab(nome) {
       '<div class="ind-detail-grid">' +
         '<div class="ind-info-card">' +
           '<div class="ind-info-label">Valor Atual</div>' +
-          '<div class="ind-info-value">' + (v!=null?fmtNum(v,1):'—') + '</div>' +
+          '<div class="ind-info-value">' + (v!=null?fmtNum(v,1):'-') + '</div>' +
           '<div class="ind-info-sent ' + sentimentClass(v) + '">' + sentimentLabel(v) + '</div>' +
           '<div class="ind-info-desc">' + (meta.desc||'') + '</div>' +
           '<div class="stat-row">' +
-            '<div class="stat-item"><div class="stat-item-label">Variação</div><div class="stat-item-value ' + (diff!=null?(diff>=0?'pos':'neg'):'') + '">' + (diff!=null?(diff>=0?'+':'')+fmtNum(diff,1):'—') + '</div></div>' +
+            '<div class="stat-item"><div class="stat-item-label">Variação</div><div class="stat-item-value ' + (diff!=null?(diff>=0?'pos':'neg'):'') + '">' + (diff!=null?(diff>=0?'+':'')+fmtNum(diff,1):'-') + '</div></div>' +
             '<div class="stat-item"><div class="stat-item-label">Máx (hist)</div><div class="stat-item-value">' + fmtNum(maxV,1) + '</div></div>' +
             '<div class="stat-item"><div class="stat-item-label">Mín (hist)</div><div class="stat-item-value">' + fmtNum(minV,1) + '</div></div>' +
             '<div class="stat-item"><div class="stat-item-label">Média (hist)</div><div class="stat-item-value">' + fmtNum(avgV,1) + '</div></div>' +
@@ -1127,7 +1127,7 @@ function renderCorrMatrix() {
     html += '<div class="corr-row"><div class="corr-row-label">' + e1 + '</div>';
     entities.forEach(e2 => {
       const c = cm[e1+'_'+e2];
-      const cv = c != null ? c.toFixed(2) : '—';
+      const cv = c != null ? c.toFixed(2) : '-';
       html += '<div class="corr-cell" style="background:' + corrColor(c) + '">' +
         '<div class="corr-value">' + cv + '</div>' +
         (e1!==e2 ? '<div class="corr-pair">' + e1 + '×' + e2 + '</div>' : '') +
@@ -1258,11 +1258,11 @@ function renderKpiTab(entity) {
     let html =
       '<div class="two-col" style="margin-bottom:20px">' +
         '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px">' +
-          '<div class="card-title">Sentimento Médio por Ano — ISMB</div>' +
+          '<div class="card-title">Sentimento Médio por Ano - ISMB</div>' +
           '<div class="chart-container chart-md"><canvas id="chartKpiReturn"></canvas></div>' +
         '</div>' +
         '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px">' +
-          '<div class="card-title">Variação YoY do Sentimento — ISMB</div>' +
+          '<div class="card-title">Variação YoY do Sentimento - ISMB</div>' +
           '<div class="chart-container chart-md"><canvas id="chartKpiVol"></canvas></div>' +
         '</div>' +
       '</div>' +
@@ -1273,7 +1273,7 @@ function renderKpiTab(entity) {
           '<th title="Score < 45">Dias Medo</th><th title="45 ≤ Score ≤ 55">Dias Neutro</th><th title="Score > 55">Dias Ganância</th><th>Obs</th>' +
         '</tr></thead><tbody>';
     stats.forEach(s => {
-      const yoyFmt = s.yoy!=null ? ('<span class="'+(s.yoy>=0?'kpi-return-pos':'kpi-return-neg')+'">'+(s.yoy>=0?'+':'')+s.yoy.toFixed(1)+'%</span>') : '—';
+      const yoyFmt = s.yoy!=null ? ('<span class="'+(s.yoy>=0?'kpi-return-pos':'kpi-return-neg')+'">'+(s.yoy>=0?'+':'')+s.yoy.toFixed(1)+'%</span>') : '-';
       html += '<tr>' +
         '<td class="kpi-year">' + s.year + '</td>' +
         '<td><b>' + s.mean.toFixed(1) + '</b></td>' +
@@ -1313,10 +1313,10 @@ function renderKpiTab(entity) {
 
   let html =
     '<div class="two-col" style="margin-bottom:20px">' +
-      '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px"><div class="card-title">Retorno Anual — ' + entity + '</div><div class="chart-container chart-md"><canvas id="chartKpiReturn"></canvas></div></div>' +
-      '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px"><div class="card-title">Volatilidade Anualizada — ' + entity + '</div><div class="chart-container chart-md"><canvas id="chartKpiVol"></canvas></div></div>' +
+      '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px"><div class="card-title">Retorno Anual - ' + entity + '</div><div class="chart-container chart-md"><canvas id="chartKpiReturn"></canvas></div></div>' +
+      '<div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px"><div class="card-title">Volatilidade Anualizada - ' + entity + '</div><div class="chart-container chart-md"><canvas id="chartKpiVol"></canvas></div></div>' +
     '</div>' +
-    '<div class="card" style="margin-top:0"><div class="card-title">Dados Anuais — ' + entity + '</div>' +
+    '<div class="card" style="margin-top:0"><div class="card-title">Dados Anuais - ' + entity + '</div>' +
     '<div class="kpi-table-wrap"><table class="kpi-table"><thead><tr>' +
       '<th>Ano</th><th>Retorno Anual</th><th>Volatilidade <small style="font-weight:400">(std log-ret × √252)</small></th>' +
       '<th>Drawdown Máx <small style="font-weight:400">(peak-to-trough)</small></th><th>Mín</th><th>Máx</th><th>Obs</th>' +
@@ -1325,9 +1325,9 @@ function renderKpiTab(entity) {
     const ret = r.ret;
     html += '<tr>' +
       '<td class="kpi-year">' + r.year + '</td>' +
-      '<td class="' + (ret!=null?(ret>=0?'kpi-return-pos':'kpi-return-neg'):'') + '">' + (ret!=null?(ret>=0?'+':'')+ret.toFixed(2)+'%':'—') + '</td>' +
-      '<td>' + (r.vol!=null?r.vol.toFixed(2)+'%':'—') + '</td>' +
-      '<td class="kpi-drawdown">' + (r.mdd!=null?r.mdd.toFixed(2)+'%':'—') + '</td>' +
+      '<td class="' + (ret!=null?(ret>=0?'kpi-return-pos':'kpi-return-neg'):'') + '">' + (ret!=null?(ret>=0?'+':'')+ret.toFixed(2)+'%':'-') + '</td>' +
+      '<td>' + (r.vol!=null?r.vol.toFixed(2)+'%':'-') + '</td>' +
+      '<td class="kpi-drawdown">' + (r.mdd!=null?r.mdd.toFixed(2)+'%':'-') + '</td>' +
       '<td>' + r.min.toLocaleString('pt-BR') + '</td>' +
       '<td>' + r.max.toLocaleString('pt-BR') + '</td>' +
       '<td>' + r.n + '</td>' +
@@ -1386,19 +1386,19 @@ function renderMktTab(symbol) {
 
   let html =
     '<div class="stat-row" style="margin-bottom:16px">' +
-      '<div class="stat-item"><div class="stat-item-label">Fechamento</div><div class="stat-item-value">' + (v!=null?v.toLocaleString('pt-BR'):'—') + '</div><div class="stat-item-sub">' + (lat&&lat.dat_ref||'—') + '</div></div>' +
-      '<div class="stat-item"><div class="stat-item-label">Variação</div><div class="stat-item-value ' + (diff!=null?(diff>=0?'pos':'neg'):'') + '">' + (diff!=null?(diff>=0?'+':'')+diff.toFixed(2):'—') + '</div><div class="stat-item-sub">' + (diffP!=null?(diffP>=0?'+':'')+diffP.toFixed(2)+'%':'—') + '</div></div>' +
-      '<div class="stat-item"><div class="stat-item-label">Volume</div><div class="stat-item-value">' + (lat&&lat.qtd_volume!=null?Number(lat.qtd_volume).toLocaleString('pt-BR'):'—') + '</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Fechamento</div><div class="stat-item-value">' + (v!=null?v.toLocaleString('pt-BR'):'-') + '</div><div class="stat-item-sub">' + (lat&&lat.dat_ref||'-') + '</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Variação</div><div class="stat-item-value ' + (diff!=null?(diff>=0?'pos':'neg'):'') + '">' + (diff!=null?(diff>=0?'+':'')+diff.toFixed(2):'-') + '</div><div class="stat-item-sub">' + (diffP!=null?(diffP>=0?'+':'')+diffP.toFixed(2)+'%':'-') + '</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Volume</div><div class="stat-item-value">' + (lat&&lat.qtd_volume!=null?Number(lat.qtd_volume).toLocaleString('pt-BR'):'-') + '</div></div>' +
     '</div>' +
     '<div class="two-col">' +
-      '<div class="card" style="margin:0"><div class="card-title">Fechamento — ' + symbol + '</div><div class="chart-container chart-md"><canvas id="chartMktPrice"></canvas></div></div>' +
-      '<div class="card" style="margin:0"><div class="card-title">Dados Recentes — ' + symbol + '</div><div class="table-wrap"><table class="data-table"><thead><tr><th>Data</th><th>Fechamento</th><th>Mínima</th><th>Máxima</th><th>Volume</th></tr></thead><tbody>' +
+      '<div class="card" style="margin:0"><div class="card-title">Fechamento - ' + symbol + '</div><div class="chart-container chart-md"><canvas id="chartMktPrice"></canvas></div></div>' +
+      '<div class="card" style="margin:0"><div class="card-title">Dados Recentes - ' + symbol + '</div><div class="table-wrap"><table class="data-table"><thead><tr><th>Data</th><th>Fechamento</th><th>Mínima</th><th>Máxima</th><th>Volume</th></tr></thead><tbody>' +
       [...rows].reverse().slice(0,15).map(r =>
         '<tr><td>' + r.dat_ref + '</td>' +
-        '<td><b>' + (r.val_fechamento!=null?Number(r.val_fechamento).toLocaleString('pt-BR'):'—') + '</b></td>' +
-        '<td>' + (r.val_minima!=null?Number(r.val_minima).toLocaleString('pt-BR'):'—') + '</td>' +
-        '<td>' + (r.val_maxima!=null?Number(r.val_maxima).toLocaleString('pt-BR'):'—') + '</td>' +
-        '<td>' + (r.qtd_volume!=null?Number(r.qtd_volume).toLocaleString('pt-BR'):'—') + '</td></tr>'
+        '<td><b>' + (r.val_fechamento!=null?Number(r.val_fechamento).toLocaleString('pt-BR'):'-') + '</b></td>' +
+        '<td>' + (r.val_minima!=null?Number(r.val_minima).toLocaleString('pt-BR'):'-') + '</td>' +
+        '<td>' + (r.val_maxima!=null?Number(r.val_maxima).toLocaleString('pt-BR'):'-') + '</td>' +
+        '<td>' + (r.qtd_volume!=null?Number(r.qtd_volume).toLocaleString('pt-BR'):'-') + '</td></tr>'
       ).join('') +
       '</tbody></table></div></div>' +
     '</div>';
@@ -1445,14 +1445,14 @@ function renderQuality() {
     html += '<div class="quality-card ' + cls + '">' +
       '<div class="quality-name">' + r.dataset_name + '</div>' +
       '<div class="quality-score ' + (sc===0?'neg':sc>=90?'pos':'') + '">' + sc.toFixed(1) + '</div>' +
-      '<div class="quality-meta">' + (r.total_records||0) + ' registros · ' + (r.dat_ref||'—') + '</div>' +
+      '<div class="quality-meta">' + (r.total_records||0) + ' registros · ' + (r.dat_ref||'-') + '</div>' +
       '<div class="quality-meta" style="margin-top:3px">Comp: ' + (r.completeness_pct||0) + '% · Valid: ' + (r.validity_pct||0) + '%</div>' +
     '</div>';
   });
   html += '</div><div class="card"><div class="card-title">Relatório Detalhado</div><div class="table-wrap"><table class="data-table"><thead><tr><th>Dataset</th><th>Data</th><th>Registros</th><th>Completude</th><th>Validade</th><th>Consistência</th><th>Outliers</th><th>Score</th><th>Status</th></tr></thead><tbody>';
   _quality.forEach(r => {
     const sc=Number(r.quality_score||0);
-    html += '<tr><td><b>' + r.dataset_name + '</b></td><td>' + (r.dat_ref||'—') + '</td><td>' + (r.total_records||0) + '</td><td>' + (r.completeness_pct||0) + '%</td><td>' + (r.validity_pct||0) + '%</td><td>' + (r.consistency_pct||0) + '%</td><td>' + (r.outlier_count||0) + '</td><td><b>' + sc.toFixed(1) + '</b></td><td><span class="badge">' + (r.status||'—') + '</span></td></tr>';
+    html += '<tr><td><b>' + r.dataset_name + '</b></td><td>' + (r.dat_ref||'-') + '</td><td>' + (r.total_records||0) + '</td><td>' + (r.completeness_pct||0) + '%</td><td>' + (r.validity_pct||0) + '%</td><td>' + (r.consistency_pct||0) + '%</td><td>' + (r.outlier_count||0) + '</td><td><b>' + sc.toFixed(1) + '</b></td><td><span class="badge">' + (r.status||'-') + '</span></td></tr>';
   });
   html += '</tbody></table></div></div>';
   document.getElementById('qualityContent').innerHTML = html;

@@ -358,25 +358,25 @@ def indicador_sentimento_midia(df_consolidated_noticias, parms_indicador, parame
     Calcula o indicador de sentimento da mídia financeira.
 
     Melhorias v2:
-      1. Pré-filtro de relevância — mantém apenas notícias de economia,
+      1. Pré-filtro de relevância - mantém apenas notícias de economia,
          mercado e política; descarta off-topic (esportes, entretenimento…).
-      2. Léxico VADER calibrado para PT-BR financeiro — termos como "dispara",
+      2. Léxico VADER calibrado para PT-BR financeiro - termos como "dispara",
          "recessão", "calote", "dividendo" têm polaridade ajustada ao contexto.
-      3. Score volátil via tanh amplificado — elimina a compressão ao centro
+      3. Score volátil via tanh amplificado - elimina a compressão ao centro
          típica de médias simples; sinais leves já afastam o score de 50.
-      4. Ponderação por força do sinal — títulos com |compound| alto contam
+      4. Ponderação por força do sinal - títulos com |compound| alto contam
          mais no score diário; títulos quase-neutros são descartados.
 
     Parâmetros relevantes (parameters_data_processing.yml):
-      amplificacao       — fator k do tanh (default 2.0; maior = mais volátil)
-      threshold_neutro   — títulos com neutro > valor são ignorados (default 0.80)
-      min_compound_abs   — |compound| mínimo para considerar o título (default 0.05)
-      min_noticias_dia   — mínimo de títulos válidos por dia (default 3)
+      amplificacao       - fator k do tanh (default 2.0; maior = mais volátil)
+      threshold_neutro   - títulos com neutro > valor são ignorados (default 0.80)
+      min_compound_abs   - |compound| mínimo para considerar o título (default 0.05)
+      min_noticias_dia   - mínimo de títulos válidos por dia (default 3)
 
     Score:
-      0   → Sentimento muito negativo
-      50  → Equilíbrio neutro
-      100 → Sentimento muito positivo
+      0   -> Sentimento muito negativo
+      50  -> Equilíbrio neutro
+      100 -> Sentimento muito positivo
     """
     odate             = parameters.get("odate")
     process_full_data = parameters.get("process_full_data", False)
@@ -398,12 +398,12 @@ def indicador_sentimento_midia(df_consolidated_noticias, parms_indicador, parame
     if not process_full_data:
         lookback_days = parms_indicador.get("lookback_days", 3)
         data_limite   = (pd.to_datetime(odate) - pd.Timedelta(days=lookback_days)).strftime('%Y-%m-%d')
-        logger.info("Janela: %s → %s (lookback=%d)", data_limite, odate, lookback_days)
+        logger.info("Janela: %s -> %s (lookback=%d)", data_limite, odate, lookback_days)
         df = df[(df['dat_ref'] >= data_limite) & (df['dat_ref'] <= odate)].copy()
         df['dat_ref'] = odate
 
     if df.empty:
-        logger.warning("Nenhuma notícia no período — retornando DataFrame vazio.")
+        logger.warning("Nenhuma notícia no período - retornando DataFrame vazio.")
         return pd.DataFrame(columns=['dat_ref', 'cod_indicador', 'score_noticias'])
 
     # ── 1. Pré-filtro de relevância ───────────────────────────────────────────
@@ -435,7 +435,7 @@ def indicador_sentimento_midia(df_consolidated_noticias, parms_indicador, parame
             # Menos títulos válidos que o mínimo: usa 50 (neutro) com aviso
             validos = int((grupo['compound'].abs() >= min_compound_abs).sum())
             logger.warning(
-                "Data %s: apenas %d/%d títulos válidos (min=%d) → score=50 (neutro).",
+                "Data %s: apenas %d/%d títulos válidos (min=%d) -> score=50 (neutro).",
                 dat, validos, total_titulos, min_noticias_dia,
             )
             score = 50.0
@@ -445,7 +445,7 @@ def indicador_sentimento_midia(df_consolidated_noticias, parms_indicador, parame
              (grupo['neutro'] <= threshold_neutro)).sum()
         )
         logger.info(
-            "Data %s: %d válidos / %d totais → score=%.2f",
+            "Data %s: %d válidos / %d totais -> score=%.2f",
             dat, validos, total_titulos, score,
         )
         scores_por_dia.append({

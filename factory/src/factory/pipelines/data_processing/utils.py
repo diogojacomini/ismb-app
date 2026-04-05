@@ -15,7 +15,7 @@ except LookupError:
 
 # =============================================================================
 # Léxico financeiro PT-BR para VADER
-# Escala: −4 (muito negativo) → +4 (muito positivo), 0 = neutro
+# Escala: −4 (muito negativo) -> +4 (muito positivo), 0 = neutro
 # Calibrado para títulos de portais financeiros brasileiros.
 # =============================================================================
 FINANCIAL_LEXICON: dict[str, float] = {
@@ -106,7 +106,7 @@ FINANCIAL_LEXICON: dict[str, float] = {
 }
 
 # =============================================================================
-# Filtro de relevância — notícias financeiras / econômicas / políticas
+# Filtro de relevância - notícias financeiras / econômicas / políticas
 # =============================================================================
 # Palavras que INCLUEM a notícia (ao menos uma deve estar no título)
 _INCLUDE_PATTERNS: list[str] = [
@@ -146,7 +146,7 @@ _INCLUDE_PATTERNS: list[str] = [
     r"\bminério\b", r"\baço\b", r"\btrigo\b", r"\bmilho\b",
 ]
 
-# Palavras que EXCLUEM a notícia (se presente → descartado por ser off-topic)
+# Palavras que EXCLUEM a notícia (se presente -> descartado por ser off-topic)
 _EXCLUDE_PATTERNS: list[str] = [
     r"\bfutebol\b", r"\bfutebol\b", r"\belenco\b", r"\btime\b",
     r"\bcampeonato\b", r"\bcopado\b", r"\bliga\b", r"\bgol\b",
@@ -213,9 +213,9 @@ def score_sentimento_volatil(compound: float, amplificacao: float = 2.0) -> floa
     Mapeia compound VADER para score [0, 100] usando tanh amplificado.
 
     tanh(k · c) é mais volátil que mapeamento linear:
-      - compound = ±0.1 (leve)  → score ≈ 60 / 40
-      - compound = ±0.3 (médio) → score ≈ 76 / 24
-      - compound = ±0.6 (forte) → score ≈ 91 / 9
+      - compound = ±0.1 (leve)  -> score ≈ 60 / 40
+      - compound = ±0.3 (médio) -> score ≈ 76 / 24
+      - compound = ±0.6 (forte) -> score ≈ 91 / 9
 
     Args:
         compound:     Score compound VADER ∈ [-1, 1]
