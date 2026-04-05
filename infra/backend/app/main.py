@@ -1,32 +1,61 @@
 """
-ISMB API — FastAPI application factory.
+ISMB API - FastAPI Application Factory.
+
+Aplicação principal que expõe a API REST do índice ISMB.
+Gerencia lifecycle (inicialização de banco, cache, shutdown) e registra todos os routers de endpoints.
+
+Documentação interativa disponível em:
+    - Swagger UI: http://localhost:8000/docs
+    - ReDoc: http://localhost:8000/redoc
+
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 """
 
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from .api.router import router as api_router
 from .core import cache
-from .services import csv_service
+from .core.config import DatabaseConfig
+from .core.database import db_pool
+from .services import db_service
 
-
-# ── lifespan: pre-warm cache on startup ───────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Pre-load the two heaviest CSVs so the first real request is instant."""
-    for loader in (csv_service.read_indice, csv_service.read_mercado):
+    """
+    Gerenciador de ciclo de vida da aplicação.
+
+    Startup:
+        1. Inicializa pool de conexões PostgreSQL
+        2. Pre-carrega queries pesadas no cache (read_indice, read_mercado) para garantir primeira requisição instantânea
+
+    Shutdown:
+        1. Fecha todas as conexões do pool
+        2. Limpa cache em memória
+
+    Yields:
+        Controle para o FastAPI executar requests
+    """
+
+    db_pool.initialize(
+        DatabaseConfig.CONNECTION_STRING,
+        minconn=DatabaseConfig.MIN_CONNECTIONS,
+        maxconn=DatabaseConfig.MAX_CONNECTIONS,
+    )
+
+    for loader in (db_service.read_indice, db_service.read_mercado):
         try:
             loader()
-        except FileNotFoundError:
-            pass  # data may not exist in all environments
+        except Exception:
+            pass
+
     yield
+
+    # Cleanup on shutdown
+    db_pool.close()
     cache.clear()
 
-
-# ── application ────────────────────────────────────────────────────────────
 
 app = FastAPI(
     title="ISMB API",
