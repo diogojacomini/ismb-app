@@ -686,13 +686,10 @@ function drawGauge(canvas, value) {
   // Needle
   if (value != null) {
     const na = ang(Number(value));
-    const nx = cx + R * Math.cos(na);
-    const ny = cy - R * Math.sin(na);
     const nb = 8;
     ctx.save();
     ctx.translate(cx, cy);
-    const nRad = Math.atan2(-(ny - cy), nx - cx);
-    ctx.rotate(-nRad);
+    ctx.rotate(Math.PI / 2 - na);
     ctx.beginPath();
     ctx.moveTo(-nb, 0);
     ctx.lineTo(0, -(R - 6));
