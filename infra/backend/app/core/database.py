@@ -15,9 +15,6 @@ logger = logging.getLogger(__name__)
 class DatabasePool:
     """
     PostgreSQL connection pool manager.
-
-    Implements a singleton pattern to ensure a single connection pool
-    instance across the application lifecycle.
     """
 
     _instance: Optional["DatabasePool"] = None
@@ -32,12 +29,12 @@ class DatabasePool:
         self, connection_string: str, minconn: int = 2, maxconn: int = 10
     ) -> None:
         """
-        Initialize the connection pool.
+        Inicializa o pool de conexões.
 
         Args:
-            connection_string: PostgreSQL connection string (e.g., postgresql://user:pass@host:port/db)
-            minconn: Minimum number of connections to maintain
-            maxconn: Maximum number of connections allowed
+            connection_string: String de conexão do PostgreSQL
+            minconn: Número mínimo de conexões a serem mantidas
+            maxconn: Número máximo de conexões permitidas
         """
         if self._pool is not None:
             logger.warning("DatabasePool already initialized")

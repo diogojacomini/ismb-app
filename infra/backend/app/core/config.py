@@ -2,21 +2,7 @@
 Application Configuration Module.
 
 Define configurações centralizadas para conexão com banco de dados PostgreSQL.
-Todas as configurações podem ser sobrescritas via variáveis de ambiente.
-
-Classes:
-    DatabaseConfig: Credenciais e limites do pool PostgreSQL
-
-Example:
-    from app.core.config import DatabaseConfig
-
-    # Usar configuração padrão
-    conn_str = DatabaseConfig.CONNECTION_STRING
-
-    # Sobrescrever via environment
-    # export DATABASE_URL="postgresql://user:pass@prod:5432/ismb"
 """
-
 import os
 
 
@@ -32,13 +18,6 @@ class DatabaseConfig:
         MIN_CONNECTIONS: Conexões mínimas no pool (ENV: DB_MIN_CONNECTIONS)
         MAX_CONNECTIONS: Conexões máximas no pool (ENV: DB_MAX_CONNECTIONS)
         QUERY_TIMEOUT: Timeout de queries em segundos (ENV: DB_QUERY_TIMEOUT)
-
-    Example:
-        # Usar padrão
-        db_url = DatabaseConfig.CONNECTION_STRING
-
-        # Sobrescrever via environment
-        export DATABASE_URL="postgresql://user:pass@prod-server:5432/ismb"
     """
 
     # Default connection string (can be overridden by environment variable)

@@ -64,7 +64,7 @@ class KedroOperator(BaseOperator):
             session.run(self.pipeline_name, node_names=self.node_name)
 
 
-env = "local"
+env = "airflow"  # Use 'airflow' environment for Docker (ismb-db:5432)
 pipeline_name = "__default__"
 project_path = Path.cwd()
 package_name = "factory"

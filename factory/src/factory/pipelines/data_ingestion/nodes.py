@@ -279,7 +279,9 @@ def extract_transform_moneytimes(mapping_class: Dict[str, str], parameters: dict
         df["dat_ref"] = df["dat_ref"].apply(data_relativa_para_absoluta)
         df["id_news"] = df.apply(_generate_id_from_row, axis=1)
         df = select_cast_midia(df)
+        print(df)
         df['dat_ref'].fillna(datetime.today().strftime('%Y-%m-%d'), inplace=True)  # para notícias recém publicadas
+        print(df)
         logger.info("Data transformed successfully")
 
     if not process_full_data:

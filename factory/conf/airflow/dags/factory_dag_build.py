@@ -68,7 +68,7 @@ class KedroOperator(BaseOperator):
 
 
 # Kedro settings required to run your pipeline
-env = "local"
+env = "airflow"  # Use 'airflow' environment for Docker (ismb-db:5432)
 pipeline_name = "__default__"
 project_path = Path.cwd()
 package_name = "factory"

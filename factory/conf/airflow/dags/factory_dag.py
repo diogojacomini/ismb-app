@@ -68,11 +68,13 @@ class KedroOperator(BaseOperator):
 
 
 # Kedro settings required to run your pipeline
-env = "local"
+# IMPORTANT: use absolute path to /home/factory so Kedro always finds
+# conf/airflow/credentials.yml (ismb-db:5432) regardless of Airflow's cwd.
+env = "airflow"  # Use 'airflow' environment for Docker (ismb-db:5432)
 pipeline_name = "__default__"
-project_path = Path.cwd()
+project_path = Path("/home/factory")
 package_name = "factory"
-conf_source = "" or Path.cwd() / "conf"
+conf_source = Path("/home/factory/conf")
 
 
 # Using a DAG context manager, you don't have to specify the dag property of each task

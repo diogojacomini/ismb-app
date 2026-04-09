@@ -7,6 +7,7 @@ AppendSQLDataset  - grava em tabela PostgreSQL com upsert (prd) ou
                     lógica de deduplicação do AppendCSVDataset.
 """
 import logging
+import os
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, List, Optional
 
@@ -16,6 +17,7 @@ from kedro.io import AbstractDataset
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.engine import Engine
+from sqlalchemy.pool import NullPool
 
 from .saiph.schemas import SchemaRegistry
 
@@ -197,16 +199,40 @@ class AppendSQLDataset(AbstractDataset):
 
     def _build_engine(self) -> Engine:
         con: str = self._credentials.get("con", "")
+
+        # Fallback: se a credential não foi carregada corretamente (e.g. conf_source
+        # errado no Airflow), tenta a variável de ambiente ISMB_DB_CONN que é
+        # injetada pelo docker-compose com o hostname correto (ismb-db:5432).
+        if not con:
+            con = os.environ.get("ISMB_DB_CONN", "")
+
         if not con:
             raise ValueError(
-                "AppendSQLDataset: 'con' não encontrado nas credentials. "
-                "Verifique conf/local/credentials.yml."
+                "AppendSQLDataset: 'con' não encontrado nas credentials nem em "
+                "ISMB_DB_CONN. Verifique conf/airflow/credentials.yml ou o "
+                "docker-compose.yaml."
             )
+
+        # Aviso de segurança: localhost dentro de container Docker não funciona.
+        if "localhost" in con or "127.0.0.1" in con:
+            env_con = os.environ.get("ISMB_DB_CONN", "")
+            if env_con:
+                logger.warning(
+                    "AppendSQLDataset: connection string aponta para 'localhost' "
+                    "mas estamos dentro de um container. Usando ISMB_DB_CONN=%s "
+                    "como fallback seguro.",
+                    env_con,
+                )
+                con = env_con
+
+        # NullPool: sem pooling de conexões — cada operação abre e fecha a
+        # conexão de forma independente. Elimina conexões obsoletas/ociosas
+        # que causavam OperationalError após a migração para SQL.
         return create_engine(
             con,
-            pool_pre_ping=True,   # detecta conexões mortas automaticamente
-            pool_size=2,
-            max_overflow=3,
+            poolclass=NullPool,
+            echo=False,
+            future=True,
         )
 
     @contextmanager
@@ -232,9 +258,33 @@ class AppendSQLDataset(AbstractDataset):
                 )
                 return pd.DataFrame()
 
-            query = f'SELECT * FROM "{schema}"."{self._table}"'
+            query = text(f'SELECT * FROM "{schema}"."{self._table}"')
             try:
-                return pd.read_sql(query, engine, **self._load_args)
+                # pd.read_sql não é compatível com SQLAlchemy 2.0 (future=True):
+                # chama .cursor() que não existe em Connection 2.0.
+                # Solução definitiva: executar via API nativa do SQLAlchemy e
+                # construir o DataFrame manualmente.
+                with engine.connect() as conn:
+                    result = conn.execute(query)
+                    df = pd.DataFrame(result.fetchall(), columns=list(result.keys()))
+
+                # psycopg2 retorna tipos Decimal/UUID/etc. para colunas numéricas
+                # do PostgreSQL, que pandas mapeia como dtype=object. Coerce
+                # colunas object para numeric onde possível, preservando strings.
+                for col in df.columns:
+                    if df[col].dtype == object:
+                        converted = pd.to_numeric(df[col], errors="ignore")
+                        if converted.dtype != object:
+                            df[col] = converted
+
+                # Aplica parse_dates de load_args manualmente, se presente
+                parse_dates = self._load_args.get("parse_dates")
+                if parse_dates:
+                    for col in (parse_dates if isinstance(parse_dates, list) else list(parse_dates)):
+                        if col in df.columns:
+                            df[col] = pd.to_datetime(df[col], errors="coerce")
+
+                return df
             except Exception as exc:
                 logger.error(
                     "AppendSQLDataset._load falhou em %s.%s: %s",
@@ -283,8 +333,11 @@ class AppendSQLDataset(AbstractDataset):
         with self._engine() as engine:
             from sqlalchemy import MetaData, Table
 
+            # SQLAlchemy 2.0 (future=True): meta.reflect requer Connection, não Engine.
             meta = MetaData()
-            meta.reflect(bind=engine, schema=schema, only=[self._table])
+            with engine.connect() as reflect_conn:
+                meta.reflect(bind=reflect_conn, schema=schema, only=[self._table])
+
             tbl_key = f"{schema}.{self._table}"
             if tbl_key not in meta.tables:
                 raise ValueError(
@@ -293,6 +346,12 @@ class AppendSQLDataset(AbstractDataset):
                 )
             table: Table = meta.tables[tbl_key]
 
+            # Identifica colunas JSONB para sanitização especial de NaN.
+            # pd.notna() não captura string 'NaN', apenas float NaN —
+            # e PostgreSQL rejeita 'NaN'::JSONB como JSON inválido.
+            from sqlalchemy.dialects.postgresql import JSONB as SA_JSONB
+            jsonb_cols = {c.name for c in table.columns if isinstance(c.type, SA_JSONB)}
+
             non_pk = [c for c in data.columns if c not in self._pk_columns]
             total = 0
 
@@ -300,6 +359,22 @@ class AppendSQLDataset(AbstractDataset):
                 for start in range(0, len(data), self._batch_size):
                     batch = data.iloc[start:start + self._batch_size]
                     records = batch.where(pd.notna(batch), None).to_dict(orient="records")
+
+                    # Sanitiza colunas JSONB: substitui float('nan') e string 'NaN'
+                    # por None (que vira null em JSON — válido no PostgreSQL).
+                    if jsonb_cols:
+                        import math
+                        for rec in records:
+                            for col in jsonb_cols:
+                                if col not in rec:
+                                    continue
+                                val = rec[col]
+                                if val is None:
+                                    continue
+                                if isinstance(val, float) and math.isnan(val):
+                                    rec[col] = None
+                                elif isinstance(val, str) and val.strip().lower() == 'nan':
+                                    rec[col] = None
 
                     stmt = pg_insert(table).values(records)
                     if non_pk:
@@ -341,15 +416,17 @@ class AppendSQLDataset(AbstractDataset):
         with self._engine() as engine:
             with engine.begin() as conn:
                 conn.execute(text(f'TRUNCATE TABLE "{schema}"."{self._table}"'))
-                combined.where(pd.notna(combined), None).to_sql(
-                    self._table,
-                    conn,
-                    schema=schema,
-                    if_exists="append",
-                    index=False,
-                    chunksize=self._batch_size,
-                    **self._save_args,
-                )
+            
+            # Passa engine em vez de connection para evitar warning do pandas
+            combined.where(pd.notna(combined), None).to_sql(
+                self._table,
+                engine,
+                schema=schema,
+                if_exists="append",
+                index=False,
+                chunksize=self._batch_size,
+                **self._save_args,
+            )
 
         logger.info(
             "AppendSQLDataset.sandbox -> %s.%s: %d linhas gravadas.",
