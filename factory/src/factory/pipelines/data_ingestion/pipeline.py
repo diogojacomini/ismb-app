@@ -1,6 +1,28 @@
 """
 This is a boilerplate pipeline 'data_ingestion'
 generated using Kedro 0.19.14
+
+Extrai e transforma dados de mercado e noticias financeiras,
+cada node é responsavel por uma fonte de dados.
+
+Fontes de dados:
+    Mercado:
+        - CDS Brasil 5Y: web scraping de tabela HTML
+        - Ibovespa: API yfinance
+        - IVVB11 (VIX Brasil): API yfinance
+        - IFIX: web scraping de tabela HTML
+
+    Noticias:
+        - InfoMoney: scraping
+        - Valor Investe: scraping
+        - Seu Dinheiro: scraping
+        - Money Times: scraping
+
+Fluxo de dados:
+    1. Coleta dados da fonte externa
+    2. Normalizacao de tipos (datas, numericos)
+    5. Retorno de DataFrame pronto para gravacao mapeados no catalog.yml
+
 """
 from kedro.pipeline import node, Pipeline, pipeline
 from .nodes import (
@@ -26,14 +48,22 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=extract_transform_api_yf,
-                inputs=["params:ibov_ticker", "params:columns_mapping_yf", "parameters"],
+                inputs=[
+                    "params:ibov_ticker",
+                    "params:columns_mapping_yf",
+                    "parameters",
+                ],
                 outputs="stage_ibov",
                 name="etl_ibov_node",
                 tags=["pipeline-ingestion", "ibov"],
             ),
             node(
                 func=extract_transform_api_yf,
-                inputs=["params:ivvb11_ticker", "params:columns_mapping_yf", "parameters"],
+                inputs=[
+                    "params:ivvb11_ticker",
+                    "params:columns_mapping_yf",
+                    "parameters",
+                ],
                 outputs="stage_ivvb",
                 name="etl_ivvb11_vix_brasil_node",
                 tags=["pipeline-ingestion", "ivvb"],

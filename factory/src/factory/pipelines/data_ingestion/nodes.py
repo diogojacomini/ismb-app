@@ -1,6 +1,7 @@
 """
 This is a boilerplate pipeline 'data_ingestion' generated using Kedro 0.19.14
 """
+
 from typing import Dict
 from datetime import datetime
 import pandas as pd
@@ -23,12 +24,19 @@ from .utils import (
 )
 
 
-def extract_transform_html_table(scraping_mapping: dict, columns_order: list, parameters: dict) -> pd.DataFrame:
+def extract_transform_html_table(
+    scraping_mapping: dict, columns_order: list, parameters: dict
+) -> pd.DataFrame:
     """Função para extrair tabelas HTML."""
     odate = parameters.get("odate")
     environment = parameters.get("environment", "production")
     process_full_data = parameters.get("process_full_data", False)
-    logger.info("Parameters - Odate: %s, Environment: %s, Full Data: %s", odate, environment, process_full_data)
+    logger.info(
+        "Parameters - Odate: %s, Environment: %s, Full Data: %s",
+        odate,
+        environment,
+        process_full_data,
+    )
 
     have_replace = scraping_mapping.get("replace_decimal", False)
     dat_ref_format = scraping_mapping.get("dat_ref_format")
@@ -42,25 +50,37 @@ def extract_transform_html_table(scraping_mapping: dict, columns_order: list, pa
 
     if (not data or len(data) == 0) and scraping_mapping.get("scraping_except", None):
         logger.info("Data scraping failed. Try extracting data from another source.")
-        data = scraping(scraping_mapping.get("scraping_except").get('url'),
-                        scraping_mapping.get("headers"))
+        data = scraping(
+            scraping_mapping.get("scraping_except").get("url"),
+            scraping_mapping.get("headers"),
+        )
 
-        have_replace = scraping_mapping.get("scraping_except", False).get('replace_decimal')
-        columns_order = scraping_mapping.get("scraping_except").get('columns_order')
-        dat_ref_format = scraping_mapping.get("scraping_except").get('dat_ref_format')
+        have_replace = scraping_mapping.get("scraping_except", False).get(
+            "replace_decimal"
+        )
+        columns_order = scraping_mapping.get("scraping_except").get("columns_order")
+        dat_ref_format = scraping_mapping.get("scraping_except").get("dat_ref_format")
 
     df = pd.DataFrame(data)
 
-    df_transformed = _transform_html_table(df, columns_order, dat_ref_format, have_replace)
+    df_transformed = _transform_html_table(
+        df, columns_order, dat_ref_format, have_replace
+    )
     logger.info("Data transformed successfully")
 
     if not process_full_data:
         df_transformed = df_transformed[df_transformed["dat_ref"] == odate]
 
         if len(df_transformed) == 0 and scraping_mapping.get("scraping_except", None):
-            df_transformed = _retry_scraping_odate(odate, scraping_mapping.get("scraping_except"), scraping_mapping.get("headers"))
+            df_transformed = _retry_scraping_odate(
+                odate,
+                scraping_mapping.get("scraping_except"),
+                scraping_mapping.get("headers"),
+            )
 
-        logger.info("Filtered data for date '%s': %d records", odate, len(df_transformed))
+        logger.info(
+            "Filtered data for date '%s': %d records", odate, len(df_transformed)
+        )
 
     return df_transformed
 
@@ -69,25 +89,34 @@ def _retry_scraping_odate(odate, scraping_mapping, headers):
     """Tenta re-extrair dados para uma data específica."""
     logger.info("Retrying data extraction for date: %s", odate)
 
-    data = scraping(scraping_mapping.get('url'), headers)
+    data = scraping(scraping_mapping.get("url"), headers)
     df = pd.DataFrame(data)
 
-    df_transformed = _transform_html_table(df,
-                                           scraping_mapping.get('columns_order'),
-                                           scraping_mapping.get('dat_ref_format'),
-                                           scraping_mapping.get('replace_decimal'))
+    df_transformed = _transform_html_table(
+        df,
+        scraping_mapping.get("columns_order"),
+        scraping_mapping.get("dat_ref_format"),
+        scraping_mapping.get("replace_decimal"),
+    )
 
     return df_transformed[df_transformed["dat_ref"] == odate]
 
 
-def _transform_html_table(raw_data: pd.DataFrame, columns_order: list, dat_format: str, replace_decimal: bool = False) -> pd.DataFrame:
+def _transform_html_table(
+    raw_data: pd.DataFrame,
+    columns_order: list,
+    dat_format: str,
+    replace_decimal: bool = False,
+) -> pd.DataFrame:
     """Transformação de dados html."""
     df = raw_data.copy()
     if len(df.columns) == 7:
         df.drop(columns=5, inplace=True)
 
     df.columns = columns_order
-    df["dat_ref"] = pd.to_datetime(df["dat_ref"], format=dat_format).dt.strftime("%Y-%m-%d")
+    df["dat_ref"] = pd.to_datetime(df["dat_ref"], format=dat_format).dt.strftime(
+        "%Y-%m-%d"
+    )
     df = df.sort_values("dat_ref", ascending=False).reset_index(drop=True)
     df["change_percentage"] = df["change_percentage"].str.replace("%", "", regex=False)
 
@@ -102,16 +131,26 @@ def _transform_html_table(raw_data: pd.DataFrame, columns_order: list, dat_forma
             )
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    df["change_percentage"] = pd.to_numeric(df["change_percentage"], errors="coerce").round(2)
+    df["change_percentage"] = pd.to_numeric(
+        df["change_percentage"], errors="coerce"
+    ).round(2)
     return df
 
 
-def extract_transform_api_yf(ticker: str, columns_mapping: Dict[str, str], parameters: dict) -> pd.DataFrame:
+def extract_transform_api_yf(
+    ticker: str, columns_mapping: Dict[str, str], parameters: dict
+) -> pd.DataFrame:
     """Extrai e transforma dados de ações usando a API do yfinance."""
     odate = parameters.get("odate")
     environment = parameters.get("environment", "production")
     process_full_data = parameters.get("process_full_data", False)
-    logger.info("Yahoo Finance - Ticker: %s, Data: %s, Environment: %s, Full Data: %s", ticker, odate, environment, process_full_data)
+    logger.info(
+        "Yahoo Finance - Ticker: %s, Data: %s, Environment: %s, Full Data: %s",
+        ticker,
+        odate,
+        environment,
+        process_full_data,
+    )
 
     if environment == "test":
         return _make_dataframe_test_yf(odate)
@@ -127,23 +166,32 @@ def extract_transform_api_yf(ticker: str, columns_mapping: Dict[str, str], param
     df = df.rename(columns=columns_mapping)
     logger.info("Data transformed successfully")
 
-    for col in df.select_dtypes(include=['float']).columns:
+    for col in df.select_dtypes(include=["float"]).columns:
         df[col] = df[col].round(2)
 
     if not process_full_data:
         df["dat_ref"] = df["dat_ref"].dt.strftime("%Y-%m-%d")
         df = df[df["dat_ref"] == odate]
-        logger.info("Filtered Yahoo Finance data for date '%s': %d records", odate, len(df))
+        logger.info(
+            "Filtered Yahoo Finance data for date '%s': %d records", odate, len(df)
+        )
 
     return df
 
 
-def extract_transform_infomoney(mapping_class: Dict[str, str], parameters: dict) -> pd.DataFrame:
+def extract_transform_infomoney(
+    mapping_class: Dict[str, str], parameters: dict
+) -> pd.DataFrame:
     """Extrai e transforma dados do InfoMoney."""
     odate = parameters.get("odate")
     environment = parameters.get("environment", "production")
     process_full_data = parameters.get("process_full_data", False)
-    logger.info("InfoMoney - Odate: %s, Environment: %s, Full Data: %s", odate, environment, process_full_data)
+    logger.info(
+        "InfoMoney - Odate: %s, Environment: %s, Full Data: %s",
+        odate,
+        environment,
+        process_full_data,
+    )
 
     if environment == "test":
         return _make_dataframe_test_news(odate, "InfoMoney")
@@ -151,7 +199,11 @@ def extract_transform_infomoney(mapping_class: Dict[str, str], parameters: dict)
     df = pd.DataFrame(
         scraping_infomoney(mapping_class.get("url"), mapping_class.get("class_"))
     )
-    logger.info("Data collected successfully from URL: %s - Data collected: %d", mapping_class.get("url"), len(df))
+    logger.info(
+        "Data collected successfully from URL: %s - Data collected: %d",
+        mapping_class.get("url"),
+        len(df),
+    )
 
     df[["categoria", "titulo", "data_publicacao"]] = df["titulo"].apply(extrair_campos)
     df["dat_ref"] = pd.to_datetime(df["dat_ref"]).dt.strftime("%Y-%m-%d")
@@ -167,12 +219,19 @@ def extract_transform_infomoney(mapping_class: Dict[str, str], parameters: dict)
     return df
 
 
-def extract_transform_valorinveste(mapping_class: Dict[str, str], parameters: dict) -> pd.DataFrame:
+def extract_transform_valorinveste(
+    mapping_class: Dict[str, str], parameters: dict
+) -> pd.DataFrame:
     """Extrai e transforma dados do Valor Investe."""
     odate = parameters.get("odate")
     environment = parameters.get("environment", "production")
     process_full_data = parameters.get("process_full_data", False)
-    logger.info("ValorInveste - Odate: %s, Environment: %s, Full Data: %s", odate, environment, process_full_data)
+    logger.info(
+        "ValorInveste - Odate: %s, Environment: %s, Full Data: %s",
+        odate,
+        environment,
+        process_full_data,
+    )
 
     if environment == "test":
         return _make_dataframe_test_news(odate, "ValorInveste")
@@ -184,32 +243,51 @@ def extract_transform_valorinveste(mapping_class: Dict[str, str], parameters: di
             mapping_class.get("class_date"),
         )
     )
-    logger.info("Data collected successfully from URL: %s - Data collected: %d", mapping_class.get("url"), len(df))
+    logger.info(
+        "Data collected successfully from URL: %s - Data collected: %d",
+        mapping_class.get("url"),
+        len(df),
+    )
 
     df["dat_ref"] = df["link"].apply(extrair_data_url)
     df["id_news"] = df.apply(_generate_id_from_row, axis=1)
     df = select_cast_midia(df)
-    df["dat_ref"] = pd.to_datetime(df["dat_ref"], format="%Y/%m/%d").dt.strftime("%Y-%m-%d")
+    df["dat_ref"] = pd.to_datetime(df["dat_ref"], format="%Y/%m/%d").dt.strftime(
+        "%Y-%m-%d"
+    )
     logger.info("Data transformed successfully")
 
     if not process_full_data:
         df = df[df["dat_ref"] == odate]
-        logger.info("Filtered ValorInveste data for date '%s': %d records", odate, len(df))
+        logger.info(
+            "Filtered ValorInveste data for date '%s': %d records", odate, len(df)
+        )
 
     return df
 
 
-def extract_transform_seudinheiro(mapping_class: Dict[str, str], parameters: dict) -> pd.DataFrame:
+def extract_transform_seudinheiro(
+    mapping_class: Dict[str, str], parameters: dict
+) -> pd.DataFrame:
     """Extrai e transforma dados do Seu Dinheiro."""
     odate = parameters.get("odate")
     environment = parameters.get("environment", "production")
     process_full_data = parameters.get("process_full_data", False)
-    logger.info("SeuDinheiro - Odate: %s, Environment: %s, Full Data: %s", odate, environment, process_full_data)
+    logger.info(
+        "SeuDinheiro - Odate: %s, Environment: %s, Full Data: %s",
+        odate,
+        environment,
+        process_full_data,
+    )
 
     if environment == "test":
         return _make_dataframe_test_news(odate, "SeuDinheiro")
 
-    max_pages = mapping_class.get("max_pages_full", 10) if process_full_data else mapping_class.get("max_pages", 5)
+    max_pages = (
+        mapping_class.get("max_pages_full", 10)
+        if process_full_data
+        else mapping_class.get("max_pages", 5)
+    )
     all_data = []
 
     for page in range(1, max_pages + 1):
@@ -228,7 +306,11 @@ def extract_transform_seudinheiro(mapping_class: Dict[str, str], parameters: dic
         all_data.extend(data)
 
     df = pd.DataFrame(all_data)
-    logger.info("Data collected successfully from URL: %s - Data collected: %d", mapping_class.get("url"), len(df))
+    logger.info(
+        "Data collected successfully from URL: %s - Data collected: %d",
+        mapping_class.get("url"),
+        len(df),
+    )
 
     if not df.empty:
         df["dat_ref"] = df["dat_ref"].apply(parse_data_portugues)
@@ -238,22 +320,35 @@ def extract_transform_seudinheiro(mapping_class: Dict[str, str], parameters: dic
 
         if not process_full_data:
             df = df[df["dat_ref"] == odate]
-            logger.info("Filtered SeuDinheiro data for date '%s': %d records", odate, len(df))
+            logger.info(
+                "Filtered SeuDinheiro data for date '%s': %d records", odate, len(df)
+            )
 
         return df
 
 
-def extract_transform_moneytimes(mapping_class: Dict[str, str], parameters: dict) -> pd.DataFrame:
+def extract_transform_moneytimes(
+    mapping_class: Dict[str, str], parameters: dict
+) -> pd.DataFrame:
     """Extrai e transforma dados do MoneyTimes."""
     odate = parameters.get("odate")
     environment = parameters.get("environment", "production")
     process_full_data = parameters.get("process_full_data", False)
-    logger.info("MoneyTimes - Odate: %s, Environment: %s, Full Data: %s", odate, environment, process_full_data)
+    logger.info(
+        "MoneyTimes - Odate: %s, Environment: %s, Full Data: %s",
+        odate,
+        environment,
+        process_full_data,
+    )
 
     if environment == "test":
         return _make_dataframe_test_news(odate, "MoneyTimes")
 
-    max_pages = mapping_class.get("max_pages_full", 10) if process_full_data else mapping_class.get("max_pages", 5)
+    max_pages = (
+        mapping_class.get("max_pages_full", 10)
+        if process_full_data
+        else mapping_class.get("max_pages", 5)
+    )
     all_data = []
 
     for page in range(1, max_pages + 1):
@@ -273,61 +368,74 @@ def extract_transform_moneytimes(mapping_class: Dict[str, str], parameters: dict
         all_data.extend(data)
 
     df = pd.DataFrame(all_data)
-    logger.info("Data collected successfully from URL: %s - Data collected: %d", mapping_class.get("url"), len(df))
+    logger.info(
+        "Data collected successfully from URL: %s - Data collected: %d",
+        mapping_class.get("url"),
+        len(df),
+    )
 
     if not df.empty:
         df["dat_ref"] = df["dat_ref"].apply(data_relativa_para_absoluta)
         df["id_news"] = df.apply(_generate_id_from_row, axis=1)
         df = select_cast_midia(df)
-        print(df)
-        df['dat_ref'].fillna(datetime.today().strftime('%Y-%m-%d'), inplace=True)  # para notícias recém publicadas
-        print(df)
+        df["dat_ref"].fillna(datetime.today().strftime("%Y-%m-%d"), inplace=True)
         logger.info("Data transformed successfully")
 
     if not process_full_data:
         df = df[df["dat_ref"] == odate]
-        logger.info("Filtered MoneyTimes data for date '%s': %d records", odate, len(df))
+        logger.info(
+            "Filtered MoneyTimes data for date '%s': %d records", odate, len(df)
+        )
 
     return df
 
+
 def _generate_id_from_row(row):
     return create_news_id(
-        titulo=row["titulo"],
-        fonte=row["fonte"],
-        dat_ref=row["dat_ref"]
+        titulo=row["titulo"], fonte=row["fonte"], dat_ref=row["dat_ref"]
     )
 
-def _make_dataframe_test_news(odate: str, context) -> pd.DataFrame:
-    """Cria um DataFrame de teste."""
+
+def _make_dataframe_test_news(odate: str, context: str) -> pd.DataFrame:
+    """Retorna um DataFrame minimo de noticias para ambiente de teste."""
     logger.info("Running in test environment, returning test data for news.")
-    return pd.DataFrame({"id_news": ['1AB13'],
-                         "dat_ref": [odate],
-                         "fonte": [context],
-                         "titulo": ["Titulo de Test"],
-                         "link": [f"link_test_{context}.com"],
-                         })
+    return pd.DataFrame(
+        {
+            "id_news": ["1AB13"],
+            "dat_ref": [odate],
+            "fonte": [context],
+            "titulo": ["Titulo de Test"],
+            "link": ["link_test_%s.com" % context],
+        }
+    )
 
 
 def _make_dataframe_test_wbf(odate: str) -> pd.DataFrame:
     """Cria um DataFrame de teste para dados de mercado."""
     logger.info("Running in test environment, returning test data for market.")
-    return pd.DataFrame({"dat_ref": [odate],
-                         "open_price": [999.99],
-                         "close_price": [999.99],
-                         "high_price": [999.99],
-                         "low_price": [999.99],
-                         "change_percentage": [99.99]
-                         })
+    return pd.DataFrame(
+        {
+            "dat_ref": [odate],
+            "open_price": [999.99],
+            "close_price": [999.99],
+            "high_price": [999.99],
+            "low_price": [999.99],
+            "change_percentage": [99.99],
+        }
+    )
 
 
 def _make_dataframe_test_yf(odate: str) -> pd.DataFrame:
     """Cria um DataFrame de teste para dados do Yahoo Finance."""
     logger.info("Running in test environment, returning test data for Yahoo Finance.")
-    return pd.DataFrame({"dat_ref": [odate],
-                         "close_adj_price": [999.99],
-                         "close_price": [999.99],
-                         "high_price": [999.99],
-                         "low_price": [999.99],
-                         "open_price": [999.99],
-                         "volume": [9999]
-                         })
+    return pd.DataFrame(
+        {
+            "dat_ref": [odate],
+            "close_adj_price": [999.99],
+            "close_price": [999.99],
+            "high_price": [999.99],
+            "low_price": [999.99],
+            "open_price": [999.99],
+            "volume": [9999],
+        }
+    )
