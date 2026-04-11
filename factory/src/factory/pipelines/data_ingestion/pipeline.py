@@ -21,7 +21,7 @@ Fontes de dados:
 Fluxo de dados:
     1. Coleta dados da fonte externa
     2. Normalizacao de tipos (datas, numericos)
-    5. Retorno de DataFrame pronto para gravacao mapeados no catalog.yml
+    3. Retorno de DataFrame pronto para gravacao mapeados no catalog.yml
 
 """
 from kedro.pipeline import node, Pipeline, pipeline
