@@ -158,7 +158,6 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_cds (
     check_timestamp  TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     total_records    INTEGER,
     null_count       INTEGER,
-    duplicate_count  INTEGER,
     completeness_pct NUMERIC(6, 2),
     validity_pct     NUMERIC(6, 2),
     consistency_pct  NUMERIC(6, 2),
@@ -166,8 +165,10 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_cds (
     quality_score    NUMERIC(6, 2),
     warnings         JSONB          NOT NULL DEFAULT '[]',
     errors           JSONB          NOT NULL DEFAULT '[]',
-    status           VARCHAR(16)    CHECK (status IN ('OK', 'WARNING', 'ERROR')),
-    CONSTRAINT pk_metrics_stage_cds PRIMARY KEY (metrics_id)
+    status           VARCHAR(16),
+    CONSTRAINT pk_metrics_stage_cds PRIMARY KEY (metrics_id),
+    CONSTRAINT chk_metrics_stage_cds_status
+        CHECK (status IN ('PASSED', 'WARNING', 'FAILED'))
 );
 
 COMMENT ON TABLE  governance.metrics_stage_cds IS 'Métricas de qualidade de dados para stage_cds (CDS Brasil 5Y).';
@@ -177,7 +178,6 @@ COMMENT ON COLUMN governance.metrics_stage_cds.dat_ref          IS 'Data de refe
 COMMENT ON COLUMN governance.metrics_stage_cds.check_timestamp  IS 'Timestamp da execução da checagem de qualidade';
 COMMENT ON COLUMN governance.metrics_stage_cds.total_records    IS 'Número total de registros no dataset';
 COMMENT ON COLUMN governance.metrics_stage_cds.null_count       IS 'Quantidade de valores nulos';
-COMMENT ON COLUMN governance.metrics_stage_cds.duplicate_count  IS 'Quantidade de registros duplicados';
 COMMENT ON COLUMN governance.metrics_stage_cds.completeness_pct IS 'Percentual de completude (campos preenchidos)';
 COMMENT ON COLUMN governance.metrics_stage_cds.validity_pct     IS 'Percentual de validade (valores dentro do esperado)';
 COMMENT ON COLUMN governance.metrics_stage_cds.consistency_pct  IS 'Percentual de consistência (relações entre campos)';
@@ -185,7 +185,7 @@ COMMENT ON COLUMN governance.metrics_stage_cds.outlier_count    IS 'Quantidade d
 COMMENT ON COLUMN governance.metrics_stage_cds.quality_score    IS 'Score global de qualidade [0-100]';
 COMMENT ON COLUMN governance.metrics_stage_cds.warnings         IS 'Lista de advertências em formato JSON';
 COMMENT ON COLUMN governance.metrics_stage_cds.errors           IS 'Lista de erros críticos em formato JSON';
-COMMENT ON COLUMN governance.metrics_stage_cds.status           IS 'Status da checagem: OK | WARNING | ERROR';
+COMMENT ON COLUMN governance.metrics_stage_cds.status           IS 'Status da checagem: PASSED | WARNING | FAILED';
 
 -- -----------------------------------------------------------------------------
 -- Tabela: governance.metrics_stage_ibov
@@ -197,7 +197,6 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_ibov (
     check_timestamp  TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     total_records    INTEGER,
     null_count       INTEGER,
-    duplicate_count  INTEGER,
     completeness_pct NUMERIC(6, 2),
     validity_pct     NUMERIC(6, 2),
     consistency_pct  NUMERIC(6, 2),
@@ -205,8 +204,10 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_ibov (
     quality_score    NUMERIC(6, 2),
     warnings         JSONB          NOT NULL DEFAULT '[]',
     errors           JSONB          NOT NULL DEFAULT '[]',
-    status           VARCHAR(16)    CHECK (status IN ('OK', 'WARNING', 'ERROR')),
-    CONSTRAINT pk_metrics_stage_ibov PRIMARY KEY (metrics_id)
+    status           VARCHAR(16),
+    CONSTRAINT pk_metrics_stage_ibov PRIMARY KEY (metrics_id),
+    CONSTRAINT chk_metrics_stage_ibov_status 
+        CHECK (status IN ('PASSED', 'WARNING', 'FAILED'))
 );
 
 COMMENT ON TABLE  governance.metrics_stage_ibov IS 'Métricas de qualidade de dados para stage_ibov (Ibovespa).';
@@ -216,7 +217,6 @@ COMMENT ON COLUMN governance.metrics_stage_ibov.dat_ref          IS 'Data de ref
 COMMENT ON COLUMN governance.metrics_stage_ibov.check_timestamp  IS 'Timestamp da execução da checagem de qualidade';
 COMMENT ON COLUMN governance.metrics_stage_ibov.total_records    IS 'Número total de registros no dataset';
 COMMENT ON COLUMN governance.metrics_stage_ibov.null_count       IS 'Quantidade de valores nulos';
-COMMENT ON COLUMN governance.metrics_stage_ibov.duplicate_count  IS 'Quantidade de registros duplicados';
 COMMENT ON COLUMN governance.metrics_stage_ibov.completeness_pct IS 'Percentual de completude (campos preenchidos)';
 COMMENT ON COLUMN governance.metrics_stage_ibov.validity_pct     IS 'Percentual de validade (valores dentro do esperado)';
 COMMENT ON COLUMN governance.metrics_stage_ibov.consistency_pct  IS 'Percentual de consistência (relações entre campos)';
@@ -224,7 +224,7 @@ COMMENT ON COLUMN governance.metrics_stage_ibov.outlier_count    IS 'Quantidade 
 COMMENT ON COLUMN governance.metrics_stage_ibov.quality_score    IS 'Score global de qualidade [0-100]';
 COMMENT ON COLUMN governance.metrics_stage_ibov.warnings         IS 'Lista de advertências em formato JSON';
 COMMENT ON COLUMN governance.metrics_stage_ibov.errors           IS 'Lista de erros críticos em formato JSON';
-COMMENT ON COLUMN governance.metrics_stage_ibov.status           IS 'Status da checagem: OK | WARNING | ERROR';
+COMMENT ON COLUMN governance.metrics_stage_ibov.status           IS 'Status da checagem: PASSED | WARNING | FAILED';
 
 -- -----------------------------------------------------------------------------
 -- Tabela: governance.metrics_stage_ivvb
@@ -236,7 +236,6 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_ivvb (
     check_timestamp  TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     total_records    INTEGER,
     null_count       INTEGER,
-    duplicate_count  INTEGER,
     completeness_pct NUMERIC(6, 2),
     validity_pct     NUMERIC(6, 2),
     consistency_pct  NUMERIC(6, 2),
@@ -244,8 +243,10 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_ivvb (
     quality_score    NUMERIC(6, 2),
     warnings         JSONB          NOT NULL DEFAULT '[]',
     errors           JSONB          NOT NULL DEFAULT '[]',
-    status           VARCHAR(16)    CHECK (status IN ('OK', 'WARNING', 'ERROR')),
-    CONSTRAINT pk_metrics_stage_ivvb PRIMARY KEY (metrics_id)
+    status           VARCHAR(16),
+    CONSTRAINT pk_metrics_stage_ivvb PRIMARY KEY (metrics_id),
+    CONSTRAINT chk_metrics_stage_ivvb_status 
+        CHECK (status IN ('PASSED', 'WARNING', 'FAILED'))
 );
 
 COMMENT ON TABLE  governance.metrics_stage_ivvb IS 'Métricas de qualidade de dados para stage_ivvb (IVVB11 - VIX Brasil).';
@@ -255,7 +256,6 @@ COMMENT ON COLUMN governance.metrics_stage_ivvb.dat_ref          IS 'Data de ref
 COMMENT ON COLUMN governance.metrics_stage_ivvb.check_timestamp  IS 'Timestamp da execução da checagem de qualidade';
 COMMENT ON COLUMN governance.metrics_stage_ivvb.total_records    IS 'Número total de registros no dataset';
 COMMENT ON COLUMN governance.metrics_stage_ivvb.null_count       IS 'Quantidade de valores nulos';
-COMMENT ON COLUMN governance.metrics_stage_ivvb.duplicate_count  IS 'Quantidade de registros duplicados';
 COMMENT ON COLUMN governance.metrics_stage_ivvb.completeness_pct IS 'Percentual de completude (campos preenchidos)';
 COMMENT ON COLUMN governance.metrics_stage_ivvb.validity_pct     IS 'Percentual de validade (valores dentro do esperado)';
 COMMENT ON COLUMN governance.metrics_stage_ivvb.consistency_pct  IS 'Percentual de consistência (relações entre campos)';
@@ -263,7 +263,7 @@ COMMENT ON COLUMN governance.metrics_stage_ivvb.outlier_count    IS 'Quantidade 
 COMMENT ON COLUMN governance.metrics_stage_ivvb.quality_score    IS 'Score global de qualidade [0-100]';
 COMMENT ON COLUMN governance.metrics_stage_ivvb.warnings         IS 'Lista de advertências em formato JSON';
 COMMENT ON COLUMN governance.metrics_stage_ivvb.errors           IS 'Lista de erros críticos em formato JSON';
-COMMENT ON COLUMN governance.metrics_stage_ivvb.status           IS 'Status da checagem: OK | WARNING | ERROR';
+COMMENT ON COLUMN governance.metrics_stage_ivvb.status           IS 'Status da checagem: PASSED | WARNING | FAILED';
 
 -- -----------------------------------------------------------------------------
 -- Tabela: governance.metrics_stage_ifix
@@ -275,7 +275,6 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_ifix (
     check_timestamp  TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     total_records    INTEGER,
     null_count       INTEGER,
-    duplicate_count  INTEGER,
     completeness_pct NUMERIC(6, 2),
     validity_pct     NUMERIC(6, 2),
     consistency_pct  NUMERIC(6, 2),
@@ -283,8 +282,10 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_ifix (
     quality_score    NUMERIC(6, 2),
     warnings         JSONB          NOT NULL DEFAULT '[]',
     errors           JSONB          NOT NULL DEFAULT '[]',
-    status           VARCHAR(16)    CHECK (status IN ('OK', 'WARNING', 'ERROR')),
-    CONSTRAINT pk_metrics_stage_ifix PRIMARY KEY (metrics_id)
+    status           VARCHAR(16),
+    CONSTRAINT pk_metrics_stage_ifix PRIMARY KEY (metrics_id),
+    CONSTRAINT chk_metrics_stage_ifix_status 
+        CHECK (status IN ('PASSED', 'WARNING', 'FAILED'))
 );
 
 COMMENT ON TABLE  governance.metrics_stage_ifix IS 'Métricas de qualidade de dados para stage_ifix (IFIX - Fundos Imobiliários).';
@@ -294,7 +295,6 @@ COMMENT ON COLUMN governance.metrics_stage_ifix.dat_ref          IS 'Data de ref
 COMMENT ON COLUMN governance.metrics_stage_ifix.check_timestamp  IS 'Timestamp da execução da checagem de qualidade';
 COMMENT ON COLUMN governance.metrics_stage_ifix.total_records    IS 'Número total de registros no dataset';
 COMMENT ON COLUMN governance.metrics_stage_ifix.null_count       IS 'Quantidade de valores nulos';
-COMMENT ON COLUMN governance.metrics_stage_ifix.duplicate_count  IS 'Quantidade de registros duplicados';
 COMMENT ON COLUMN governance.metrics_stage_ifix.completeness_pct IS 'Percentual de completude (campos preenchidos)';
 COMMENT ON COLUMN governance.metrics_stage_ifix.validity_pct     IS 'Percentual de validade (valores dentro do esperado)';
 COMMENT ON COLUMN governance.metrics_stage_ifix.consistency_pct  IS 'Percentual de consistência (relações entre campos)';
@@ -302,7 +302,7 @@ COMMENT ON COLUMN governance.metrics_stage_ifix.outlier_count    IS 'Quantidade 
 COMMENT ON COLUMN governance.metrics_stage_ifix.quality_score    IS 'Score global de qualidade [0-100]';
 COMMENT ON COLUMN governance.metrics_stage_ifix.warnings         IS 'Lista de advertências em formato JSON';
 COMMENT ON COLUMN governance.metrics_stage_ifix.errors           IS 'Lista de erros críticos em formato JSON';
-COMMENT ON COLUMN governance.metrics_stage_ifix.status           IS 'Status da checagem: OK | WARNING | ERROR';
+COMMENT ON COLUMN governance.metrics_stage_ifix.status           IS 'Status da checagem: PASSED | WARNING | FAILED';
 
 -- -----------------------------------------------------------------------------
 -- Tabela: governance.metrics_stage_infomoney
@@ -314,7 +314,6 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_infomoney (
     check_timestamp  TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     total_records    INTEGER,
     null_count       INTEGER,
-    duplicate_count  INTEGER,
     completeness_pct NUMERIC(6, 2),
     validity_pct     NUMERIC(6, 2),
     consistency_pct  NUMERIC(6, 2),
@@ -322,8 +321,10 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_infomoney (
     quality_score    NUMERIC(6, 2),
     warnings         JSONB          NOT NULL DEFAULT '[]',
     errors           JSONB          NOT NULL DEFAULT '[]',
-    status           VARCHAR(16)    CHECK (status IN ('OK', 'WARNING', 'ERROR')),
-    CONSTRAINT pk_metrics_stage_infomoney PRIMARY KEY (metrics_id)
+    status           VARCHAR(16),
+    CONSTRAINT pk_metrics_stage_infomoney PRIMARY KEY (metrics_id),
+    CONSTRAINT chk_metrics_stage_infomoney_status
+        CHECK (status IN ('PASSED', 'WARNING', 'FAILED'))
 );
 
 COMMENT ON TABLE  governance.metrics_stage_infomoney IS 'Métricas de qualidade de dados para stage_infomoney (Notícias InfoMoney).';
@@ -333,7 +334,6 @@ COMMENT ON COLUMN governance.metrics_stage_infomoney.dat_ref          IS 'Data d
 COMMENT ON COLUMN governance.metrics_stage_infomoney.check_timestamp  IS 'Timestamp da execução da checagem de qualidade';
 COMMENT ON COLUMN governance.metrics_stage_infomoney.total_records    IS 'Número total de registros no dataset';
 COMMENT ON COLUMN governance.metrics_stage_infomoney.null_count       IS 'Quantidade de valores nulos';
-COMMENT ON COLUMN governance.metrics_stage_infomoney.duplicate_count  IS 'Quantidade de registros duplicados';
 COMMENT ON COLUMN governance.metrics_stage_infomoney.completeness_pct IS 'Percentual de completude (campos preenchidos)';
 COMMENT ON COLUMN governance.metrics_stage_infomoney.validity_pct     IS 'Percentual de validade (valores dentro do esperado)';
 COMMENT ON COLUMN governance.metrics_stage_infomoney.consistency_pct  IS 'Percentual de consistência (relações entre campos)';
@@ -341,7 +341,7 @@ COMMENT ON COLUMN governance.metrics_stage_infomoney.outlier_count    IS 'Quanti
 COMMENT ON COLUMN governance.metrics_stage_infomoney.quality_score    IS 'Score global de qualidade [0-100]';
 COMMENT ON COLUMN governance.metrics_stage_infomoney.warnings         IS 'Lista de advertências em formato JSON';
 COMMENT ON COLUMN governance.metrics_stage_infomoney.errors           IS 'Lista de erros críticos em formato JSON';
-COMMENT ON COLUMN governance.metrics_stage_infomoney.status           IS 'Status da checagem: OK | WARNING | ERROR';
+COMMENT ON COLUMN governance.metrics_stage_infomoney.status           IS 'Status da checagem: PASSED | WARNING | FAILED';
 
 -- -----------------------------------------------------------------------------
 -- Tabela: governance.metrics_stage_valorinveste
@@ -353,7 +353,6 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_valorinveste (
     check_timestamp  TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     total_records    INTEGER,
     null_count       INTEGER,
-    duplicate_count  INTEGER,
     completeness_pct NUMERIC(6, 2),
     validity_pct     NUMERIC(6, 2),
     consistency_pct  NUMERIC(6, 2),
@@ -361,8 +360,10 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_valorinveste (
     quality_score    NUMERIC(6, 2),
     warnings         JSONB          NOT NULL DEFAULT '[]',
     errors           JSONB          NOT NULL DEFAULT '[]',
-    status           VARCHAR(16)    CHECK (status IN ('OK', 'WARNING', 'ERROR')),
-    CONSTRAINT pk_metrics_stage_valorinveste PRIMARY KEY (metrics_id)
+    status           VARCHAR(16),
+    CONSTRAINT pk_metrics_stage_valorinveste PRIMARY KEY (metrics_id),
+    CONSTRAINT chk_metrics_stage_valorinveste_status
+        CHECK (status IN ('PASSED', 'WARNING', 'FAILED'))
 );
 
 COMMENT ON TABLE  governance.metrics_stage_valorinveste IS 'Métricas de qualidade de dados para stage_valorinveste (Notícias Valor Investe).';
@@ -372,7 +373,6 @@ COMMENT ON COLUMN governance.metrics_stage_valorinveste.dat_ref          IS 'Dat
 COMMENT ON COLUMN governance.metrics_stage_valorinveste.check_timestamp  IS 'Timestamp da execução da checagem de qualidade';
 COMMENT ON COLUMN governance.metrics_stage_valorinveste.total_records    IS 'Número total de registros no dataset';
 COMMENT ON COLUMN governance.metrics_stage_valorinveste.null_count       IS 'Quantidade de valores nulos';
-COMMENT ON COLUMN governance.metrics_stage_valorinveste.duplicate_count  IS 'Quantidade de registros duplicados';
 COMMENT ON COLUMN governance.metrics_stage_valorinveste.completeness_pct IS 'Percentual de completude (campos preenchidos)';
 COMMENT ON COLUMN governance.metrics_stage_valorinveste.validity_pct     IS 'Percentual de validade (valores dentro do esperado)';
 COMMENT ON COLUMN governance.metrics_stage_valorinveste.consistency_pct  IS 'Percentual de consistência (relações entre campos)';
@@ -380,7 +380,7 @@ COMMENT ON COLUMN governance.metrics_stage_valorinveste.outlier_count    IS 'Qua
 COMMENT ON COLUMN governance.metrics_stage_valorinveste.quality_score    IS 'Score global de qualidade [0-100]';
 COMMENT ON COLUMN governance.metrics_stage_valorinveste.warnings         IS 'Lista de advertências em formato JSON';
 COMMENT ON COLUMN governance.metrics_stage_valorinveste.errors           IS 'Lista de erros críticos em formato JSON';
-COMMENT ON COLUMN governance.metrics_stage_valorinveste.status           IS 'Status da checagem: OK | WARNING | ERROR';
+COMMENT ON COLUMN governance.metrics_stage_valorinveste.status           IS 'Status da checagem: PASSED | WARNING | FAILED';
 
 -- -----------------------------------------------------------------------------
 -- Tabela: governance.metrics_stage_seudinheiro
@@ -392,7 +392,6 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_seudinheiro (
     check_timestamp  TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     total_records    INTEGER,
     null_count       INTEGER,
-    duplicate_count  INTEGER,
     completeness_pct NUMERIC(6, 2),
     validity_pct     NUMERIC(6, 2),
     consistency_pct  NUMERIC(6, 2),
@@ -400,8 +399,10 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_seudinheiro (
     quality_score    NUMERIC(6, 2),
     warnings         JSONB          NOT NULL DEFAULT '[]',
     errors           JSONB          NOT NULL DEFAULT '[]',
-    status           VARCHAR(16)    CHECK (status IN ('OK', 'WARNING', 'ERROR')),
-    CONSTRAINT pk_metrics_stage_seudinheiro PRIMARY KEY (metrics_id)
+    status           VARCHAR(16),
+    CONSTRAINT pk_metrics_stage_seudinheiro PRIMARY KEY (metrics_id),
+    CONSTRAINT chk_metrics_stage_seudinheiro_status
+        CHECK (status IN ('PASSED', 'WARNING', 'FAILED'))
 );
 
 COMMENT ON TABLE  governance.metrics_stage_seudinheiro IS 'Métricas de qualidade de dados para stage_seudinheiro (Notícias Seu Dinheiro).';
@@ -411,7 +412,6 @@ COMMENT ON COLUMN governance.metrics_stage_seudinheiro.dat_ref          IS 'Data
 COMMENT ON COLUMN governance.metrics_stage_seudinheiro.check_timestamp  IS 'Timestamp da execução da checagem de qualidade';
 COMMENT ON COLUMN governance.metrics_stage_seudinheiro.total_records    IS 'Número total de registros no dataset';
 COMMENT ON COLUMN governance.metrics_stage_seudinheiro.null_count       IS 'Quantidade de valores nulos';
-COMMENT ON COLUMN governance.metrics_stage_seudinheiro.duplicate_count  IS 'Quantidade de registros duplicados';
 COMMENT ON COLUMN governance.metrics_stage_seudinheiro.completeness_pct IS 'Percentual de completude (campos preenchidos)';
 COMMENT ON COLUMN governance.metrics_stage_seudinheiro.validity_pct     IS 'Percentual de validade (valores dentro do esperado)';
 COMMENT ON COLUMN governance.metrics_stage_seudinheiro.consistency_pct  IS 'Percentual de consistência (relações entre campos)';
@@ -419,7 +419,7 @@ COMMENT ON COLUMN governance.metrics_stage_seudinheiro.outlier_count    IS 'Quan
 COMMENT ON COLUMN governance.metrics_stage_seudinheiro.quality_score    IS 'Score global de qualidade [0-100]';
 COMMENT ON COLUMN governance.metrics_stage_seudinheiro.warnings         IS 'Lista de advertências em formato JSON';
 COMMENT ON COLUMN governance.metrics_stage_seudinheiro.errors           IS 'Lista de erros críticos em formato JSON';
-COMMENT ON COLUMN governance.metrics_stage_seudinheiro.status           IS 'Status da checagem: OK | WARNING | ERROR';
+COMMENT ON COLUMN governance.metrics_stage_seudinheiro.status           IS 'Status da checagem: PASSED | WARNING | FAILED';
 
 -- -----------------------------------------------------------------------------
 -- Tabela: governance.metrics_stage_moneytimes
@@ -431,7 +431,6 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_moneytimes (
     check_timestamp  TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     total_records    INTEGER,
     null_count       INTEGER,
-    duplicate_count  INTEGER,
     completeness_pct NUMERIC(6, 2),
     validity_pct     NUMERIC(6, 2),
     consistency_pct  NUMERIC(6, 2),
@@ -439,8 +438,10 @@ CREATE TABLE IF NOT EXISTS governance.metrics_stage_moneytimes (
     quality_score    NUMERIC(6, 2),
     warnings         JSONB          NOT NULL DEFAULT '[]',
     errors           JSONB          NOT NULL DEFAULT '[]',
-    status           VARCHAR(16)    CHECK (status IN ('OK', 'WARNING', 'ERROR')),
-    CONSTRAINT pk_metrics_stage_moneytimes PRIMARY KEY (metrics_id)
+    status           VARCHAR(16),
+    CONSTRAINT pk_metrics_stage_moneytimes PRIMARY KEY (metrics_id),
+    CONSTRAINT chk_metrics_stage_infomoney_status
+        CHECK (status IN ('PASSED', 'WARNING', 'FAILED'))
 );
 
 COMMENT ON TABLE  governance.metrics_stage_moneytimes IS 'Métricas de qualidade de dados para stage_moneytimes (Notícias Money Times).';
@@ -450,7 +451,6 @@ COMMENT ON COLUMN governance.metrics_stage_moneytimes.dat_ref          IS 'Data 
 COMMENT ON COLUMN governance.metrics_stage_moneytimes.check_timestamp  IS 'Timestamp da execução da checagem de qualidade';
 COMMENT ON COLUMN governance.metrics_stage_moneytimes.total_records    IS 'Número total de registros no dataset';
 COMMENT ON COLUMN governance.metrics_stage_moneytimes.null_count       IS 'Quantidade de valores nulos';
-COMMENT ON COLUMN governance.metrics_stage_moneytimes.duplicate_count  IS 'Quantidade de registros duplicados';
 COMMENT ON COLUMN governance.metrics_stage_moneytimes.completeness_pct IS 'Percentual de completude (campos preenchidos)';
 COMMENT ON COLUMN governance.metrics_stage_moneytimes.validity_pct     IS 'Percentual de validade (valores dentro do esperado)';
 COMMENT ON COLUMN governance.metrics_stage_moneytimes.consistency_pct  IS 'Percentual de consistência (relações entre campos)';
@@ -458,7 +458,7 @@ COMMENT ON COLUMN governance.metrics_stage_moneytimes.outlier_count    IS 'Quant
 COMMENT ON COLUMN governance.metrics_stage_moneytimes.quality_score    IS 'Score global de qualidade [0-100]';
 COMMENT ON COLUMN governance.metrics_stage_moneytimes.warnings         IS 'Lista de advertências em formato JSON';
 COMMENT ON COLUMN governance.metrics_stage_moneytimes.errors           IS 'Lista de erros críticos em formato JSON';
-COMMENT ON COLUMN governance.metrics_stage_moneytimes.status           IS 'Status da checagem: OK | WARNING | ERROR';
+COMMENT ON COLUMN governance.metrics_stage_moneytimes.status           IS 'Status da checagem: PASSED | WARNING | FAILED';
 
 -- -----------------------------------------------------------------------------
 -- Tabela: governance.data_quality_report
@@ -471,7 +471,6 @@ CREATE TABLE IF NOT EXISTS governance.data_quality_report (
     check_timestamp   TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     total_records     INTEGER,
     null_count        INTEGER,
-    duplicate_count   INTEGER,
     completeness_pct  NUMERIC(6, 2),
     validity_pct      NUMERIC(6, 2),
     consistency_pct   NUMERIC(6, 2),
@@ -479,11 +478,13 @@ CREATE TABLE IF NOT EXISTS governance.data_quality_report (
     quality_score     NUMERIC(6, 2),
     warnings          JSONB          NOT NULL DEFAULT '[]',
     errors            JSONB          NOT NULL DEFAULT '[]',
-    status            VARCHAR(16)    CHECK (status IN ('OK', 'WARNING', 'ERROR')),
+    status            VARCHAR(16),
     warning_count     INTEGER        NOT NULL DEFAULT 0,
     error_count       INTEGER        NOT NULL DEFAULT 0,
     execution_date    TIMESTAMP WITHOUT TIME ZONE,
-    CONSTRAINT pk_data_quality_report PRIMARY KEY (metrics_id)
+    CONSTRAINT pk_data_quality_report PRIMARY KEY (metrics_id),
+    CONSTRAINT chk_data_quality_report_status 
+        CHECK (status IN ('PASSED', 'WARNING', 'FAILED'))
 );
 
 COMMENT ON TABLE  governance.data_quality_report IS 'Relatório consolidado de qualidade de dados para todos os datasets do pipeline.';
@@ -493,7 +494,6 @@ COMMENT ON COLUMN governance.data_quality_report.dat_ref           IS 'Data de r
 COMMENT ON COLUMN governance.data_quality_report.check_timestamp   IS 'Timestamp da execução da checagem de qualidade';
 COMMENT ON COLUMN governance.data_quality_report.total_records     IS 'Número total de registros no dataset';
 COMMENT ON COLUMN governance.data_quality_report.null_count        IS 'Quantidade de valores nulos';
-COMMENT ON COLUMN governance.data_quality_report.duplicate_count   IS 'Quantidade de registros duplicados';
 COMMENT ON COLUMN governance.data_quality_report.completeness_pct  IS 'Percentual de completude (campos preenchidos)';
 COMMENT ON COLUMN governance.data_quality_report.validity_pct      IS 'Percentual de validade (valores dentro do esperado)';
 COMMENT ON COLUMN governance.data_quality_report.consistency_pct   IS 'Percentual de consistência (relações entre campos)';
@@ -501,7 +501,7 @@ COMMENT ON COLUMN governance.data_quality_report.outlier_count     IS 'Quantidad
 COMMENT ON COLUMN governance.data_quality_report.quality_score     IS 'Score global de qualidade do dataset [0-100]';
 COMMENT ON COLUMN governance.data_quality_report.warnings          IS 'Lista de advertências em formato JSON';
 COMMENT ON COLUMN governance.data_quality_report.errors            IS 'Lista de erros críticos em formato JSON';
-COMMENT ON COLUMN governance.data_quality_report.status            IS 'Status da checagem: OK | WARNING | ERROR';
+COMMENT ON COLUMN governance.data_quality_report.status            IS 'Status da checagem: PASSED | WARNING | FAILED';
 COMMENT ON COLUMN governance.data_quality_report.warning_count     IS 'Número de advertências geradas durante a checagem de qualidade';
 COMMENT ON COLUMN governance.data_quality_report.error_count       IS 'Número de erros críticos encontrados';
 COMMENT ON COLUMN governance.data_quality_report.execution_date    IS 'Timestamp de execução do relatório de qualidade';
