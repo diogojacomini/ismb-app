@@ -1,83 +1,99 @@
 """
-This is a boilerplate pipeline 'data_quality'
-generated using Kedro 0.19.14
-
+This is a boilerplate pipeline 'data_quality' generated using Kedro 0.19.14
 """
-import pandas as pd
-import logging
-from .validator import DataQualityValidator
-from factory.saiph.schemas import SchemaRegistry
 from datetime import datetime
+import logging
+import pandas as pd
+from .validator import DataQualityValidator, QualityMetrics
+from factory.saiph.schemas import SchemaRegistry
 
 logger = logging.getLogger(__name__)
 
 
-def validate_stage_mercado(df: pd.DataFrame, dataset_name: str, params_quality: dict, params_global: dict) -> pd.DataFrame:
-    
-    # Parametros
+def validate_stage_mercado(
+    df: pd.DataFrame,
+    dim_tempo: pd.DataFrame,
+    dataset_name: str,
+    params_quality: dict,
+    params_global: dict,
+) -> pd.DataFrame:
+    """Valida um dataset de mercado e retorna as metricas de qualidade."""
     odate = params_global.get("odate")
     process_full_data = params_global.get("process_full_data", False)
-    sample_period = params_global.get("sample_period_month").get(dataset_name, None)
-    logger.info(f"Odate de processamento: {odate}")
-    logger.info(f"Quality thresholds: {params_quality}")
+    sample_period = params_global.get("sample_period_month", {}).get(dataset_name)
+    logger.info("Odate: %s", odate)
+    logger.info("Quality thresholds: %s", params_quality)
 
     if sample_period and not process_full_data:
-        logger.info(f"Periodo de Analise: {sample_period}")
+        logger.info("Periodo de analise: %s meses", sample_period)
+        dim_tempo["dat_ref_fmt"] = pd.to_datetime(dim_tempo["dat_ref"], errors="coerce")
+        start_date = pd.to_datetime(odate, errors="coerce") - pd.DateOffset(
+            months=int(sample_period)
+        )
+        dim_tempo = dim_tempo.loc[(dim_tempo["dat_ref_fmt"] >= start_date) &
+                                  (dim_tempo["dat_ref_fmt"] <= pd.to_datetime(odate, errors="coerce"))]
 
-        df['dat_ref_fmt'] = pd.to_datetime(df['dat_ref'], errors="coerce")
-        _start_date = pd.to_datetime(odate, errors="coerce") - pd.DateOffset(months=int(sample_period))
-        df = df.loc[(df['dat_ref_fmt'] >= _start_date) & (df['dat_ref_fmt'] <= pd.to_datetime(odate, errors="coerce"))].drop(columns=['dat_ref_fmt'])
+    # Filtra apenas dias uteis (quando é coletado tudo, vem finais de semana e feriados)
+    df = dim_tempo[dim_tempo["dia_util"] == 1][["dat_ref"]].merge(
+        df, on="dat_ref", how="left"
+    )
 
     validator = DataQualityValidator(dataset_name, params_quality)
-    logger.info(f"Validating dataset: {dataset_name} with {len(df)} records.")
+    logger.info("Validating dataset '%s' with %d records.", dataset_name, len(df))
 
-    # Pre validações
-    metrics = _pre_validation_metrics(validator, df, dataset_name, odate)
+    consistency_price = validator.validate_price_consistency(df)
+    metrics = _pre_validation_metrics(validator, df, dataset_name, odate, consistency_price)
 
-    # Validações de négocio, apenas warnings
-    validator.validate_price_consistency(df)
+    logger.info(
+        "Qualidade %s: Score=%.2f, Status=%s",
+        dataset_name,
+        metrics.quality_score,
+        metrics.status,
+    )
 
-    logger.info(f"Qualidade {dataset_name}: Score={metrics.quality_score:.2f}, Status={metrics.status}")
-
-    if metrics.status == 'FAILED':
-        logger.error(f"Validação FALHOU para {dataset_name}: {metrics.errors}")
-        raise ValueError(f"Data Quality Check FAILED para {dataset_name}")
+    if metrics.status == "FAILED":
+        logger.error("Validacao FALHOU para %s: %s", dataset_name, metrics.errors)
+        raise ValueError("Data Quality Check FAILED para %s" % dataset_name)
 
     _log_warnings(validator.warnings)
     return pd.DataFrame([metrics.to_dict()])
 
-def validate_stage_noticias(df: pd.DataFrame, dataset_name: str, params_quality: dict, params_global: dict) -> pd.DataFrame:
-    
-    # Parametros
+
+def validate_stage_noticias(
+    df: pd.DataFrame,
+    dataset_name: str,
+    params_quality: dict,
+    params_global: dict,
+) -> pd.DataFrame:
+    """Valida um dataset de noticias e retorna as metricas de qualidade."""
     odate = params_global.get("odate")
     process_full_data = params_global.get("process_full_data", False)
-    logger.info(f"Odate de processamento: {odate}")
-    logger.info(f"Quality thresholds: {params_quality}")
+    logger.info("Odate: %s", odate)
+    logger.info("Quality thresholds: %s", params_quality)
 
     if not process_full_data:
-        lookback_days = params_global.get("sample_period_news", 3)
-        data_limite = (pd.to_datetime(odate) - pd.Timedelta(days=lookback_days)).strftime('%Y-%m-%d')
-        logger.info("Data limite: %s (lookback_days=%d)", data_limite, lookback_days)
-
-        df = df[(df['dat_ref'] >= data_limite) & (df['dat_ref'] <= odate)]
+        df = df[df["dat_ref"] == odate]
 
     validator = DataQualityValidator(dataset_name, params_quality)
-    logger.info(f"Validating dataset: {dataset_name} with {len(df)} records.")
-    
-    # Pre validações
-    metrics = _pre_validation_metrics(validator, df, dataset_name, odate)
-    
-    # Validações de négocio, apenas warnings
-    validator.validate_text_fields(df, ['titulo', 'link'])
+    logger.info("Validating dataset '%s' with %d records.", dataset_name, len(df))
 
-    logger.info(f"Qualidade {dataset_name}: Score={metrics.quality_score:.2f}, Status={metrics.status}")
-    
-    if metrics.status == 'FAILED':
-        logger.error(f"Validação FALHOU para {dataset_name}: {metrics.errors}")
-        raise ValueError(f"Data Quality Check FAILED para {dataset_name}")
+    consistency_text = validator.consistency_text_fields(df)
+    metrics = _pre_validation_metrics(validator, df, dataset_name, odate, consistency_text)
+
+    logger.info(
+        "Qualidade %s: Score=%.2f, Status=%s",
+        dataset_name,
+        metrics.quality_score,
+        metrics.status,
+    )
+
+    if metrics.status == "FAILED":
+        logger.error("Validacao FALHOU para %s: %s", dataset_name, metrics.errors)
+        raise ValueError("Data Quality Check FAILED para %s" % dataset_name)
 
     _log_warnings(validator.warnings)
     return pd.DataFrame([metrics.to_dict()])
+
 
 def generate_quality_report(
     metrics_stage_cds: pd.DataFrame,
@@ -88,87 +104,78 @@ def generate_quality_report(
     metrics_stage_valorinveste: pd.DataFrame,
     metrics_stage_seudinheiro: pd.DataFrame,
     metrics_stage_moneytimes: pd.DataFrame,
-    params_global,
-    ) -> pd.DataFrame:
-    
-    # Parametros
+    params_global: dict,
+) -> pd.DataFrame:
+    """Consolida as metricas de todos os relatorios individuais em um unico relatorio de qualidade."""
     odate = params_global.get("odate")
     process_full_data = params_global.get("process_full_data", False)
-    logger.info(f"Odate de processamento: {odate}")
+    logger.info("Odate: %s", odate)
 
-    df_report = pd.concat([
-        metrics_stage_cds,
-        metrics_stage_ibov,
-        metrics_stage_ivvb,
-        metrics_stage_ifix,
-        metrics_stage_infomoney,
-        metrics_stage_valorinveste,
-        metrics_stage_seudinheiro,
-        metrics_stage_moneytimes,
-    ], ignore_index=True)
+    df_report = pd.concat(
+        [
+            metrics_stage_cds,
+            metrics_stage_ibov,
+            metrics_stage_ivvb,
+            metrics_stage_ifix,
+            metrics_stage_infomoney,
+            metrics_stage_valorinveste,
+            metrics_stage_seudinheiro,
+            metrics_stage_moneytimes,
+        ],
+        ignore_index=True,
+    )
 
     if not process_full_data:
         df_report = df_report[df_report["dat_ref"] == odate]
 
-    # Contagem da quantidade de erros e do score: warnings,errors
-    df_report["warning_count"] = (
-        df_report["warnings"]
-        .astype(str)
-        .str.replace(r"[\[\]\s]", "", regex=True)
-        .ne("")
-        .astype(int)
-    )
+    df_report["check_timestamp"] = pd.to_datetime(df_report["check_timestamp"])
+    df_report = df_report.sort_values("check_timestamp", ascending=False)
+    df_report = df_report.drop_duplicates(subset=["dataset_name", "dat_ref"], keep="first")
 
-    df_report["error_count"] = (
-        df_report["errors"]
-        .astype(str)
-        .str.replace(r"[\[\]\s]", "", regex=True)
-        .ne("")
-        .astype(int)
-    )
+    df_report["execution_date"] = datetime.now().isoformat()
 
-    df_report['execution_date'] = datetime.now().strftime('%Y-%m-%d')
-    df_report['execution_date'] = datetime.now().isoformat()
-
-    logger.info(f"Relatório gerado com {len(df_report)} linhas.")
-    logger.info(f"Score médio de qulidade: {df_report['quality_score'].mean():.2f}")
+    logger.info("Relatorio gerado com %d linhas.", len(df_report))
+    logger.info("Score medio de qualidade: %.2f", df_report["quality_score"].mean())
 
     return df_report
 
-def _pre_validation_metrics(validator, df, dataset_name, dat_ref):
-    # Validação de schema e tipo de dados
+
+def _pre_validation_metrics(
+    validator: DataQualityValidator,
+    df: pd.DataFrame,
+    dataset_name: str,
+    dat_ref: str,
+    consistency: float = None,
+) -> QualityMetrics:
+    """Executa as validacoes basicas e retorna o QualityMetrics calculado."""
     is_schema_valid, schema_errors = validator.validate_schema(df, SchemaRegistry.get_schema(dataset_name))
     if not is_schema_valid:
         validator.errors.extend(schema_errors)
-        logger.info(f"schema_errors: {schema_errors}")
+        logger.info("schema_errors: %s", schema_errors)
 
-    logger.info(f"is_schema_valid: {is_schema_valid}")
+    logger.info("is_schema_valid: %s", is_schema_valid)
 
-    # Validar Datas
-    is_date_valid, data_errors = validator.validate_date_column(df, 'dat_ref')
+    is_date_valid, date_errors = validator.validate_date_column(df, "dat_ref")
     if not is_date_valid:
-        validator.errors.extend(data_errors)
-        logger.info(f"data_errors: {data_errors}")
+        validator.errors.extend(date_errors)
+        logger.info("date_errors: %s", date_errors)
 
-    logger.info(f"is_date_valid: {is_date_valid}")
+    logger.info("is_date_valid: %s", is_date_valid)
 
-    # Valida Nulos
-    nullable_cols = []
-    null_counts = validator.validate_nulls(df, nullable_cols)
+    null_counts = validator.validate_nulls(df, [])
     if sum(null_counts.values()) > 0:
-        logger.warning(f"Valores Nulls presente: {null_counts}")
+        validator.errors.extend(null_counts)
+        logger.warning("Valores nulos presentes: %s", null_counts)
 
-    # Valida duplicados
-    duplicate_keys = 'id_news' if 'id_news' in df.columns else 'dat_ref'
-    duplicate_count = validator.validade_duplicates(df, duplicate_keys)
+    numeric_cols = df.select_dtypes(include=["int64", "float64", "int32", "float32"]).columns.tolist()
+    outlier_counts = validator.detect_outliers(df, numeric_cols, method="iqr")
 
-    # Identificação de outliers
-    numeric_cols = df.select_dtypes(include=['int64', 'float64', 'int32', 'float32']).columns.to_list()
-    outlier_counts = validator.detect_outliers(df, numeric_cols, method='iqr')
+    return validator.calculate_quality_metrics(
+        df, null_counts, outlier_counts, dat_ref, consistency
+    )
 
-    # Calculo das métricas
-    return validator.calculate_quality_metrics(df, null_counts, duplicate_count, outlier_counts, dat_ref)
 
-def _log_warnings(warnings):
+def _log_warnings(warnings: list) -> None:
+    """Emite cada aviso acumulado como logger.warning."""
     for w in warnings:
         logger.warning(w)
