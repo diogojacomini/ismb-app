@@ -1,7 +1,6 @@
 """
 This is a boilerplate pipeline 'data_ingestion' generated using Kedro 0.19.14
 """
-
 from typing import Dict
 from datetime import datetime
 import pandas as pd
