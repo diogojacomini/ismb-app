@@ -46,6 +46,7 @@
 ---
 volumes:
   postgres-db-volume:
+  ismb-db-dev-volume:
   ismb-db-volume:
 
 networks:
@@ -80,7 +81,7 @@ x-airflow-common:
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
     # Configure Kedro logging
     KEDRO_LOGGING_CONFIG: '/home/factory/conf/logging.yml'
-    ISMB_DB_CONN: postgresql+psycopg2://ismb:ismb@ismb-db:5432/ismb_data
+    ISMB_DB_CONN: postgresql+psycopg2://ismb:ismb@ismb-db:5432/ismb
   volumes:
     - ./conf/airflow/dags:/opt/airflow/dags
     - ./conf/airflow/logs:/opt/airflow/logs
@@ -120,14 +121,34 @@ services:
     environment:
       POSTGRES_USER: ismb
       POSTGRES_PASSWORD: ismb
-      POSTGRES_DB: ismb_data
+      POSTGRES_DB: ismb
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - ismb-db-volume:/var/lib/postgresql/data
       - ./docker/ismb-db/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "ismb", "-d", "ismb_data"]
+      test: ["CMD", "pg_isready", "-U", "ismb", "-d", "postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+    networks:
+      - airflow_network
+
+  ismb-db-dev:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: ismb
+      POSTGRES_PASSWORD: ismb
+      POSTGRES_DB: ismb_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - ismb-db-dev-volume:/var/lib/postgresql/data
+      - ./docker/ismb-db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ismb", "-d", "postgres"]
       interval: 10s
       retries: 5
       start_period: 5s
