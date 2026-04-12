@@ -1,119 +1,120 @@
+"""Monitoramento de execucao de pipelines e nodes Kedro.
+
+Registra inicio, fim, duracao, parametros e erros de cada
+pipeline ou node. Os resultados sao gravados no catalogo
+como o dataset 'pipeline_logs'.
+"""
 import json
 import logging
 import time
+import uuid
 from datetime import datetime
 from typing import Any
-import uuid
+
 from pandas import DataFrame
 
 logger = logging.getLogger(__name__)
 
 
 class Monitor:
-    def __init__(self, entity_name: str, catalog=None):
-        self.entity_name = entity_name
-        self.start_time = None
-        self.end_time = None
-        self.metrics = {}
-        self.errors = []
-        self.catalog = catalog
-        self.run_id = None
-        self.params = {}
+    """Rastreia execucao de um pipeline ou node.
 
-    def start(self, params, entity_type: str = "pipeline"):
+    Registra tempo, parametros e erros, e grava o resultado
+    no catalogo ao final da execucao.
+    """
+
+    def __init__(self, entity_name: str, catalog: Any = None) -> None:
+        self.entity_name = entity_name
+        self.start_time: float | None = None
+        self.end_time: float | None = None
+        self.metrics: dict = {}
+        self.errors: list = []
+        self.catalog = catalog
+        self.run_id: str | None = None
+        self.params: dict = {}
+
+    def start(self, params: dict, entity_type: str = "pipeline") -> None:
+        """Inicia o rastreamento. Registra run_id, hora de inicio e parametros."""
         self.start_time = time.time()
         self.run_id = uuid.uuid4().hex[:8]
         self.params = params
         start_iso = datetime.fromtimestamp(self.start_time).isoformat()
+        extra = self.params.get("extra_params", {})
 
         banner = [
-             "=" * 80,
-            f"| STARTING {entity_type.upper()}: {self.entity_name} ",
+            "=" * 80,
+            "| STARTING %s: %s" % (entity_type.upper(), self.entity_name),
             "-" * 80,
-            f" run_id                 : {self.run_id}",
-            f" start_time             : {start_iso}",
-            f" parm odate             : {json.dumps(self.params.get('extra_params').get('odate'))}",
-            f" parm environment       : {json.dumps(self.params.get('extra_params').get('environment', 'prd'))}",
-            f" parm process_full_data : {json.dumps(self.params.get('extra_params').get('process_full_data', False))}",
+            " run_id                 : %s" % self.run_id,
+            " start_time             : %s" % start_iso,
+            " parm odate             : %s" % json.dumps(extra.get("odate")),
+            " parm environment       : %s" % json.dumps(extra.get("environment", "prd")),
+            " parm process_full_data : %s" % json.dumps(extra.get("process_full_data", False)),
         ]
 
         if entity_type.upper() == "NODE":
             banner.extend([
-            f" node.inputs            : {json.dumps(self.params.get('extra_params').get('node.inputs', []))}",
-            f" node.outputs           : {json.dumps(self.params.get('extra_params').get('node.outputs', []))}",
+                " node.inputs            : %s" % json.dumps(extra.get("node.inputs", [])),
+                " node.outputs           : %s" % json.dumps(extra.get("node.outputs", [])),
             ])
 
-        banner.extend(["=" * 80])
+        banner.append("=" * 80)
         for line in banner:
             logger.info(line)
 
-    def end(self, status: str = "SUCCESS", params: dict = None, entity_type: str = "pipeline"):
+    def end(
+        self,
+        status: str = "SUCCESS",
+        params: dict | None = None,
+        entity_type: str = "pipeline",
+    ) -> dict:
+        """Finaliza o rastreamento, calcula duracao e grava no catalogo."""
         self.end_time = time.time()
-        duration = self.end_time - self.start_time
+        duration = self.end_time - self.start_time  # type: ignore[operator]
+        params = params or {}
 
-        logger.info(f"[MONITOR] {entity_type.title()} '{self.entity_name}' ended with status '{status}' in {duration:.2f} seconds.")
+        logger.info(
+            "[MONITOR] %s '%s' ended with status '%s' in %.2f seconds.",
+            entity_type.title(), self.entity_name, status, duration,
+        )
+
         result = {
-            'run_id': self.run_id,
-            'entity_name': self.entity_name,
-            'entity_type': entity_type,
-            'status': status,
-            'duration_seconds': round(duration, 2),
-            'start_time': datetime.fromtimestamp(self.start_time).isoformat(),
-            'end_time': datetime.fromtimestamp(self.end_time).isoformat(),
-            'metrics': self.metrics,
-            'errors': self.errors,
-            'dat_ref': params.get('odate') if params else None,
-            'environment': 'prd' if params.get('environment') is None else params.get('environment'),
-            'process_full_data': False if params.get('process_full_data') is None else params.get('process_full_data')
-
+            "run_id": self.run_id,
+            "entity_name": self.entity_name,
+            "entity_type": entity_type,
+            "status": status,
+            "duration_seconds": round(duration, 2),
+            "start_time": datetime.fromtimestamp(self.start_time).isoformat(),  # type: ignore[arg-type]
+            "end_time": datetime.fromtimestamp(self.end_time).isoformat(),
+            "metrics": self.metrics,
+            "errors": self.errors,
+            "dat_ref": params.get("odate"),
+            "environment": params.get("environment", "prd"),
+            "process_full_data": params.get("process_full_data", False),
         }
 
         self._save_to_catalog(result)
-
         return result
-    
-    def set_metric(self, key: str, value: Any):
-        self.metrics[key] = value
-    
-    def set_error(self, error: Exception):
-        self.errors.append({
-            'error': error,
-            'timestamp': datetime.now().isoformat()
-            })
 
-    def _save_to_catalog(self, result: dict):
+    def set_metric(self, key: str, value: Any) -> None:
+        """Registra uma metrica de execucao."""
+        self.metrics[key] = value
+
+    def set_error(self, error: str) -> None:
+        """Registra um erro ocorrido durante a execucao."""
+        self.errors.append({
+            "error": error,
+            "timestamp": datetime.now().isoformat(),
+        })
+
+    def _save_to_catalog(self, result: dict) -> None:
+        """Persiste o resultado no dataset 'pipeline_logs' do catalogo."""
         try:
             if self.catalog is not None:
                 df = DataFrame([result])
                 self.catalog.save("pipeline_logs", df)
-                logger.info(f"[MONITOR] Metrics for pipeline '{self.entity_name}' saved to catalog.")
+                logger.info("[MONITOR] Metrics for '%s' saved to catalog.", self.entity_name)
             else:
-                logger.warning(f"[MONITOR] ERROR '{self.entity_name}'.")
+                logger.warning("[MONITOR] Catalog not available for '%s'.", self.entity_name)
         except Exception as e:
-            logger.error(f"[MONITOR] Failed to save metrics to catalog: {e}")
-
-
-class MonitorCost:
-    
-    def __init__(self, catalog=None):
-        self.costs = {
-            'compute': 0.0,
-            'storage': 0.0,
-            'network': 0.0
-        }
-        self.catalog = catalog
-    
-    def estimate_compute_cost(self, duration_seconds: float, workers: int = 1):
-        cost_per_hour = 0.10
-        hours = duration_seconds / 3600
-        cost = hours * workers * cost_per_hour
-        
-        self.costs['compute'] += cost
-        return cost
-    
-    def estimate_storage_cost(self, size_gb: float, duration_days: int = 30):
-        cost_per_gb_month = 0.023
-        cost = (size_gb / 1024) * cost_per_gb_month
-        
-        self.costs['storage'] += cost
-        return cost
+            logger.error("[MONITOR] Failed to save metrics to catalog: %s", e)
