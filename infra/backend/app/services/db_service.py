@@ -48,6 +48,7 @@ class TableNames:
 
     # Governance layer
     DATA_QUALITY_REPORT = "governance.data_quality_report"
+    PIPELINE_LOGS = "governance.pipeline_logs"
 
 
 def _coerce_numeric_values(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -229,6 +230,38 @@ def read_quality() -> List[Dict[str, Any]]:
             SELECT *
             FROM {TableNames.DATA_QUALITY_REPORT}
             ORDER BY dat_ref DESC
+        """
+        rows = execute_query(query)
+        return _coerce_numeric_values(rows)
+    except Exception:
+        # Table may not exist in all environments
+        return []
+
+
+@cached(ttl=60)
+def read_pipeline_logs() -> List[Dict[str, Any]]:
+    """
+    Read pipeline execution logs from governance layer.
+
+    Returns:
+        List of dicts with pipeline performance metrics (node-level execution data).
+    """
+    try:
+        query = f"""
+            SELECT
+                entity_name,
+                entity_type,
+                dat_ref,
+                duration_seconds,
+                status,
+                process_full_data,
+                environment,
+                start_time
+            FROM {TableNames.PIPELINE_LOGS}
+            WHERE entity_type = 'node'
+              AND process_full_data = FALSE
+              AND environment = 'production'
+            ORDER BY dat_ref DESC, start_time DESC
         """
         rows = execute_query(query)
         return _coerce_numeric_values(rows)

@@ -12,6 +12,7 @@ Organização de endpoints por domínio:
     - quality: Relatórios de qualidade de dados
     - analytics: KPIs e dashboards consolidados
     - cache: Endpoints administrativos de cache
+    - pipeline_logs: Logs de execução dos pipelines
 
 """
 from fastapi import APIRouter
@@ -22,6 +23,7 @@ from .endpoints import (
     indicadores,
     indice,
     mercado,
+    pipeline_logs,
     quality,
     serie_temporal,
 )
@@ -36,3 +38,4 @@ router.include_router(mercado.router)
 router.include_router(quality.router)
 router.include_router(analytics.router)
 router.include_router(cache.router)
+router.include_router(pipeline_logs.router)

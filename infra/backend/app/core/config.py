@@ -20,9 +20,8 @@ class DatabaseConfig:
         QUERY_TIMEOUT: Timeout de queries em segundos (ENV: DB_QUERY_TIMEOUT)
     """
 
-    # Default connection string (can be overridden by environment variable)
     CONNECTION_STRING = os.getenv(
-        "DATABASE_URL", "postgresql+psycopg2://ismb:ismb@localhost:5433/ismb_data"
+        "DATABASE_URL", "postgresql+psycopg2://ismb:ismb@localhost:5434/ismb"
     )
 
     # Connection pool settings
