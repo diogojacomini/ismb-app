@@ -8,7 +8,16 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def validate_mercado_consistency(data_consolidated_mercado: pd.DataFrame, dim_tempo: pd.DataFrame, parameters) -> pd.DataFrame:
+def validate_mercado_consistency(
+    data_consolidated_mercado: pd.DataFrame,
+    dim_tempo: pd.DataFrame,
+    parameters: dict,
+) -> pd.DataFrame:
+    """Verifica consistencia dos dados de mercado por cod_indice.
+
+    Retorna uma linha por indice com contagem, datas, nulos em val_fechamento
+    e volumes negativos. Campo ok indica se o dataset passou na verificacao.
+    """
     odate = parameters.get("odate")
     process_full_data = parameters.get("process_full_data", False)
 
@@ -46,11 +55,11 @@ def validate_mercado_consistency(data_consolidated_mercado: pd.DataFrame, dim_te
         notes = []
         ok = True
         if null_pct is not None and null_pct > 0:
-            notes.append(f"{null_count} nulls ({null_pct:.2f}%)")
+            notes.append("%d nulls (%.2f%%)" % (null_count, null_pct))
             ok = False
 
         if neg_volume and neg_volume > 0:
-            notes.append(f"{neg_volume} negative volumes")
+            notes.append("%d negative volumes" % neg_volume)
             ok = False
 
         row = {
@@ -72,6 +81,7 @@ def validate_mercado_consistency(data_consolidated_mercado: pd.DataFrame, dim_te
 
     return df_stats
 
+
 def validate_indicadores_consistency(
     indicador_risco_credito: pd.DataFrame,
     indicador_retorno_mercado: pd.DataFrame,
@@ -79,11 +89,16 @@ def validate_indicadores_consistency(
     indicador_atividade_mercado: pd.DataFrame,
     indicador_confianca_mercado_local: pd.DataFrame,
     indicador_sentimento_noticias: pd.DataFrame,
-    parameters,
+    parameters: dict,
 ) -> pd.DataFrame:
+    """Verifica consistencia de cada indicador calculado.
+
+    Retorna uma linha por indicador com min, max, media, desvio padrao,
+    contagem de nulos e flag ok.
+    """
     odate = parameters.get("odate")
     process_full_data = parameters.get("process_full_data", False)
-    
+
     indicadores = [
         ("RISCO_CREDITO", indicador_risco_credito, "score_risco_credito"),
         ("RETORNO_MERCADO", indicador_retorno_mercado, "score_retorno_mercado"),
@@ -124,7 +139,7 @@ def validate_indicadores_consistency(
         unique_dates = int(df['dat_ref'].nunique())
         date_min = df['dat_ref'].min()
         date_max = df['dat_ref'].max()
-        
+
         # aggregate row
         row.update({
             "n_rows": int(n_rows),
@@ -142,7 +157,7 @@ def validate_indicadores_consistency(
         # flags/notes
         notes = []
         if null_pct is not None and null_pct > 0:
-            notes.append(f"high null pct: {null_pct:.1f}%")
+            notes.append("high null pct: %.1f%%" % null_pct)
 
         if int(null_count) > 0:
             row["ok"] = False
@@ -158,8 +173,8 @@ def validate_indicadores_consistency(
     return df_stats
 
 
-def validate_ismb_index(indice_isbm: pd.DataFrame, parameters) -> pd.DataFrame:
-    """Validação para o índice ISMB."""
+def validate_ismb_index(indice_isbm: pd.DataFrame, parameters: dict) -> pd.DataFrame:
+    """Valida o indice ISMB: nulos, valores fora de [0, 100] e cobertura de datas."""
     odate = parameters.get("odate")
     params = parameters or {}
 
@@ -171,7 +186,7 @@ def validate_ismb_index(indice_isbm: pd.DataFrame, parameters) -> pd.DataFrame:
     df = indice_isbm.copy()
     df['dat_ref'] = pd.to_datetime(df['dat_ref'], errors="coerce")
     df['indice_ismb'] = pd.to_numeric(df['indice_ismb'], errors="coerce")
-    
+
     n_rows = len(df)
     null_count = int(df['indice_ismb'].isna().sum())
 
@@ -198,10 +213,10 @@ def validate_ismb_index(indice_isbm: pd.DataFrame, parameters) -> pd.DataFrame:
     # flags/notes
     notes = []
     if null_count is not None and null_count > 0:
-        notes.append(f"null count: {null_count}")
+        notes.append("null count: %d" % null_count)
 
     if out_of_range and out_of_range > 0:
-        notes.append(f"{out_of_range} values out of range")
+        notes.append("%d values out of range" % out_of_range)
 
     if notes:
         row["ok"] = False

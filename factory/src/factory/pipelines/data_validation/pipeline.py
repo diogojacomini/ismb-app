@@ -1,9 +1,23 @@
 """
 This is a boilerplate pipeline 'data_validation'
 generated using Kedro 0.19.14
-"""
 
-from kedro.pipeline import node, Pipeline, pipeline  # noqa
+Pipeline de validação após a consolidação e cálculo dos indicadores. 
+O objetivo é identificar problemas estruturais que possam comprometer a confiabilidade do ISMB.
+
+Validações executadas:
+
+1. Consistência dos dados de mercado:
+    - Verifica cada indice consolidado (CDS, IBOV, IVVB, IFIX)
+
+2. Consistência dos indicadores calculados:
+    - Analisa cada um dos indicadores
+
+3. Validação do indice ISMB:
+    - Analise o indice final do ISMB
+
+"""
+from kedro.pipeline import node, Pipeline, pipeline
 from .nodes import (
     validate_mercado_consistency,
     validate_indicadores_consistency,
@@ -26,7 +40,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="validate_mercado_node",
                 tags=["pipeline-data_validation"],
             ),
-
             # Validação de consistência entre Indicadores
             node(
                 func=validate_indicadores_consistency,
@@ -43,7 +56,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="validate_indicadores_node",
                 tags=["pipeline-data_validation"],
             ),
-            
             # Validação do Indice ISMB Final
             node(
                 func=validate_ismb_index,
