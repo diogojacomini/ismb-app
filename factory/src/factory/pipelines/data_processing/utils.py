@@ -1,3 +1,5 @@
+"""Utilitarios para calculo de volatilidade, normalizacao e analise de sentimento financeiro."""
+import math
 import re
 
 import numpy as np
@@ -19,7 +21,7 @@ except LookupError:
 # Calibrado para títulos de portais financeiros brasileiros.
 # =============================================================================
 FINANCIAL_LEXICON: dict[str, float] = {
-    # ── Mercado / índices ─────────────────────────────────────────────────────
+    # Mercado / indices
     "alta":            2.5,  "altas":           2.3,
     "valoriza":        2.4,  "valorização":     2.4,  "valorizado":      2.0,
     "sobe":            2.0,  "subida":          2.0,  "sobe forte":      3.0,
@@ -56,7 +58,7 @@ FINANCIAL_LEXICON: dict[str, float] = {
     "bolsa sobe":      3.0,  "ibovespa sobe":   3.0,  "mercado sobe":    3.0,
     "dólar cai":       2.0,  "câmbio estável":  1.5,
 
-    # ── Queda / crise ─────────────────────────────────────────────────────────
+    # Queda / crise
     "queda":          -2.5,  "quedas":          -2.3,
     "cai":            -2.0,  "caem":            -2.0,  "caiu":           -2.0,
     "desaba":         -3.0,  "desabam":         -3.0,  "desacelera":     -2.0,
@@ -97,7 +99,7 @@ FINANCIAL_LEXICON: dict[str, float] = {
     "guerra":         -3.0,  "conflito":        -2.5,  "crise geopolítica": -3.0,
     "recessão global": -4.0,
 
-    # ── Neutros com peso leve (contexto financeiro) ───────────────────────────
+    # Neutros com peso leve
     "ata":             0.0,  "reunião":         0.0,  "ipca":            0.0,
     "copom":           0.0,  "bacen":           0.0,  "banco central":   0.0,
     "selic":           0.0,  "câmbio":          0.0,  "dólar":           0.0,
@@ -170,9 +172,9 @@ _exclude_re = re.compile("|".join(_EXCLUDE_PATTERNS), re.IGNORECASE)
 
 def filtrar_noticias_financeiras(df: pd.DataFrame, coluna: str = "txt_titulo") -> pd.DataFrame:
     """
-    Mantém apenas notícias de relevância financeira, econômica ou política.
-    Remove títulos off-topic (esportes, entretenimento, saúde, etc.).
-    Retorna DataFrame filtrado com coluna 'relevante' para auditoria.
+    Mantem apenas noticias de relevância financeira, econômica ou política.
+    Remove titulos off-topic (esportes, entretenimento, saúde, etc.).
+    Retorna DataFrame filtrado com coluna 'relevante'.
     """
     titulo = df[coluna].fillna("").astype(str)
     incluir = titulo.str.contains(_include_re)
@@ -181,10 +183,6 @@ def filtrar_noticias_financeiras(df: pd.DataFrame, coluna: str = "txt_titulo") -
     logger.info("Filtro relevância: %d notícias relevantes", len(df))
     return df
 
-
-# =============================================================================
-# Análise de sentimento com léxico financeiro PT-BR
-# =============================================================================
 
 def _get_sia() -> SentimentIntensityAnalyzer:
     """Retorna VADER com léxico financeiro PT-BR injetado (singleton por processo)."""
@@ -209,19 +207,17 @@ def analisar_sentimento(texto: str) -> dict:
 
 
 def score_sentimento_volatil(compound: float, amplificacao: float = 2.0) -> float:
-    """
-    Mapeia compound VADER para score [0, 100] usando tanh amplificado.
+    """Mapeia compound VADER para score [0, 100] via tanh amplificado.
 
-    tanh(k · c) é mais volátil que mapeamento linear:
-      - compound = ±0.1 (leve)  -> score ≈ 60 / 40
-      - compound = ±0.3 (médio) -> score ≈ 76 / 24
-      - compound = ±0.6 (forte) -> score ≈ 91 / 9
+    Mais sensivel que mapeamento linear:
+    - compound = +-0.1 (leve)  -> score aprox 60 / 40
+    - compound = +-0.3 (medio) -> score aprox 76 / 24
+    - compound = +-0.6 (forte) -> score aprox 91 / 9
 
     Args:
-        compound:     Score compound VADER ∈ [-1, 1]
-        amplificacao: Fator de amplificação k (padrão 2.0)
+        compound: score compound VADER entre -1 e 1.
+        amplificacao: fator de amplificacao k (padrao 2.0).
     """
-    import math
     return 50.0 * (1.0 + math.tanh(amplificacao * compound))
 
 
@@ -232,9 +228,9 @@ def calcular_score_dia(
     min_compound_abs: float = 0.05,
 ) -> float | None:
     """
-    Calcula o score diário de sentimento a partir de um DataFrame de títulos já analisados.
+    Calcula o score diario de sentimento a partir de um DataFrame de titulos já analisados.
 
-    Estratégia de ponderação por força do sinal:
+    Estrategia de ponderação por força do sinal:
       - Títulos com |compound| < min_compound_abs são descartados (ruído puro)
       - Títulos com neutro > threshold_neutro são descartados
       - Cada título recebe peso = |compound| (títulos mais polares têm mais voz)
@@ -252,17 +248,17 @@ def calcular_score_dia(
         return None
 
     scores = df_val["compound"].apply(lambda c: score_sentimento_volatil(c, amplificacao))
-    pesos  = df_val["compound"].abs()
+    pesos = df_val["compound"].abs()
 
     return float((scores * pesos).sum() / pesos.sum())
 
 
-# =============================================================================
-# Utilitários de séries temporais
-# =============================================================================
+def ewma_volatility(df: pd.DataFrame, variacia: int = 21, lambda_: float = 0.94) -> pd.DataFrame:
+    """Calcula volatilidade EWMA (exponentially weighted moving average) em 'val_fechamento'.
 
-def ewma_volatility(df, variacia=21, lambda_=0.94):
-
+    Adiciona as colunas 'retorno_diario' e 'vol_ewma' ao DataFrame.
+    Levanta ValueError se 'val_fechamento' contiver nulos.
+    """
     if df['val_fechamento'].isnull().any():
         raise ValueError("A coluna 'close' contém valores nulos.")
 
@@ -281,10 +277,10 @@ def ewma_volatility(df, variacia=21, lambda_=0.94):
     return df
 
 
-def normalizar_escala(s):
-    """Normaliza uma série para a escala 0-100 usando quantis 5% e 95%."""
+def normalizar_escala(s: pd.Series) -> pd.Series:
+    """Normaliza uma serie para o intervalo [0, 100] usando os quantis 5% e 95%."""
     quantis = s.quantile([0.05, 0.95])
-    p5  = quantis.loc[0.05]
+    p5 = quantis.loc[0.05]
     p95 = quantis.loc[0.95]
 
     def norm(x):
@@ -297,4 +293,3 @@ def normalizar_escala(s):
         return ((x - p5) / (p95 - p5)) * 100
 
     return s.apply(norm)
-
