@@ -384,6 +384,10 @@
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
       Governança
     </div>
+    <div class="nav-item" data-page="pipeline-logs" onclick="showPage('pipeline-logs',this)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 3.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2v14H3v3c0 1.66 1.34 3 3 3h12c1.66 0 3-1.34 3-3V2l-1.5 1.5zM19 19c0 .55-.45 1-1 1s-1-.45-1-1v-3H8V5h11v14z"/><path d="M9 7h6v2H9zm7 0h2v2h-2zm-7 3h6v2H9zm7 0h2v2h-2z"/></svg>
+      Pipeline Logs
+    </div>
   </div>
 
   <div class="sidebar-footer">
@@ -596,6 +600,35 @@
     <div id="qualityContent"><div class="spinner-wrap"><div class="spinner"></div></div></div>
   </div>
 
+  <!-- ── PIPELINE LOGS ─────────────────────────────────────────────────── -->
+  <div class="page" id="page-pipeline-logs">
+    <div class="section-hdr">
+      <div class="left">
+        <h2>Pipeline Logs</h2>
+        <p>Métricas de desempenho e status de execução dos nodes por pipeline.</p>
+      </div>
+    </div>
+    <div class="tabs" id="pipelineTabs">
+      <button class="tab-btn active" onclick="switchPipelineTab('dashboard',this)">Principal</button>
+      <button class="tab-btn" onclick="switchPipelineTab('all',this)">Geral</button>
+      <button class="tab-btn" onclick="switchPipelineTab('data_ingestion',this)">Ingestion</button>
+      <button class="tab-btn" onclick="switchPipelineTab('data_quality',this)">Quality</button>
+      <button class="tab-btn" onclick="switchPipelineTab('data_consolidation',this)">Consolidation</button>
+      <button class="tab-btn" onclick="switchPipelineTab('data_processing',this)">Processing</button>
+      <button class="tab-btn" onclick="switchPipelineTab('data_score',this)">Score</button>
+      <button class="tab-btn" onclick="switchPipelineTab('data_validation',this)">Validation</button>
+      <button class="tab-btn" onclick="switchPipelineTab('data_analytics',this)">Analytics</button>
+    </div>
+    <div class="period-bar">
+      <span class="period-label">Período:</span>
+      <button class="period-btn active" onclick="setPipelinePeriod(2,this)">2d</button>
+      <button class="period-btn" onclick="setPipelinePeriod(5,this)">5d</button>
+      <button class="period-btn" onclick="setPipelinePeriod(30,this)">30d</button>
+      <button class="period-btn" onclick="setPipelinePeriod(60,this)">Tudo</button>
+    </div>
+    <div id="pipelineLogsContent"><div class="spinner-wrap"><div class="spinner"></div></div></div>
+  </div>
+
 </div><!-- /.main -->
 
 <!-- ═══════  JAVASCRIPT  ═════════════════════════════════════════════════ -->
@@ -615,6 +648,7 @@ let _corr        = [];
 let _quality     = [];
 let _mkt_data    = [];
 let _ind_full    = {};
+let _pipeline_logs = [];
 let _dash_period    = 90;
 let _analise_period = 180;
 let _mkt_period     = 30;
@@ -622,6 +656,8 @@ let _current_ind    = 'risco_credito';
 let _ind_period     = 30;
 let _current_kpi    = 'ISMB';
 let _current_mkt    = 'IBOV';
+let _current_pipeline = 'dashboard';
+let _pipeline_period = 2;
 
 /* ─── Sentiment ───────────────────────────────────────────────────────── */
 function sentimentClass(v) {
@@ -834,6 +870,7 @@ const PAGE_TITLES = {
   kpis:       'KPIs & Performance',
   mercado:    'Dados de Mercado',
   governanca: 'Governança de Dados',
+  'pipeline-logs': 'Pipeline Logs',
 };
 
 function showPage(name, navEl) {
@@ -843,12 +880,38 @@ function showPage(name, navEl) {
   if (navEl) navEl.classList.add('active');
   document.getElementById('topbarTitle').textContent = PAGE_TITLES[name] || name;
 
+  // Atualizar hash da URL para persistir navegação
+  if (window.location.hash !== '#' + name) {
+    window.location.hash = name;
+  }
+
   if (name === 'indicadores' && !_ind_full[_current_ind]) loadIndTab(_current_ind);
   if (name === 'analise')    loadAnalise();
   if (name === 'kpis')       loadKpis();
   if (name === 'mercado')    loadMercado();
   if (name === 'governanca') loadGovernanca();
+  if (name === 'pipeline-logs') loadPipelineLogs();
 }
+
+/* ─── Navegação por URL Hash ─────────────────────────────────── */
+function loadPageFromHash() {
+  const hash = window.location.hash.slice(1); // Remove o '#'
+  const validPages = ['dashboard', 'indicadores', 'analise', 'kpis', 'mercado', 'governanca', 'pipeline-logs'];
+  
+  if (hash && validPages.includes(hash)) {
+    const navEl = document.querySelector(`.nav-item[data-page="${hash}"]`);
+    showPage(hash, navEl);
+  } else {
+    // Padrão: Dashboard
+    const navEl = document.querySelector('.nav-item[data-page="dashboard"]');
+    showPage('dashboard', navEl);
+  }
+}
+
+// Listener para mudanças no hash (botão voltar/avancar do browser)
+window.addEventListener('hashchange', () => {
+  loadPageFromHash();
+});
 
 /* ─── DASHBOARD ───────────────────────────────────────────────────────── */
 async function loadDashboard() {
@@ -1458,8 +1521,347 @@ function renderQuality() {
   document.getElementById('qualityContent').innerHTML = html;
 }
 
+/* ─── PIPELINE LOGS PAGE ──────────────────────────────────────────────── */
+async function loadPipelineLogs() {
+  if (_pipeline_logs.length) { 
+    if (_current_pipeline === 'dashboard') {
+      renderPipelineDashboard();
+    } else {
+      renderPipelineLogs();
+    }
+    return;
+  }
+  document.getElementById('pipelineLogsContent').innerHTML='<div class="spinner-wrap"><div class="spinner"></div></div>';
+  try {
+    const data = await apiFetch('/pipeline_logs');
+    _pipeline_logs = data.sort((a,b) => {
+      if (a.dat_ref !== b.dat_ref) return b.dat_ref.localeCompare(a.dat_ref);
+      return b.start_time.localeCompare(a.start_time);
+    });
+    renderPipelineDashboard();
+  } catch(e) { 
+    document.getElementById('pipelineLogsContent').innerHTML='<p style="padding:20px;color:#ef4444">Erro ao carregar logs de pipeline.</p>'; 
+  }
+}
+
+function switchPipelineTab(pipeline, btn) {
+  _current_pipeline = pipeline;
+  document.querySelectorAll('#pipelineTabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if (pipeline === 'dashboard') {
+    renderPipelineDashboard();
+  } else {
+    renderPipelineLogs();
+  }
+}
+
+function setPipelinePeriod(days, btn) {
+  _pipeline_period = days;
+  document.querySelectorAll('#page-pipeline-logs .period-bar .period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if (_current_pipeline === 'dashboard') {
+    renderPipelineDashboard();
+  } else {
+    renderPipelineLogs();
+  }
+}
+
+function getPipelineType(entityName) {
+  const name = entityName.toLowerCase();
+  if (name.startsWith('build')) return 'data_analytics';
+  if (name.startsWith('etl')) return 'data_ingestion';
+  if (name.startsWith('validate_stage') || name.startsWith('generate')) return 'data_quality';
+  if (name.startsWith('validate')) return 'data_validation';
+  if (name.startsWith('data_consolidated')) return 'data_consolidation';
+  if (name.startsWith('indicador')) return 'data_processing';
+  if (name.startsWith('process_score')) return 'data_score';
+  return 'other';
+}
+
+const PIPELINE_LABELS = {
+  'data_analytics': 'Analytics',
+  'data_ingestion': 'Ingestion',
+  'data_quality': 'Quality',
+  'data_consolidation': 'Consolidation',
+  'data_processing': 'Processing',
+  'data_score': 'Score',
+  'data_validation': 'Validation',
+  'other': 'Outros'
+};
+
+const PIPELINE_COLORS = {
+  'data_analytics': '#1565c0',
+  'data_ingestion': '#e65100',
+  'data_quality': '#6a1b9a',
+  'data_consolidation': '#2e7d32',
+  'data_processing': '#c62828',
+  'data_score': '#00695c',
+  'data_validation': '#ad1457',
+  'other': '#616161'
+};
+
+function renderPipelineDashboard() {
+  // Aplicar filtro de período
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - _pipeline_period);
+  const cutoffStr = cutoffDate.toISOString().split('T')[0];
+  
+  const filteredLogs = _pipeline_logs.filter(log => log.dat_ref >= cutoffStr);
+  
+  const logs = filteredLogs.map(log => ({
+    ...log,
+    pipeline_type: getPipelineType(log.entity_name)
+  }));
+
+  // Estatísticas gerais
+  const totalLogs = logs.length;
+  const successLogs = logs.filter(l => l.status.toUpperCase() === 'SUCCESS').length;
+  const failedLogs = logs.filter(l => l.status.toUpperCase() === 'FAILED').length;
+  const avgDuration = totalLogs > 0 ? logs.reduce((sum, l) => sum + (Number(l.duration_seconds) || 0), 0) / totalLogs : 0;
+  const successRate = totalLogs > 0 ? (successLogs / totalLogs * 100) : 0;
+
+  // Estatísticas por pipeline
+  const byPipeline = {};
+  logs.forEach(log => {
+    const pt = log.pipeline_type;
+    if (!byPipeline[pt]) byPipeline[pt] = { total: 0, success: 0, failed: 0, duration: 0 };
+    byPipeline[pt].total++;
+    if (log.status.toUpperCase() === 'SUCCESS') byPipeline[pt].success++;
+    if (log.status.toUpperCase() === 'FAILED') byPipeline[pt].failed++;
+    byPipeline[pt].duration += Number(log.duration_seconds) || 0;
+  });
+
+  // Top 10 nodes mais lentos
+  const slowestNodes = [...logs].sort((a, b) => (Number(b.duration_seconds) || 0) - (Number(a.duration_seconds) || 0)).slice(0, 10);
+
+  // Agregar por data
+  const byDate = {};
+  logs.forEach(log => {
+    const date = log.dat_ref;
+    if (!byDate[date]) byDate[date] = { total: 0, success: 0, failed: 0 };
+    byDate[date].total++;
+    if (log.status.toUpperCase() === 'SUCCESS') byDate[date].success++;
+    if (log.status.toUpperCase() === 'FAILED') byDate[date].failed++;
+  });
+  const dates = Object.keys(byDate).sort();
+
+  let html =
+    '<div class="stat-row" style="margin-bottom:20px">' +
+      '<div class="stat-item"><div class="stat-item-label">Total Execuções</div><div class="stat-item-value">' + totalLogs + '</div><div class="stat-item-sub">Últimos ' + _pipeline_period + ' dias</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Taxa de Sucesso</div><div class="stat-item-value pos">' + successRate.toFixed(1) + '%</div><div class="stat-item-sub">' + successLogs + ' sucessos</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Falhas</div><div class="stat-item-value neg">' + failedLogs + '</div><div class="stat-item-sub">' + (totalLogs > 0 ? ((failedLogs/totalLogs*100).toFixed(1)) : 0) + '%</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Duração Média</div><div class="stat-item-value">' + avgDuration.toFixed(2) + 's</div></div>' +
+    '</div>' +
+    '<div class="two-col" style="margin-bottom:20px">' +
+      '<div class="card" style="margin:0"><div class="card-title">Duração Média por Pipeline</div><div class="chart-container chart-md"><canvas id="chartPipelineDuration"></canvas></div></div>' +
+      '<div class="card" style="margin:0"><div class="card-title">Distribuição de Status</div><div class="chart-container chart-md"><canvas id="chartPipelineStatus"></canvas></div></div>' +
+    '</div>' +
+    '<div class="two-col" style="margin-bottom:20px">' +
+      '<div class="card" style="margin:0"><div class="card-title">Execuções ao longo do Tempo</div><div class="chart-container chart-md"><canvas id="chartPipelineTimeline"></canvas></div></div>' +
+      '<div class="card" style="margin:0"><div class="card-title">Taxa de Sucesso por Pipeline</div><div class="chart-container chart-md"><canvas id="chartPipelineSuccessRate"></canvas></div></div>' +
+    '</div>' +
+    '<div class="card"><div class="card-title">Top 10 Nodes Mais Lentos</div><div class="table-wrap"><table class="data-table"><thead><tr><th>Posição</th><th>Node</th><th>Pipeline</th><th>Duração</th><th>Data</th><th>Status</th></tr></thead><tbody>';
+
+  slowestNodes.forEach((log, idx) => {
+    const pipelineLabel = PIPELINE_LABELS[log.pipeline_type] || 'Outros';
+    const pipelineColor = PIPELINE_COLORS[log.pipeline_type] || '#616161';
+    const statusClass = log.status.toUpperCase() === 'SUCCESS' ? 'pos' : 'neg';
+    html += '<tr>' +
+      '<td><b>' + (idx + 1) + '</b></td>' +
+      '<td><b>' + log.entity_name + '</b></td>' +
+      '<td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700;color:#fff;background:' + pipelineColor + '">' + pipelineLabel + '</span></td>' +
+      '<td><b>' + (Number(log.duration_seconds) || 0).toFixed(2) + 's</b></td>' +
+      '<td>' + log.dat_ref + '</td>' +
+      '<td><span class="' + statusClass + '">' + log.status + '</span></td>' +
+    '</tr>';
+  });
+
+  html += '</tbody></table></div></div>';
+  
+  // Verificar se não há dados
+  if (totalLogs === 0) {
+    html = '<div style="padding:60px 20px;text-align:center;">' +
+      '<svg viewBox="0 0 24 24" fill="currentColor" style="width:64px;height:64px;color:var(--text3);margin-bottom:16px"><path d="M19.5 3.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2v14H3v3c0 1.66 1.34 3 3 3h12c1.66 0 3-1.34 3-3V2l-1.5 1.5zM19 19c0 .55-.45 1-1 1s-1-.45-1-1v-3H8V5h11v14z"/><path d="M9 7h6v2H9zm7 0h2v2h-2zm-7 3h6v2H9zm7 0h2v2h-2z"/></svg>' +
+      '<h3 style="font-family:var(--font-display);font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:8px">Nenhum log encontrado</h3>' +
+      '<p style="color:var(--text2);font-size:0.9rem">Não há execuções registradas nos últimos ' + _pipeline_period + ' dias.</p>' +
+      '<p style="color:var(--text3);font-size:0.85rem;margin-top:8px">Tente selecionar um período maior.</p>' +
+    '</div>';
+    document.getElementById('pipelineLogsContent').innerHTML = html;
+    return;
+  }
+  
+  document.getElementById('pipelineLogsContent').innerHTML = html;
+
+  // Gráfico: Duração média por pipeline
+  setTimeout(() => {
+    const pipelineNames = Object.keys(byPipeline).filter(p => p !== 'other');
+    const pipelineAvgDurations = pipelineNames.map(p => (byPipeline[p].duration / byPipeline[p].total).toFixed(2));
+    const pipelineColors = pipelineNames.map(p => PIPELINE_COLORS[p] || '#616161');
+
+    mkBar('chartPipelineDuration', pipelineNames.map(p => PIPELINE_LABELS[p] || p),
+      [{ label: 'Duração Média (s)', data: pipelineAvgDurations, backgroundColor: pipelineColors, borderRadius: 5, borderWidth: 0 }],
+      { yOpts: { min: 0 } }
+    );
+
+    // Gráfico: Distribuição de status
+    destroyChart('chartPipelineStatus');
+    const el = document.getElementById('chartPipelineStatus');
+    if (el) {
+      _charts['chartPipelineStatus'] = new Chart(el.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Sucesso', 'Falha'],
+          datasets: [{
+            data: [successLogs, failedLogs],
+            backgroundColor: ['#22c55e', '#ef4444'],
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return label + ': ' + value + ' (' + percentage + '%)';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Gráfico: Timeline de execuções
+    mkLine('chartPipelineTimeline', dates,
+      [
+        { label: 'Total', data: dates.map(d => byDate[d].total), borderColor: '#1565c0', backgroundColor: 'rgba(21,101,192,0.1)', fill: true, borderWidth: 2, tension: 0.3 },
+        { label: 'Sucesso', data: dates.map(d => byDate[d].success), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: false, borderWidth: 2, tension: 0.3 },
+        { label: 'Falha', data: dates.map(d => byDate[d].failed), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', fill: false, borderWidth: 2, tension: 0.3 }
+      ],
+      { yOpts: { min: 0 }, legend: { display: true, position: 'bottom' } }
+    );
+
+    // Gráfico: Taxa de sucesso por pipeline
+    const successRates = pipelineNames.map(p => ((byPipeline[p].success / byPipeline[p].total) * 100).toFixed(1));
+    mkBar('chartPipelineSuccessRate', pipelineNames.map(p => PIPELINE_LABELS[p] || p),
+      [{ label: 'Taxa de Sucesso (%)', data: successRates, backgroundColor: successRates.map(r => parseFloat(r) >= 90 ? '#22c55e' : parseFloat(r) >= 70 ? '#eab308' : '#ef4444'), borderRadius: 5, borderWidth: 0 }],
+      { yOpts: { min: 0, max: 100 } }
+    );
+  }, 50);
+}
+
+function renderPipelineLogs() {
+  // Aplicar filtro de período
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - _pipeline_period);
+  const cutoffStr = cutoffDate.toISOString().split('T')[0];
+  
+  const filteredLogs = _pipeline_logs.filter(log => log.dat_ref >= cutoffStr);
+  
+  let logs = filteredLogs.map(log => ({
+    ...log,
+    pipeline_type: getPipelineType(log.entity_name)
+  }));
+
+  // Filtrar por pipeline se não for 'all'
+  if (_current_pipeline !== 'all') {
+    logs = logs.filter(log => log.pipeline_type === _current_pipeline);
+  }
+
+  // Agrupar por data de referência
+  const byDate = {};
+  logs.forEach(log => {
+    const date = log.dat_ref;
+    if (!byDate[date]) byDate[date] = [];
+    byDate[date].push(log);
+  });
+
+  const dates = Object.keys(byDate).sort().reverse();
+
+  // Calcular estatísticas
+  const totalLogs = logs.length;
+  const successLogs = logs.filter(l => l.status.toUpperCase() === 'SUCCESS').length;
+  const failedLogs = logs.filter(l => l.status.toUpperCase() === 'FAILED').length;
+  const avgDuration = totalLogs > 0 ? logs.reduce((sum, l) => sum + (Number(l.duration_seconds) || 0), 0) / totalLogs : 0;
+
+  let html =
+    '<div class="stat-row" style="margin-bottom:20px">' +
+      '<div class="stat-item"><div class="stat-item-label">Total Execuções</div><div class="stat-item-value">' + totalLogs + '</div><div class="stat-item-sub">Últimos ' + _pipeline_period + ' dias</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Sucesso</div><div class="stat-item-value pos">' + successLogs + '</div><div class="stat-item-sub">' + (totalLogs > 0 ? ((successLogs/totalLogs*100).toFixed(1)) : 0) + '%</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Falhas</div><div class="stat-item-value neg">' + failedLogs + '</div><div class="stat-item-sub">' + (totalLogs > 0 ? ((failedLogs/totalLogs*100).toFixed(1)) : 0) + '%</div></div>' +
+      '<div class="stat-item"><div class="stat-item-label">Duração Média</div><div class="stat-item-value">' + avgDuration.toFixed(2) + 's</div></div>' +
+    '</div>';
+
+  // Criar cards por data (mostrar todas as datas disponíveis após filtro)
+  dates.forEach(date => {
+    const dateLogs = byDate[date];
+    const dateSuccess = dateLogs.filter(l => l.status.toUpperCase() === 'SUCCESS').length;
+    const dateFailed = dateLogs.filter(l => l.status.toUpperCase() === 'FAILED').length;
+    const dateAvgDuration = dateLogs.reduce((sum, l) => sum + (Number(l.duration_seconds) || 0), 0) / dateLogs.length;
+
+    html += '<div class="card" style="margin-bottom:16px">' +
+      '<div class="card-title">' +
+        '<svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;margin-right:6px"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>' +
+        'Execuções de ' + date +
+        '<span style="margin-left:auto;font-size:0.8rem;font-weight:500;color:var(--text2)">' +
+        dateLogs.length + ' nodes · ' +
+        '<span style="color:var(--success)">' + dateSuccess + ' ok</span> · ' +
+        '<span style="color:var(--danger)">' + dateFailed + ' falhou</span> · ' +
+        'Média: ' + dateAvgDuration.toFixed(2) + 's' +
+        '</span>' +
+      '</div>' +
+      '<div class="table-wrap"><table class="data-table"><thead><tr><th>Node</th><th>Pipeline</th><th>Duração</th><th>Status</th><th>Execução</th></tr></thead><tbody>';
+
+    dateLogs.forEach(log => {
+      const pipelineLabel = PIPELINE_LABELS[log.pipeline_type] || 'Outros';
+      const pipelineColor = PIPELINE_COLORS[log.pipeline_type] || '#616161';
+      const duration = Number(log.duration_seconds) || 0;
+      const statusUpper = log.status.toUpperCase();
+      const statusClass = statusUpper === 'SUCCESS' ? 'pos' : 'neg';
+      const statusIcon = statusUpper === 'SUCCESS' ? '✓' : '✗';
+
+      html += '<tr>' +
+        '<td><b>' + log.entity_name + '</b></td>' +
+        '<td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700;color:#fff;background:' + pipelineColor + '">' + pipelineLabel + '</span></td>' +
+        '<td>' + duration.toFixed(2) + 's</td>' +
+        '<td><span class="' + statusClass + '" style="font-weight:700">' + statusIcon + ' ' + log.status + '</span></td>' +
+        '<td style="font-size:0.75rem;color:var(--text3)">' + (log.start_time || '-') + '</td>' +
+      '</tr>';
+    });
+
+    html += '</tbody></table></div></div>';
+  });
+
+  if (dates.length === 0) {
+    html += '<div style="padding:60px 20px;text-align:center;">' +
+      '<svg viewBox="0 0 24 24" fill="currentColor" style="width:64px;height:64px;color:var(--text3);margin-bottom:16px"><path d="M19.5 3.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2v14H3v3c0 1.66 1.34 3 3 3h12c1.66 0 3-1.34 3-3V2l-1.5 1.5zM19 19c0 .55-.45 1-1 1s-1-.45-1-1v-3H8V5h11v14z"/><path d="M9 7h6v2H9zm7 0h2v2h-2zm-7 3h6v2H9zm7 0h2v2h-2z"/></svg>' +
+      '<h3 style="font-family:var(--font-display);font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:8px">Nenhum log encontrado</h3>' +
+      '<p style="color:var(--text2);font-size:0.9rem">Não há execuções registradas nos últimos ' + _pipeline_period + ' dias' + (_current_pipeline !== 'all' ? ' para este pipeline' : '') + '.</p>' +
+      '<p style="color:var(--text3);font-size:0.85rem;margin-top:8px">Tente selecionar um período maior ou outro pipeline.</p>' +
+    '</div>';
+  }
+
+  document.getElementById('pipelineLogsContent').innerHTML = html;
+}
+
 /* ─── Init ────────────────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', loadDashboard);
+document.addEventListener('DOMContentLoaded', () => {
+  // Carregar dashboard primeiro
+  loadDashboard();
+  
+  // Depois restaurar a página correta baseada no hash
+  setTimeout(() => {
+    loadPageFromHash();
+  }, 100);
+});
 </script>
 </body>
 </html>
