@@ -10,8 +10,14 @@ import math
 logger = logging.getLogger(__name__)
 
 
-def build_dash_diario(df_consolidado_mercado, df_dim_tempo, df_tim_indice, df_ismb, parameters) -> pd.DataFrame:
-    """Constrói datamart diário consolidado por índice."""
+def build_dash_diario(
+    df_consolidado_mercado: pd.DataFrame,
+    df_dim_tempo: pd.DataFrame,
+    df_tim_indice: pd.DataFrame,
+    df_ismb: pd.DataFrame,
+    parameters: dict,
+) -> pd.DataFrame:
+    """Constroi o datamart diario consolidado por indice."""
     odate_param = parameters.get("odate")
 
     # defensivas
@@ -199,7 +205,7 @@ def build_serie_temporal_ismb(df_ismb, df_dim_tempo, parameters) -> pd.DataFrame
 
     # zscore of returns (useful to spot anomalies)
     df["ret_zscore"] = (df["daily_return"] - df["daily_return"].rolling(window=roll_window, min_periods=1).mean()) \
-                        / df["daily_return"].rolling(window=roll_window, min_periods=1).std().replace(0, pd.NA)
+        / df["daily_return"].rolling(window=roll_window, min_periods=1).std().replace(0, pd.NA)
 
     # tidy and select columns
     out_cols = [
@@ -399,9 +405,8 @@ def build_serie_temporal_ismb(df_ismb, df_dim_tempo, parameters) -> pd.DataFrame
 
     # zscore of returns (useful to spot anomalies)
     df["ret_zscore"] = (df["daily_return"] - df["daily_return"].rolling(window=roll_window, min_periods=1).mean()) \
-                        / df["daily_return"].rolling(window=roll_window, min_periods=1).std().replace(0, pd.NA)
+        / df["daily_return"].rolling(window=roll_window, min_periods=1).std().replace(0, pd.NA)
 
-    #select columns
     out_cols = [
         "dat_ref", "value", "daily_return",
         f"ma_{ma_short}", f"ma_{ma_long}",
@@ -483,7 +488,7 @@ def build_kpis_agregados(df_ismb: pd.DataFrame, df_fato_mercado: pd.DataFrame, d
 
     df_ismb = pd.merge(df_ismb, df_dim_tempo, on="dat_ref", how="left")
     df_ismb = df_ismb[df_ismb["dia_util"] == 1]
-    
+
     rows = []
     # ISMB KPIs
     tmp = df_ismb.copy()
