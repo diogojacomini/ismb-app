@@ -1,7 +1,4 @@
-"""
-This is a boilerplate pipeline 'data_processing'
-generated using Kedro 0.19.14
-"""
+"""Pipeline data_processing."""
 
 from .pipeline import create_pipeline
 

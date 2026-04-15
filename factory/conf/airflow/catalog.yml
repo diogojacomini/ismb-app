@@ -2,62 +2,231 @@
 #
 # Documentation for this file format can be found in "The Data Catalog"
 # Link: https://docs.kedro.org/en/stable/data/data_catalog.html
-rw_cds_stage:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/rw_cds_stage.csv
 
-rw_ibov_stage:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/rw_ibov_stage.csv
+# =============================================================================
+# Parametros Globais
+# =============================================================================
+_common_environment: &environment_default
+  environment: prd
 
-rw_ivvb_stage:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/rw_ivvb_stage.csv
+_sql_common: &sql_common
+  type: factory.datasets.AppendSQLDataset
+  credentials: db_credentials
+  batch_size: 500
+  <<: *environment_default
 
-rw_ifix_stage:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/rw_ifix_stage.csv
+# =============================================================================
+# 00 - Governance
+# =============================================================================
 
-rw_infomoney_stage:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/rw_infomoney_stage.csv
+pipeline_logs:
+  <<: *sql_common
+  table_name: governance.pipeline_logs
+  pk_columns: [run_id, entity_name]
 
-rw_valorinveste_stage:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/rw_valorinveste_stage.csv
+validation_data_mercado:
+  <<: *sql_common
+  table_name: governance.validation_data_mercado
+  pk_columns: [cod_indice, dat_ref]
 
-rw_seudinheiro_stage:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/rw_seudinheiro_stage.csv
+validation_data_indicadores:
+  <<: *sql_common
+  table_name: governance.validation_data_indicadores
+  pk_columns: [indicator, score_col, dat_ref]
 
-rw_moneytimes_stage:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/rw_moneytimes_stage.csv
+validation_indice_isbm:
+  <<: *sql_common
+  table_name: governance.validation_indice_isbm
+  pk_columns: [indicator, dat_ref]
+
+metrics_stage_cds:
+  <<: *sql_common
+  table_name: governance.metrics_stage_cds
+  pk_columns: [metrics_id]
+
+metrics_stage_ibov:
+  <<: *sql_common
+  table_name: governance.metrics_stage_ibov
+  pk_columns: [metrics_id]
+
+metrics_stage_ivvb:
+  <<: *sql_common
+  table_name: governance.metrics_stage_ivvb
+  pk_columns: [metrics_id]
+
+metrics_stage_ifix:
+  <<: *sql_common
+  table_name: governance.metrics_stage_ifix
+  pk_columns: [metrics_id]
+
+metrics_stage_infomoney:
+  <<: *sql_common
+  table_name: governance.metrics_stage_infomoney
+  pk_columns: [metrics_id]
+
+metrics_stage_valorinveste:
+  <<: *sql_common
+  table_name: governance.metrics_stage_valorinveste
+  pk_columns: [metrics_id]
+
+metrics_stage_seudinheiro:
+  <<: *sql_common
+  table_name: governance.metrics_stage_seudinheiro
+  pk_columns: [metrics_id]
+
+metrics_stage_moneytimes:
+  <<: *sql_common
+  table_name: governance.metrics_stage_moneytimes
+  pk_columns: [metrics_id]
+
+data_quality_report:
+  <<: *sql_common
+  table_name: governance.data_quality_report
+  pk_columns: [metrics_id]
+
+
+# =============================================================================
+# 01 - Stage
+# =============================================================================
+
+stage_cds:
+  <<: *sql_common
+  table_name: stage.stage_cds
+  pk_columns: [dat_ref]
+
+stage_ibov:
+  <<: *sql_common
+  table_name: stage.stage_ibov
+  pk_columns: [dat_ref]
+
+stage_ivvb:
+  <<: *sql_common
+  table_name: stage.stage_ivvb
+  pk_columns: [dat_ref]
+
+stage_ifix:
+  <<: *sql_common
+  table_name: stage.stage_ifix
+  pk_columns: [dat_ref]
+
+stage_infomoney:
+  <<: *sql_common
+  table_name: stage.stage_infomoney
+  pk_columns: [id_news]
+
+stage_valorinveste:
+  <<: *sql_common
+  table_name: stage.stage_valorinveste
+  pk_columns: [id_news]
+
+stage_seudinheiro:
+  <<: *sql_common
+  table_name: stage.stage_seudinheiro
+  pk_columns: [id_news]
+
+stage_moneytimes:
+  <<: *sql_common
+  table_name: stage.stage_moneytimes
+  pk_columns: [id_news]
+
+
+# =============================================================================
+# 02 - Curated
+# =============================================================================
+
+# fatos:
+fato_transacao_mercado:
+  <<: *sql_common
+  table_name: curated.fato_transacao_mercado
+  pk_columns: [dat_ref, cod_indice]
+
+fato_transacao_noticias:
+  <<: *sql_common
+  table_name: curated.fato_transacao_noticias
+  pk_columns: [id_noticia]
+
+fato_indice_ismb:
+  <<: *sql_common
+  table_name: curated.fato_indice_ismb
+  pk_columns: [dat_ref]
+
+# dimensões:
+dim_indice:
+  <<: *sql_common
+  table_name: curated.dim_indice
+  pk_columns: [sk_indice]
+
+dim_tempo:
+  <<: *sql_common
+  table_name: curated.dim_tempo
+  pk_columns: [sk_tempo]
+
+dim_indicador:
+  <<: *sql_common
+  table_name: curated.dim_indicador
+  pk_columns: [sk_indicador]
+
+dim_fonte_noticia:
+  <<: *sql_common
+  table_name: curated.dim_fonte_noticia
+  pk_columns: [sk_fonte]
+
+
+# =============================================================================
+# 03 - Indicadores
+# =============================================================================
 
 indicador_risco_credito:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/indicador_risco_credito.csv
+  <<: *sql_common
+  table_name: indicators.indicador_risco_credito
+  pk_columns: [dat_ref]
 
 indicador_retorno_mercado:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/indicador_retorno_mercado.csv
+  <<: *sql_common
+  table_name: indicators.indicador_retorno_mercado
+  pk_columns: [dat_ref]
 
 indicador_volatilidade_mercado:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/indicador_volatilidade_mercado.csv
+  <<: *sql_common
+  table_name: indicators.indicador_volatilidade_mercado
+  pk_columns: [dat_ref]
 
 indicador_atividade_mercado:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/indicador_atividade_mercado.csv
+  <<: *sql_common
+  table_name: indicators.indicador_atividade_mercado
+  pk_columns: [dat_ref]
 
 indicador_confianca_mercado_local:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/indicador_confianca_mercado_local.csv
+  <<: *sql_common
+  table_name: indicators.indicador_confianca_mercado_local
+  pk_columns: [dat_ref]
 
 indicador_sentimento_noticias:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/indicador_sentimento_noticias.csv
+  <<: *sql_common
+  table_name: indicators.indicador_sentimento_noticias
+  pk_columns: [dat_ref]
 
-indice_isbm:
-  type: pandas.CSVDataset
-  filepath: data/sandbox/indice_isbm.csv
+
+# =============================================================================
+# 04 - Analytics
+# =============================================================================
+
+analytics_dashboard_diario:
+  <<: *sql_common
+  table_name: analytics.analytics_dashboard_diario
+  pk_columns: [cod_indice, dat_ref]
+
+analytics_serie_temporal_ismb:
+  <<: *sql_common
+  table_name: analytics.analytics_serie_temporal_ismb
+  pk_columns: [dat_ref]
+
+analytics_correlacao:
+  <<: *sql_common
+  table_name: analytics.analytics_correlacao
+  pk_columns: [idx_a, idx_b, dat_ref]
+
+analytics_kpis_agregados:
+  <<: *sql_common
+  table_name: analytics.analytics_kpis_agregados
+  pk_columns: [entity_type, entity_name, year]

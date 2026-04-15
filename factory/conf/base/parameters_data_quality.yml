@@ -1,0 +1,27 @@
+# This is a boilerplate parameters config generated for pipeline 'data_quality'
+# using Kedro 0.19.14.
+#
+# Documentation for this file format can be found in "Parameters"
+# Link: https://docs.kedro.org/en/0.19.14/configuration/parameters.html
+dataset_name_cds: "stage_cds"
+dataset_name_ibov: "stage_ibov"
+dataset_name_ivvb: "stage_ivvb"
+dataset_name_ifix: "stage_ifix"
+dataset_name_infomoney: "stage_infomoney"
+dataset_name_valorinveste: "stage_valorinveste"
+dataset_name_seudinheiro: "stage_seudinheiro"
+dataset_name_moneytimes: "stage_moneytimes"
+
+quality_thresholds:
+  completeness_min: 95.0  # percentage mínima de dados não nulos
+  validity_min: 90.0      # percentage mínima de dados válidos
+  consistency_min: 95.0   # percentage mínima de consistência
+  outlier_max_pct: 5.0    # percentage máxima de outliers permitidos
+
+sample_period_month:
+  stage_cds: 12
+  stage_ibov: 6
+  stage_ivvb: 6
+  stage_ifix: 2
+
+sample_period_news: 3

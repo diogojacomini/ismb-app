@@ -1,5 +1,7 @@
 """
 This is a boilerplate pipeline 'data_processing' generated using Kedro 0.19.14
+
+Calcula os indicadores que compoem o indice ISMB a partir dos dados consolidados de mercado e noticias.
 """
 import pandas as pd
 import numpy as np
@@ -7,11 +9,18 @@ from .utils import (
     ewma_volatility,
     normalizar_escala,
     analisar_sentimento,
+    filtrar_noticias_financeiras,
+    calcular_score_dia,
     logger
 )
 
 
-def indicador_risco_credito(df, parms_indicador: dict, parameters: dict = None) -> pd.DataFrame:
+def indicador_risco_credito(
+    df: pd.DataFrame,
+    dim_tempo: pd.DataFrame,
+    parms_indicador: dict,
+    parameters: dict | None = None
+) -> pd.DataFrame:
     """
     Calcula indicador de risco de crédito baseado em volatilidade e retorno.
 
@@ -29,6 +38,11 @@ def indicador_risco_credito(df, parms_indicador: dict, parameters: dict = None) 
     process_full_data = parameters.get("process_full_data", False)
     logger.info("Parameters - Odate: %s, Full Data: %s", odate, process_full_data)
 
+    if parameters.get("environment") == 'test':
+        return _make_data_test('indicador_risco_credito', odate)
+
+    df = df[df['cod_indice'] == 'CDS']
+
     df['dat_ref'] = pd.to_datetime(df['dat_ref'], errors='coerce').dt.strftime('%Y-%m-%d')
     df = df.sort_values('dat_ref', ascending=True)
     if not process_full_data:
@@ -37,9 +51,12 @@ def indicador_risco_credito(df, parms_indicador: dict, parameters: dict = None) 
         logger.info("Data limite: %s (lookback_days=%d)", data_limite, lookback_days)
 
         df = df[(df['dat_ref'] >= data_limite) & (df['dat_ref'] <= odate)]
+    else:
+        dim_tempo_d = dim_tempo[dim_tempo['dia_util'] == 1][['dat_ref', 'ano']]
+        df = pd.merge(df, dim_tempo_d, on='dat_ref', how='inner')
 
     df = ewma_volatility(df, parms_indicador.get("variacia", 21), lambda_=parms_indicador.get("lambda_ewma", 0.94))
-    df['retorno_diario'] = df['close_price'].pct_change(periods=parms_indicador.get("window", 30))
+    df['retorno_diario'] = df['val_fechamento'].pct_change(periods=parms_indicador.get("window", 30))
 
     df = df.dropna(subset=['vol_ewma', 'retorno_diario'])
     df['rank_vol'] = df['vol_ewma'].rank(pct=True)
@@ -51,13 +68,18 @@ def indicador_risco_credito(df, parms_indicador: dict, parameters: dict = None) 
     # normalização 0-100 (0 = medo extremo, 100 = ganância extrema)
     df['score_risco_credito'] = (1 - df['risco_bruto']) * 100
 
+    # cod_indicador
+    df['cod_indicador'] = parms_indicador.get("cod_indicador")
+
     if not process_full_data:
         df = df[df["dat_ref"] == odate]
+    else:
+        df = df[df["ano"] >= 2018]
 
-    return df[['dat_ref', 'retorno_diario', 'vol_ewma', 'rank_vol', 'rank_retorno', 'risco_bruto', 'score_risco_credito']]
+    return df[parms_indicador.get("schema")]
 
 
-def indicador_retorno_mercado(df_ibov: pd.DataFrame, parms_indicador: dict, parameters: dict) -> pd.DataFrame:
+def indicador_retorno_mercado(df_ibov: pd.DataFrame, dim_tempo: pd.DataFrame, parms_indicador: dict, parameters: dict) -> pd.DataFrame:
     """
     Calcula indicador de retorno do mercado baseado no Ibovespa.
 
@@ -75,6 +97,11 @@ def indicador_retorno_mercado(df_ibov: pd.DataFrame, parms_indicador: dict, para
     process_full_data = parameters.get("process_full_data", False)
     logger.info("Parameters - Odate: %s, Full Data: %s", odate, process_full_data)
 
+    if parameters.get("environment") == 'test':
+        return _make_data_test('indicador_retorno_mercado', odate)
+
+    df_ibov = df_ibov[df_ibov['cod_indice'] == 'IBOV']
+
     df_ibov['dat_ref'] = pd.to_datetime(df_ibov['dat_ref'], errors='coerce').dt.strftime('%Y-%m-%d')
     df_ibov = df_ibov.sort_values('dat_ref', ascending=True)
 
@@ -84,9 +111,12 @@ def indicador_retorno_mercado(df_ibov: pd.DataFrame, parms_indicador: dict, para
         logger.info("Data limite: %s (lookback_days=%d)", data_limite, lookback_days)
 
         df_ibov = df_ibov[(df_ibov['dat_ref'] >= data_limite) & (df_ibov['dat_ref'] <= odate)]
+    else:
+        dim_tempo_d = dim_tempo[dim_tempo['dia_util'] == 1][['dat_ref', 'ano']]
+        df_ibov = pd.merge(df_ibov, dim_tempo_d, on='dat_ref', how='inner')
 
     #  retorno logarítmico
-    df_ibov['log_ret'] = np.log(df_ibov['close'] / df_ibov['close'].shift(1))
+    df_ibov['log_ret'] = np.log(df_ibov['val_fechamento'] / df_ibov['val_fechamento'].shift(1))
 
     # média e desvio padrão móvel (21 dias úteis)
     df_ibov['media_ret'] = df_ibov['log_ret'].rolling(window=parms_indicador.get('rolling_mean_window', 21)).mean()
@@ -99,19 +129,29 @@ def indicador_retorno_mercado(df_ibov: pd.DataFrame, parms_indicador: dict, para
     df_ibov['score'] = normalizar_escala(df_ibov['z_retorno'])
 
     # ponderar por volume (volume do dia / média 30 dias)
-    df_ibov['media_vol'] = df_ibov['volume'].rolling(parms_indicador.get('volume_mean_window', 30)).mean()
-    fator_vol = (df_ibov['volume'] / df_ibov['media_vol']).clip(lower=parms_indicador.get('volume_clip', 0.7))
+    df_ibov['media_vol'] = df_ibov['qtd_volume'].rolling(parms_indicador.get('volume_mean_window', 30)).mean()
+    fator_vol = (df_ibov['qtd_volume'] / df_ibov['media_vol']).clip(lower=parms_indicador.get('volume_clip', 0.7))
     df_ibov['score_ponderado'] = df_ibov['score'] * fator_vol
 
     df_ibov['score_retorno_mercado'] = normalizar_escala(df_ibov['score_ponderado'])
 
+    # cod_indicador
+    df_ibov['cod_indicador'] = parms_indicador.get("cod_indicador")
+
     if not process_full_data:
         df_ibov = df_ibov[df_ibov["dat_ref"] == odate]
+    else:
+        df_ibov = df_ibov[df_ibov["ano"] >= 2018]
 
-    return df_ibov[['dat_ref', 'log_ret', 'media_ret', 'desvio_ret', 'z_retorno', 'media_vol', 'score_retorno_mercado']]
+    return df_ibov[parms_indicador.get("schema")]
 
 
-def indicador_volatilidade_mercado(df_ibov: pd.DataFrame, df_ivvb: pd.DataFrame, parms_indicador: dict, parameters: dict) -> pd.DataFrame:
+def indicador_volatilidade_mercado(
+    df_consolidado: pd.DataFrame,
+    dim_tempo: pd.DataFrame,
+    parms_indicador: dict,
+    parameters: dict
+) -> pd.DataFrame:
     """
     Calcula indicador de volatilidade do mercado.
 
@@ -133,8 +173,13 @@ def indicador_volatilidade_mercado(df_ibov: pd.DataFrame, df_ivvb: pd.DataFrame,
     process_full_data = parameters.get("process_full_data", False)
     logger.info("Parameters - Odate: %s, Full Data: %s", odate, process_full_data)
 
-    df_ibov['dat_ref'] = pd.to_datetime(df_ibov['dat_ref'], errors='coerce').dt.strftime('%Y-%m-%d')
-    df_ivvb['dat_ref'] = pd.to_datetime(df_ivvb['dat_ref'], errors='coerce').dt.strftime('%Y-%m-%d')
+    if parameters.get("environment") == 'test':
+        return _make_data_test('indicador_volatilidade_mercado', odate)
+
+    df_consolidado['dat_ref'] = pd.to_datetime(df_consolidado['dat_ref'], errors='coerce').dt.strftime('%Y-%m-%d')
+    df_ibov = df_consolidado[df_consolidado['cod_indice'] == 'IBOV']
+    df_ivvb = df_consolidado[df_consolidado['cod_indice'] == 'IVVB']
+
     df_ibov = df_ibov.sort_values('dat_ref', ascending=True)
     df_ivvb = df_ivvb.sort_values('dat_ref', ascending=True)
 
@@ -146,22 +191,27 @@ def indicador_volatilidade_mercado(df_ibov: pd.DataFrame, df_ivvb: pd.DataFrame,
         df_ibov = df_ibov[(df_ibov['dat_ref'] >= data_limite) & (df_ibov['dat_ref'] <= odate)]
         df_ivvb = df_ivvb[(df_ivvb['dat_ref'] >= data_limite) & (df_ivvb['dat_ref'] <= odate)]
 
+    else:
+        dim_tempo_d = dim_tempo[dim_tempo['dia_util'] == 1][['dat_ref', 'ano']]
+        df_ibov = pd.merge(df_ibov, dim_tempo_d, on='dat_ref', how='inner')
+        df_ivvb = pd.merge(df_ivvb, dim_tempo_d, on='dat_ref', how='inner')
+
     #  retorno logarítmico
-    df_ibov['log_ret'] = np.log(df_ibov['close'] / df_ibov['close'].shift(1))
+    df_ibov['log_ret'] = np.log(df_ibov['val_fechamento'] / df_ibov['val_fechamento'].shift(1))
 
     # EWMA (volatilidade histórica com alpha ~0.06)
     df_ibov['ewma_var'] = df_ibov['log_ret'].ewm(alpha=1 - parms_indicador.get('alpha_ewma', 0.94)).var()
     df_ibov['ewma_vol'] = np.sqrt(df_ibov['ewma_var']) * np.sqrt(252) * 100
 
     # ATR (volatilidade intradiária)
-    high_low = df_ibov['high'] - df_ibov['low']
-    high_close = np.abs(df_ibov['high'] - df_ibov['close'].shift(1))
-    low_close = np.abs(df_ibov['low'] - df_ibov['close'].shift(1))
+    high_low = df_ibov['val_maxima'] - df_ibov['val_minima']
+    high_close = np.abs(df_ibov['val_maxima'] - df_ibov['val_fechamento'].shift(1))
+    low_close = np.abs(df_ibov['val_minima'] - df_ibov['val_fechamento'].shift(1))
     tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
     df_ibov['atr'] = tr.rolling(window=parms_indicador.get('atr_window', 14)).mean()
 
     # IVVB11 (proxy de percepção global / VIX Brasil)
-    df_ivvb['retorno_ivvb'] = df_ivvb['close'].pct_change()
+    df_ivvb['retorno_ivvb'] = df_ivvb['val_fechamento'].pct_change()
 
     # Volatilidade histórica do IVVB11 (EWMA de retornos)
     df_ivvb['vol_ivvb'] = df_ivvb['retorno_ivvb'].ewm(alpha=parms_indicador.get('alpha_ivvb', 0.06)).std() * np.sqrt(252) * 100
@@ -171,9 +221,12 @@ def indicador_volatilidade_mercado(df_ibov: pd.DataFrame, df_ivvb: pd.DataFrame,
     df_ibov['score_atr'] = normalizar_escala(df_ibov['atr'])
     df_ivvb['score_ivvb'] = normalizar_escala(df_ivvb['vol_ivvb'])
 
-    df_score = pd.merge(df_ibov[['dat_ref', 'log_ret', 'ewma_var', 'ewma_vol', 'atr', 'score_ewma', 'score_atr']],
-                        df_ivvb[['dat_ref', 'retorno_ivvb', 'vol_ivvb', 'score_ivvb']], on='dat_ref', how='inner')
+    columns_ibov = ['dat_ref', 'log_ret', 'ewma_var', 'ewma_vol', 'atr', 'score_ewma', 'score_atr']
+    columns_ivvb = ['dat_ref', 'retorno_ivvb', 'vol_ivvb', 'score_ivvb']
+    if process_full_data:
+        columns_ivvb.append('ano')
 
+    df_score = pd.merge(df_ibov[columns_ibov], df_ivvb[columns_ivvb], on='dat_ref', how='inner')
     df_score = df_score.dropna()
 
     # Score final ponderado
@@ -183,13 +236,18 @@ def indicador_volatilidade_mercado(df_ibov: pd.DataFrame, df_ivvb: pd.DataFrame,
         df_score['score_ivvb'] * parms_indicador.get('ivvb_weight', 0.2)
     )
 
+    # cod_indicador
+    df_score['cod_indicador'] = parms_indicador.get("cod_indicador")
+
     if not process_full_data:
         df_score = df_score[df_score["dat_ref"] == odate]
+    else:
+        df_score = df_score[df_score["ano"] >= 2018]
 
-    return df_score
+    return df_score[parms_indicador.get("schema")]
 
 
-def indicador_atividade_mercado(df_ibov: pd.DataFrame, parms_indicador: dict, parameters: dict) -> pd.DataFrame:
+def indicador_atividade_mercado(df_ibov: pd.DataFrame, dim_tempo: pd.DataFrame, parms_indicador: dict, parameters: dict) -> pd.DataFrame:
     """
     Calcula indicador de atividade do mercado baseado em retorno e volume.
 
@@ -205,18 +263,27 @@ def indicador_atividade_mercado(df_ibov: pd.DataFrame, parms_indicador: dict, pa
     process_full_data = parameters.get("process_full_data", False)
     logger.info("Parameters - Odate: %s, Full Data: %s", odate, process_full_data)
 
+    if parameters.get("environment") == 'test':
+        return _make_data_test('indicador_atividade_mercado', odate)
+
+    df_ibov = df_ibov[df_ibov['cod_indice'] == 'IBOV']
+
     df_ibov['dat_ref'] = pd.to_datetime(df_ibov['dat_ref'], errors='coerce').dt.strftime('%Y-%m-%d')
     df_ibov = df_ibov.sort_values('dat_ref', ascending=True)
 
     if not process_full_data:
-        lookback_days = max(3, parms_indicador.get("volume_mean_window", 180))
+        lookback_days = max(60, parms_indicador.get("lookback_days", 180))
         data_limite = (pd.to_datetime(odate) - pd.Timedelta(days=lookback_days)).strftime('%Y-%m-%d')
         logger.info("Data limite: %s (lookback_days=%d)", data_limite, lookback_days)
 
         df_ibov = df_ibov[(df_ibov['dat_ref'] >= data_limite) & (df_ibov['dat_ref'] <= odate)]
 
+    else:
+        dim_tempo_d = dim_tempo[dim_tempo['dia_util'] == 1][['dat_ref', 'ano']]
+        df_ibov = pd.merge(df_ibov, dim_tempo_d, on='dat_ref', how='inner')
+
     # retorno diário
-    df_ibov['retorno'] = df_ibov['close'].pct_change() * 100
+    df_ibov['retorno'] = df_ibov['val_fechamento'].pct_change() * 100
 
     # desvio em relação a média móvel (3 dias)
     mm3 = df_ibov['retorno'].rolling(parms_indicador.get('rolling_return_window', 3)).mean()
@@ -226,18 +293,23 @@ def indicador_atividade_mercado(df_ibov: pd.DataFrame, parms_indicador: dict, pa
     df_ibov['score'] = normalizar_escala(df_ibov['desvio_relativo'])
 
     # ponderar score com volume (volume do dia / média dos últimos 30 dias)
-    media_vol = df_ibov['volume'].rolling(parms_indicador.get('volume_mean_window', 30)).mean()
-    fator_vol = (df_ibov['volume'] / media_vol).clip(lower=parms_indicador.get('volume_clip', 0.7))
+    media_vol = df_ibov['qtd_volume'].rolling(parms_indicador.get('volume_mean_window', 30)).mean()
+    fator_vol = (df_ibov['qtd_volume'] / media_vol).clip(lower=parms_indicador.get('volume_clip', 0.7))
     df_ibov['score_atividade_mercado'] = df_ibov['score'] * fator_vol
     df_ibov['score_atividade_mercado'] = normalizar_escala(df_ibov['score_atividade_mercado'])
 
+    # cod_indicador
+    df_ibov['cod_indicador'] = parms_indicador.get("cod_indicador")
+
     if not process_full_data:
         df_ibov = df_ibov[df_ibov["dat_ref"] == odate]
+    else:
+        df_ibov = df_ibov[df_ibov["ano"] >= 2018]
 
-    return df_ibov[['dat_ref', 'retorno', 'desvio_relativo', 'score', 'score_atividade_mercado']]
+    return df_ibov[parms_indicador.get("schema")]
 
 
-def indicador_confianca_mercado_local(df_ifix: pd.DataFrame, parms_indicador: dict, parameters: dict) -> pd.DataFrame:
+def indicador_confianca_mercado_local(df_ifix: pd.DataFrame, dim_tempo: pd.DataFrame, parms_indicador: dict, parameters: dict) -> pd.DataFrame:
     """
     Calcula indicador de confiança do mercado local baseado no IFIX.
 
@@ -253,6 +325,11 @@ def indicador_confianca_mercado_local(df_ifix: pd.DataFrame, parms_indicador: di
     process_full_data = parameters.get("process_full_data", False)
     logger.info("Parameters - Odate: %s, Full Data: %s", odate, process_full_data)
 
+    if parameters.get("environment") == 'test':
+        return _make_data_test('indicador_confianca_mercado_local', odate)
+
+    df_ifix = df_ifix[df_ifix['cod_indice'] == 'IFIX']
+
     df_ifix['dat_ref'] = pd.to_datetime(df_ifix['dat_ref'], errors='coerce').dt.strftime('%Y-%m-%d')
     df_ifix = df_ifix.sort_values('dat_ref', ascending=True)
 
@@ -262,8 +339,11 @@ def indicador_confianca_mercado_local(df_ifix: pd.DataFrame, parms_indicador: di
         logger.info("Data limite: %s (lookback_days=%d)", data_limite, lookback_days)
 
         df_ifix = df_ifix[(df_ifix['dat_ref'] >= data_limite) & (df_ifix['dat_ref'] <= odate)]
+    else:
+        dim_tempo_d = dim_tempo[dim_tempo['dia_util'] == 1][['dat_ref', 'ano']]
+        df_ifix = pd.merge(df_ifix, dim_tempo_d, on='dat_ref', how='inner')
 
-    df_ifix['retorno'] = df_ifix['close_price'].pct_change() * 100
+    df_ifix['retorno'] = df_ifix['val_fechamento'].pct_change() * 100
 
     # calcular média móvel
     df_ifix['retorno_mm'] = df_ifix['retorno'].rolling(parms_indicador.get("rolling_return_window", 3)).mean()
@@ -274,60 +354,161 @@ def indicador_confianca_mercado_local(df_ifix: pd.DataFrame, parms_indicador: di
     # normalizar
     df_ifix['score_confianca_mercado'] = normalizar_escala(df_ifix['desvio_relativo'])
 
+    # cod_indicador
+    df_ifix['cod_indicador'] = parms_indicador.get("cod_indicador")
+
     if not process_full_data:
         df_ifix = df_ifix[df_ifix["dat_ref"] == odate]
+    else:
+        df_ifix = df_ifix[df_ifix["ano"] >= 2018]
 
-    return df_ifix[['dat_ref', 'retorno', 'retorno_mm', 'desvio_relativo', 'score_confianca_mercado']]
+    return df_ifix[parms_indicador.get("schema")]
 
 
-def indicador_sentimento_midia(df_rw_infomoney, df_rw_moneytimes, df_rw_seudinheiro, df_rw_valorinveste, parameters: dict):
+def indicador_sentimento_midia(df_consolidated_noticias, parms_indicador, parameters: dict):
     """
-    Calcula indicador de sentimento da mídia.
-
-    Combina notícias de múltiplas fontes de mídia financeira, aplica análise
-    de sentimento nos títulos e gera um score diário.
-
-    Score próximo de 0: Sentimento muito negativo
-    Score próximo de 50: Sentimento neutro
-    Score próximo de 100: Sentimento muito positivo
-
-    - score_noticias: Score médio diário de sentimento (0-100)
+    Calcula o indicador de sentimento da mídia financeira.
     """
     odate = parameters.get("odate")
     process_full_data = parameters.get("process_full_data", False)
+    amplificacao = parms_indicador.get("amplificacao",     2.0)
+    threshold_neutro = parms_indicador.get("threshold_neutro", 0.80)
+    min_compound_abs = parms_indicador.get("min_compound_abs", 0.05)
+    min_noticias_dia = parms_indicador.get("min_noticias_dia", 3)
+
     logger.info("Parameters - Odate: %s, Full Data: %s", odate, process_full_data)
 
-    df = pd.concat([df_rw_infomoney, df_rw_moneytimes, df_rw_seudinheiro, df_rw_valorinveste], ignore_index=True)
-    df = df.drop_duplicates(subset=['fonte', 'titulo', 'link'])
+    if parameters.get("environment") == 'test':
+        return _make_data_test('indicador_sentimento_midia', odate)
 
-    # padroniza dat_ref para YYYY-MM-DD
-    if 'dat_ref' in df.columns:
-        df['dat_ref'] = pd.to_datetime(df['dat_ref'], errors='coerce').dt.strftime('%Y-%m-%d')
+    df = df_consolidated_noticias.copy()
+    df['dat_ref'] = pd.to_datetime(df['dat_ref'], errors='coerce').dt.strftime('%Y-%m-%d')
+    df = df.drop_duplicates(subset=['txt_titulo'])
 
+    # Janela temporal
     if not process_full_data:
-        df = df[df["dat_ref"] == odate]
+        lookback_days = parms_indicador.get("lookback_days", 3)
+        data_limite = (pd.to_datetime(odate) - pd.Timedelta(days=lookback_days)).strftime('%Y-%m-%d')
+        logger.info("Janela: %s -> %s (lookback=%d)", data_limite, odate, lookback_days)
+        df = df[(df['dat_ref'] >= data_limite) & (df['dat_ref'] <= odate)].copy()
+        df['dat_ref'] = odate
 
-    # nada para processar: retorna DF vazio com schema esperado
     if df.empty:
-        return pd.DataFrame(columns=['dat_ref', 'score_noticias'])
+        logger.warning("Nenhuma noticia no periodo - retornando DataFrame vazio.")
+        return pd.DataFrame(columns=['dat_ref', 'cod_indicador', 'score_noticias'])
 
-    # garante string e trata nulos para análise de sentimento
-    df['titulo'] = df['titulo'].fillna('').astype(str)
+    # filtro de relevância por noticias financeiras
+    df['txt_titulo'] = df['txt_titulo'].fillna('').astype(str)
+    df = filtrar_noticias_financeiras(df, coluna='txt_titulo')
 
-    sentimentos = df["titulo"].apply(analisar_sentimento)
-    # assegura colunas esperadas mesmo quando o DF estiver vazio após transformação
-    df_sent = pd.DataFrame(list(sentimentos)).reindex(columns=["negativo", "neutro", "positivo", "compound"])  # type: ignore[arg-type]
-    # realinha índices para concat
+    if df.empty:
+        logger.warning("Nenhuma noticia relevante após filtro de relevância.")
+        return pd.DataFrame(columns=['dat_ref', 'cod_indicador', 'score_noticias'])
+
+    # analise de sentimento (VADER + léxico PT-BR)
+    sentimentos = df['txt_titulo'].apply(analisar_sentimento)
+    df_sent = pd.DataFrame(list(sentimentos))
     df = pd.concat([df.reset_index(drop=True), df_sent.reset_index(drop=True)], axis=1)
 
-    # score (robusto a ausência de colunas)
-    pos = df.get("positivo", pd.Series(0, index=df.index))
-    neg = df.get("negativo", pd.Series(0, index=df.index))
-    denom = (pd.concat([pos, neg], axis=1).sum(axis=1) + 1e-5).replace(0, 1e-5)
-    df["score_sentimento"] = (pos - neg) * 100 / denom
+    # score diario volatil com ponderação por força do sinal
+    scores_por_dia = []
 
-    # normalizar para 0–100 (percentis robustos)
-    df['score_noticias'] = normalizar_escala(df['score_sentimento'])
-    sentimento_dia = df.groupby('dat_ref', as_index=False)['score_noticias'].mean()
+    for dat, grupo in df.groupby('dat_ref'):
+        total_titulos = len(grupo)
+        score = calcular_score_dia(
+            grupo,
+            amplificacao=amplificacao,
+            threshold_neutro=threshold_neutro,
+            min_compound_abs=min_compound_abs,
+        )
 
-    return sentimento_dia
+        if score is None:
+            validos = int((grupo['compound'].abs() >= min_compound_abs).sum())
+            logger.warning(
+                "Data %s: apenas %d/%d títulos válidos (min=%d) -> score=50 (neutro).",
+                dat, validos, total_titulos, min_noticias_dia,
+            )
+            score = 50.0
+
+        validos = int(
+            ((grupo['compound'].abs() >= min_compound_abs) &
+             (grupo['neutro'] <= threshold_neutro)).sum()
+        )
+        logger.info(
+            "Data %s: %d válidos / %d totais -> score=%.2f",
+            dat, validos, total_titulos, score,
+        )
+        scores_por_dia.append({
+            'dat_ref':       dat,
+            'cod_indicador': parms_indicador.get("cod_indicador"),
+            'score_noticias': round(score, 4),
+        })
+
+    sentimento_dia = pd.DataFrame(scores_por_dia)
+    return sentimento_dia[parms_indicador.get("schema")]
+
+
+def _make_data_test(indicador, odate):
+
+    if indicador == 'indicador_risco_credito':
+        return pd.DataFrame({"dat_ref": [odate],
+                             "cod_indicador": ['RISCO_CREDITO'],
+                             "retorno_diario": [999.99],
+                             "vol_ewma": [9999],
+                             "rank_vol": [9999],
+                             "rank_retorno": [9999],
+                             "risco_bruto": [9999],
+                             "score_risco_credito": [59.99]
+                             })
+
+    elif indicador == 'indicador_retorno_mercado':
+        return pd.DataFrame({"dat_ref": [odate],
+                             "cod_indicador": ['RETORNO_MERCADO'],
+                             "log_ret": [999.99],
+                             "media_ret": [9999],
+                             "desvio_ret": [9999],
+                             "z_retorno": [9999],
+                             "media_vol": [9999],
+                             "score_retorno_mercado": [59.99]
+                             })
+
+    elif indicador == 'indicador_volatilidade_mercado':
+        return pd.DataFrame({"dat_ref": [odate],
+                             "cod_indicador": ['VOLATILIDADE'],
+                             "log_ret": [999.99],
+                             "ewma_var": [9999],
+                             "ewma_vol": [9999],
+                             "atr": [9999],
+                             "score_ewma": [9999],
+                             "score_atr": [9999],
+                             "retorno_ivvb": [9999],
+                             "vol_ivvb": [9999],
+                             "score_ivvb": [9999],
+                             "score_volatilidade_mercado": [59.99]
+                             })
+
+    elif indicador == 'indicador_atividade_mercado':
+        return pd.DataFrame({"dat_ref": [odate],
+                             "cod_indicador": ['ATIVIDADE'],
+                             "retorno": [999.99],
+                             "desvio_relativo": [9999],
+                             "score": [9999],
+                             "score_atividade_mercado": [59.99]
+                             })
+
+    elif indicador == 'indicador_confianca_mercado_local':
+        return pd.DataFrame({"dat_ref": [odate],
+                             "cod_indicador": ['CONFIANCA_LOCAL'],
+                             "retorno": [999.99],
+                             "retorno_mm": [9999],
+                             "desvio_relativo": [9999],
+                             "score_confianca_mercado": [59.99]
+                             })
+
+    elif indicador == 'indicador_sentimento_midia':
+        return pd.DataFrame({"dat_ref": [odate],
+                             "cod_indicador": ['SENTIMENTO_NOTICIAS'],
+                             "score_noticias": [59.99]
+                             })
+    else:
+        return pd.DataFrame()

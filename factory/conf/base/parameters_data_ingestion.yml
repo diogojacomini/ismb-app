@@ -30,11 +30,11 @@ cds_parms:
 # api rename columns
 columns_mapping_yf:
   Date: dat_ref
-  Close: close
-  Adj Close: close_adj
-  High: high
-  Low: low
-  Open: vpen
+  Close: close_price
+  Adj Close: close_adj_price
+  High: high_price
+  Low: low_price
+  Open: open_price
   Volume: volume
 
 # etl_ibov_node

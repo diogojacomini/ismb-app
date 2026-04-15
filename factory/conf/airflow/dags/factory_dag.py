@@ -68,18 +68,20 @@ class KedroOperator(BaseOperator):
 
 
 # Kedro settings required to run your pipeline
-env = "local"
+# IMPORTANT: use absolute path to /home/factory so Kedro always finds
+# conf/airflow/credentials.yml (ismb-db:5432) regardless of Airflow's cwd.
+env = "airflow"  # Use 'airflow' environment for Docker (ismb-db:5432)
 pipeline_name = "__default__"
-project_path = Path.cwd()
+project_path = Path("/home/factory")
 package_name = "factory"
-conf_source = "" or Path.cwd() / "conf"
+conf_source = Path("/home/factory/conf")
 
 
 # Using a DAG context manager, you don't have to specify the dag property of each task
 with DAG(
     dag_id="factory_ismb",
     start_date=datetime(2025, 1, 1),
-    max_active_runs=3,
+    max_active_runs=10,
     # https://airflow.apache.org/docs/stable/scheduler.html#dag-runs
     schedule="0 23 * * 1-5",
     catchup=False,
@@ -89,7 +91,7 @@ with DAG(
         depends_on_past=False,
         email_on_failure=False,
         email_on_retry=False,
-        retries=1,
+        retries=3,
         retry_delay=timedelta(minutes=5)
     ),
     params={
@@ -115,6 +117,24 @@ with DAG(
             package_name=package_name,
             pipeline_name=pipeline_name,
             node_name="etl_html_ifix_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "etl-ibov-node": KedroOperator(
+            task_id="etl-ibov-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="etl_ibov_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "etl-ivvb11-vix-brasil-node": KedroOperator(
+            task_id="etl-ivvb11-vix-brasil-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="etl_ivvb11_vix_brasil_node",
             project_path=project_path,
             env=env,
             conf_source=conf_source,
@@ -155,20 +175,110 @@ with DAG(
             env=env,
             conf_source=conf_source,
         ),
-        "etl-ibov-node": KedroOperator(
-            task_id="etl-ibov-node",
+        "validate-stage-cds-node": KedroOperator(
+            task_id="validate-stage-cds-node",
             package_name=package_name,
             pipeline_name=pipeline_name,
-            node_name="etl_ibov_node",
+            node_name="validate_stage_cds_node",
             project_path=project_path,
             env=env,
             conf_source=conf_source,
         ),
-        "etl-ivvb11-vix-brasil-node": KedroOperator(
-            task_id="etl-ivvb11-vix-brasil-node",
+        "validate-stage-ifix-node": KedroOperator(
+            task_id="validate-stage-ifix-node",
             package_name=package_name,
             pipeline_name=pipeline_name,
-            node_name="etl_ivvb11_vix_brasil_node",
+            node_name="validate_stage_ifix_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "validate-stage-ibov-node": KedroOperator(
+            task_id="validate-stage-ibov-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="validate_stage_ibov_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "validate-stage-ivvb-node": KedroOperator(
+            task_id="validate-stage-ivvb-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="validate_stage_ivvb_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "validate-stage-infomoney-node": KedroOperator(
+            task_id="validate-stage-infomoney-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="validate_stage_infomoney_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "validate-stage-moneytimes-node": KedroOperator(
+            task_id="validate-stage-moneytimes-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="validate_stage_moneytimes_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "validate-stage-seudinheiro-node": KedroOperator(
+            task_id="validate-stage-seudinheiro-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="validate_stage_seudinheiro_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "validate-stage-valorinveste-node": KedroOperator(
+            task_id="validate-stage-valorinveste-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="validate_stage_valorinveste_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "generate-quality-report-node": KedroOperator(
+            task_id="generate-quality-report-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="generate_quality_report_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "data-consolidated-transacoes-node": KedroOperator(
+            task_id="data-consolidated-transacoes-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="data_consolidated_transacoes_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "data-consolidated-noticias-node": KedroOperator(
+            task_id="data-consolidated-noticias-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="data_consolidated_noticias_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "validate-mercado-node": KedroOperator(
+            task_id="validate-mercado-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="validate_mercado_node",
             project_path=project_path,
             env=env,
             conf_source=conf_source,
@@ -227,6 +337,15 @@ with DAG(
             env=env,
             conf_source=conf_source,
         ),
+        "validate-indicadores-node": KedroOperator(
+            task_id="validate-indicadores-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="validate_indicadores_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
         "process-score-data-node": KedroOperator(
             task_id="process-score-data-node",
             package_name=package_name,
@@ -235,21 +354,104 @@ with DAG(
             project_path=project_path,
             env=env,
             conf_source=conf_source,
-        )
+        ),
+        "validate-indice-isbm-node": KedroOperator(
+            task_id="validate-indice-isbm-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="validate_indice_isbm_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "build-analise-correlacao-node": KedroOperator(
+            task_id="build-analise-correlacao-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="build_analise_correlacao_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "build-dashboard-diario-node": KedroOperator(
+            task_id="build-dashboard-diario-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="build_dashboard_diario_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "build-kpis-agregados-node": KedroOperator(
+            task_id="build-kpis-agregados-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="build_kpis_agregados_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
+        "build-serie-temporal-node": KedroOperator(
+            task_id="build-serie-temporal-node",
+            package_name=package_name,
+            pipeline_name=pipeline_name,
+            node_name="build_serie_temporal_node",
+            project_path=project_path,
+            env=env,
+            conf_source=conf_source,
+        ),
     }
-    tasks["etl-ibov-node"] >> tasks["indicador-atividade-mercado-node"]
-    tasks["etl-html-ifix-node"] >> tasks["indicador-confianca-mercado-local-node"]
-    tasks["etl-ibov-node"] >> tasks["indicador-retorno-mercado-node"]
-    tasks["etl-html-cds-node"] >> tasks["indicador-risco-credito-node"]
-    tasks["etl-html-seudinheiro-node"] >> tasks["indicador-sentimento-noticias-node"]
-    tasks["etl-html-moneytimes-node"] >> tasks["indicador-sentimento-noticias-node"]
-    tasks["etl-html-infomoney-node"] >> tasks["indicador-sentimento-noticias-node"]
-    tasks["etl-html-valorinveste-node"] >> tasks["indicador-sentimento-noticias-node"]
-    tasks["etl-ibov-node"] >> tasks["indicador-volatilidade-mercado-node"]
-    tasks["etl-ivvb11-vix-brasil-node"] >> tasks["indicador-volatilidade-mercado-node"]
-    tasks["indicador-confianca-mercado-local-node"] >> tasks["process-score-data-node"]
-    tasks["indicador-volatilidade-mercado-node"] >> tasks["process-score-data-node"]
-    tasks["indicador-retorno-mercado-node"] >> tasks["process-score-data-node"]
-    tasks["indicador-atividade-mercado-node"] >> tasks["process-score-data-node"]
-    tasks["indicador-sentimento-noticias-node"] >> tasks["process-score-data-node"]
-    tasks["indicador-risco-credito-node"] >> tasks["process-score-data-node"]
+
+    # Pipeline Ingestion -> Pipeline Data Quality
+    tasks["etl-html-cds-node"] >> tasks["validate-stage-cds-node"]
+    tasks["etl-html-ifix-node"] >> tasks["validate-stage-ifix-node"]
+    tasks["etl-ibov-node"] >> tasks["validate-stage-ibov-node"]
+    tasks["etl-ivvb11-vix-brasil-node"] >> tasks["validate-stage-ivvb-node"]
+    tasks["etl-html-infomoney-node"] >> tasks["validate-stage-infomoney-node"]
+    tasks["etl-html-seudinheiro-node"] >> tasks["validate-stage-seudinheiro-node"]
+    tasks["etl-html-valorinveste-node"] >> tasks["validate-stage-valorinveste-node"]
+    tasks["etl-html-moneytimes-node"] >> tasks["validate-stage-moneytimes-node"]
+
+    tasks["validate-stage-cds-node"] >> tasks["data-consolidated-transacoes-node"]
+    tasks["validate-stage-ifix-node"] >> tasks["data-consolidated-transacoes-node"]
+    tasks["validate-stage-ibov-node"] >> tasks["data-consolidated-transacoes-node"]
+    tasks["validate-stage-ivvb-node"] >> tasks["data-consolidated-transacoes-node"]
+    tasks["validate-stage-valorinveste-node"] >> tasks["data-consolidated-noticias-node"]
+    tasks["validate-stage-moneytimes-node"] >> tasks["data-consolidated-noticias-node"]
+    tasks["validate-stage-infomoney-node"] >> tasks["data-consolidated-noticias-node"]
+    tasks["validate-stage-seudinheiro-node"] >> tasks["data-consolidated-noticias-node"]
+
+
+    tasks["validate-stage-cds-node"] >> tasks["generate-quality-report-node"]
+    tasks["validate-stage-ifix-node"] >> tasks["generate-quality-report-node"]
+    tasks["validate-stage-ibov-node"] >> tasks["generate-quality-report-node"]
+    tasks["validate-stage-ivvb-node"] >> tasks["generate-quality-report-node"]
+    tasks["validate-stage-valorinveste-node"] >> tasks["generate-quality-report-node"]
+    tasks["validate-stage-moneytimes-node"] >> tasks["generate-quality-report-node"]
+    tasks["validate-stage-infomoney-node"] >> tasks["generate-quality-report-node"]
+    tasks["validate-stage-seudinheiro-node"] >> tasks["generate-quality-report-node"]
+
+    tasks["data-consolidated-transacoes-node"] >> tasks["validate-mercado-node"]
+
+    tasks["validate-mercado-node"] >> tasks["indicador-atividade-mercado-node"]
+    tasks["validate-mercado-node"] >> tasks["indicador-confianca-mercado-local-node"]
+    tasks["validate-mercado-node"] >> tasks["indicador-retorno-mercado-node"]
+    tasks["validate-mercado-node"] >> tasks["indicador-risco-credito-node"]
+    tasks["validate-mercado-node"] >> tasks["indicador-volatilidade-mercado-node"]
+    tasks["data-consolidated-noticias-node"] >> tasks["indicador-sentimento-noticias-node"]
+
+    tasks["indicador-volatilidade-mercado-node"] >> tasks["validate-indicadores-node"]
+    tasks["indicador-retorno-mercado-node"] >> tasks["validate-indicadores-node"]
+    tasks["indicador-atividade-mercado-node"] >> tasks["validate-indicadores-node"]
+    tasks["indicador-risco-credito-node"] >> tasks["validate-indicadores-node"]
+    tasks["indicador-sentimento-noticias-node"] >> tasks["validate-indicadores-node"]
+    tasks["indicador-confianca-mercado-local-node"] >> tasks["validate-indicadores-node"]
+
+    tasks["validate-indicadores-node"] >> tasks["process-score-data-node"]
+
+    tasks["process-score-data-node"] >> tasks["validate-indice-isbm-node"]
+
+    tasks["validate-indice-isbm-node"] >> tasks["build-analise-correlacao-node"]
+    tasks["validate-indice-isbm-node"] >> tasks["build-dashboard-diario-node"]
+    tasks["validate-indice-isbm-node"] >> tasks["build-kpis-agregados-node"]
+    tasks["validate-indice-isbm-node"] >> tasks["build-serie-temporal-node"]
