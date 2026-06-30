@@ -1,7 +1,7 @@
-[project)
+[project]
 name = "ismb"
 version = "4.0.0"
-description - "Indice de Sentimento do Mercado Brasileiro"
+description = "Indice de Sentimento do Mercado Brasileiro"
 requires-python = ">=3.12"
 
 [tool.ruff]
@@ -30,7 +30,7 @@ show_error_codes = true
 [[tool.mypy-overrides]]
 module = [
     "confluent_kafka.*",
-    "pyspark.*"
+    "pyspark.*",
     "nltk.*",
     "great_expectations.*",
     "yfinance.*",
@@ -41,8 +41,8 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-python_files - ["test_*.py"]
-python_classes = ["Test**]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
