@@ -1,0 +1,55 @@
+# Spark Master + Workers
+# docker compose -f docker/docker-compose.spark.yaml up -d
+
+services:
+  spark-master:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.spark
+    container_name: ismb-spark-master
+    hostname: spark-master
+    ports:
+      - "7077:7077"
+      - "8082:8080"
+    environment:
+      SPARK_MASTER_HOST: spark-master
+      SPARK_MASTER_PORT: 7077
+      SPARK_MASTER_WEBUI_PORT: 8080
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    networks:
+      - ismb-network
+
+  spark-worker-1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.spark
+    container_name: ismb-spark-worker-1
+    hostname: spark-worker-1
+    depends_on:
+      - spark-master
+    environment:
+      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_MEMORY: 2g
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    networks:
+      - ismb-network
+
+  spark-worker-2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.spark
+    container_name: ismb-spark-worker-2
+    hostname: spark-worker-2
+    depends_on:
+      - spark-master
+    environment:
+      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_MEMORY: 2g
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    networks:
+      - ismb-network
+
+networks:
+  ismb-network:
+    external: true
+    name: ismb-network

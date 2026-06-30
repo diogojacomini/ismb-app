@@ -1,0 +1,67 @@
+# MinIO (s3) + Redis
+# docker compose -f docker/docker-compose.storage.yaml up -d
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: ismb-minio
+    hostname: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - ismb-network
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: ismb-minio-init
+    depends_on:
+      - minio
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+      echo 'Creating MinIO buckets...'
+      mc alias set local http://minio:9000 minioadmin minioadmin
+      mc mb local/lakehouse --ignore-existing
+      mc mb local/lakehouse/bronze --ignore-existing
+      mc mb local/lakehouse/silver --ignore-existing
+      mc mb local/lakehouse/gold --ignore-existing
+      mc mb local/lakehouse/checkpoints --ignore-existing
+      echo 'MinIO buckets created successfully.'
+      "
+    networks:
+      - ismb-network
+
+  redis:
+    image: redis:7.2.0-alpine
+    container_name: ismb-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - ismb-network
+
+volumes:
+  minio-data:
+  redis-data:
+
+networks:
+  ismb-network:
+    external: true
+    name: ismb-network

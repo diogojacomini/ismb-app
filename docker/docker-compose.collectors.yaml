@@ -1,0 +1,22 @@
+# Data Collectors
+# docker compose -f docker/docker-compose.collectors.yaml up -d
+
+services:
+
+  market-collector:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.collectors
+    container_name: ismb-market-collector
+    restart: unless-stopped
+    environment:
+      COLLETOR_TYPE: market
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      MARKET_POLL_INTERVAL_SECONDS: 15
+    networks:
+      - ismb-network
+
+networks:
+  ismb-network:
+    external: true
+    name: ismb-network

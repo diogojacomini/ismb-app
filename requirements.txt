@@ -1,0 +1,14 @@
+pydantic-settings>2.0
+confluent-kafka>=2.5
+redis>=5.0
+fastapi>=0.115
+unicorn[standard]>=0.30
+pydantic>=2.0
+PyJWT>=2.8
+bcrypt>=4.0
+prometheus-client>=0.20
+yfinance>=0.2
+feedparser>=6.0
+nltk>=3.9
+structlog>=24.0
+pandas>=2.0
